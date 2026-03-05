@@ -639,6 +639,13 @@
     </Reference>
     <Reference Include="System.IO.Hashing">
       <HintPath>Library\PackageCache\com.unity.collections@aea9d3bd5e19\Unity.Collections.Tests\System.IO.Hashing\System.IO.Hashing.dll</HintPath>
+<<<<<<< Updated upstream
+=======
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="K4os.Compression.LZ4">
+      <HintPath>Library\PackageCache\dev.purrnet.purrnet@f4dd26fb792b\Externals\7zip\K4os.Compression.LZ4.dll</HintPath>
+>>>>>>> Stashed changes
       <Private>False</Private>
     </Reference>
     <Reference Include="log4netPlastic">
@@ -651,6 +658,13 @@
     </Reference>
     <Reference Include="Unity.VisualScripting.YamlDotNet">
       <HintPath>Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\VisualScripting.Core\Dependencies\YamlDotNet\Unity.VisualScripting.YamlDotNet.dll</HintPath>
+<<<<<<< Updated upstream
+=======
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>Library\PackageCache\com.unity.nuget.newtonsoft-json@4dfd81071c64\Runtime\Newtonsoft.Json.dll</HintPath>
+>>>>>>> Stashed changes
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.VisualScripting.TextureAssets">
@@ -1181,6 +1195,10 @@
       <HintPath>Library\ScriptAssemblies\UnityEngine.TestRunner.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="DissonanceVoip.PurrNet">
+      <HintPath>Library\ScriptAssemblies\DissonanceVoip.PurrNet.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.RenderPipelines.Core.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.Editor.dll</HintPath>
       <Private>False</Private>
@@ -1205,8 +1223,16 @@
       <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.ShaderLibrary.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="PurrNet.Runtime">
+      <HintPath>Library\ScriptAssemblies\PurrNet.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.VisualScripting.SettingsProvider.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.VisualScripting.SettingsProvider.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="PurrNet.UTP.Runtime">
+      <HintPath>Library\ScriptAssemblies\PurrNet.UTP.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.RenderPipelines.Universal.2D.Editor.Overrides">
@@ -1245,6 +1271,13 @@
       <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Universal.2D.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
+<<<<<<< Updated upstream
+=======
+    <Reference Include="PurrNet.Steam.Runtime">
+      <HintPath>Library\ScriptAssemblies\PurrNet.Steam.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+>>>>>>> Stashed changes
     <Reference Include="Unity.PlasticSCM.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.PlasticSCM.Editor.dll</HintPath>
       <Private>False</Private>
@@ -1357,6 +1390,13 @@
       <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
+<<<<<<< Updated upstream
+=======
+    <Reference Include="LiteNetLib">
+      <HintPath>Library\ScriptAssemblies\LiteNetLib.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+>>>>>>> Stashed changes
     <Reference Include="Unity.RenderPipelines.Universal.Config.Runtime">
       <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Config.Runtime.dll</HintPath>
       <Private>False</Private>
@@ -1377,6 +1417,10 @@
       <HintPath>Library\ScriptAssemblies\Unity.ShaderGraph.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="SimpleWebTransport">
+      <HintPath>Library\ScriptAssemblies\SimpleWebTransport.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.RenderPipelines.Core.Editor.Shared">
       <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.Editor.Shared.dll</HintPath>
       <Private>False</Private>
@@ -1385,8 +1429,16 @@
       <HintPath>Library\ScriptAssemblies\Unity.InputSystem.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="PurrNet.Examples">
+      <HintPath>Library\ScriptAssemblies\PurrNet.Examples.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ToolbarExtender.Editor">
+      <HintPath>Library\ScriptAssemblies\ToolbarExtender.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>

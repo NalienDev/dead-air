@@ -15,7 +15,7 @@ MonoBehaviour:
   _quality: 1
   _frameSize: 1
   _forwardErrorCorrection: 1
-  _denoiseAmount: 3
+  _denoiseAmount: 1
   _bgSoundRemovalEnabled: 1
   _bgSoundRemovalAmount: 0.6141091
   _vadSensitivity: 1

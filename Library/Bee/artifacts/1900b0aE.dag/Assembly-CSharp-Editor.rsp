@@ -410,14 +410,34 @@
 -r:"Library/PackageCache/com.unity.ext.nunit@d8c07649098d/net40/unity-custom/nunit.framework.dll"
 -r:"Library/PackageCache/com.unity.ext.nunit@d8c07649098d/net40/unity-custom/nunit.framework.dll"
 -r:"Library/PackageCache/com.unity.nuget.mono-cecil@ecb9724e46ff/Mono.Cecil.dll"
+<<<<<<< Updated upstream
+=======
+-r:"Library/PackageCache/com.unity.nuget.newtonsoft-json@4dfd81071c64/Runtime/Newtonsoft.Json.dll"
+>>>>>>> Stashed changes
 -r:"Library/PackageCache/com.unity.visualscripting@191c0d7e3b69/Editor/VisualScripting.Core/Dependencies/DotNetZip/Unity.VisualScripting.IonicZip.dll"
 -r:"Library/PackageCache/com.unity.visualscripting@191c0d7e3b69/Editor/VisualScripting.Core/Dependencies/YamlDotNet/Unity.VisualScripting.YamlDotNet.dll"
 -r:"Library/PackageCache/com.unity.visualscripting@191c0d7e3b69/Editor/VisualScripting.Core/EditorAssetResources/Unity.VisualScripting.TextureAssets.dll"
 -r:"Library/PackageCache/com.unity.visualscripting@191c0d7e3b69/Runtime/VisualScripting.Flow/Dependencies/NCalc/Unity.VisualScripting.Antlr3.Runtime.dll"
+<<<<<<< Updated upstream
+=======
+-r:"Library/PackageCache/dev.purrnet.purrnet@f4dd26fb792b/Externals/7zip/K4os.Compression.LZ4.dll"
+>>>>>>> Stashed changes
 -r:"Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.ref.dll"
+-r:"Library/Bee/artifacts/1900b0aE.dag/DissonanceVoip.PurrNet.ref.dll"
 -r:"Library/Bee/artifacts/1900b0aE.dag/DissonanceVoip.ref.dll"
 -r:"Library/Bee/artifacts/1900b0aE.dag/DissonanceVoipEditor.ref.dll"
+<<<<<<< Updated upstream
 -r:"Library/Bee/artifacts/1900b0aE.dag/PPv2URPConverters.ref.dll"
+=======
+-r:"Library/Bee/artifacts/1900b0aE.dag/LiteNetLib.ref.dll"
+-r:"Library/Bee/artifacts/1900b0aE.dag/PPv2URPConverters.ref.dll"
+-r:"Library/Bee/artifacts/1900b0aE.dag/PurrNet.Examples.ref.dll"
+-r:"Library/Bee/artifacts/1900b0aE.dag/PurrNet.Runtime.ref.dll"
+-r:"Library/Bee/artifacts/1900b0aE.dag/PurrNet.Steam.Runtime.ref.dll"
+-r:"Library/Bee/artifacts/1900b0aE.dag/PurrNet.UTP.Runtime.ref.dll"
+-r:"Library/Bee/artifacts/1900b0aE.dag/SimpleWebTransport.ref.dll"
+-r:"Library/Bee/artifacts/1900b0aE.dag/ToolbarExtender.Editor.ref.dll"
+>>>>>>> Stashed changes
 -r:"Library/Bee/artifacts/1900b0aE.dag/Unity.AI.Navigation.Editor.ConversionSystem.ref.dll"
 -r:"Library/Bee/artifacts/1900b0aE.dag/Unity.AI.Navigation.Editor.ref.dll"
 -r:"Library/Bee/artifacts/1900b0aE.dag/Unity.AI.Navigation.ref.dll"

@@ -119,6 +119,24 @@
       "source": "registry",
       "testable": false
     },
+    "dev.purrnet.dissonance@https://github.com/BobsiUnity/PurrNet-VoiceChat.git?path=/Assets/PurrNet-Dissonance": {
+      "name": "dev.purrnet.dissonance",
+      "displayName": "PurrNet Dissonance",
+      "resolvedPath": "D:\\UnityProjects\\DeadAir\\dead-air\\Library\\PackageCache\\dev.purrnet.dissonance@3698597e2a42",
+      "fingerprint": "3698597e2a42c42e4c676e8cd5a03f2c8e903a06",
+      "version": "1.0.0",
+      "source": "git",
+      "testable": false
+    },
+    "dev.purrnet.purrnet@https://github.com/PurrNet/PurrNet.git?path=/Assets/PurrNet#release": {
+      "name": "dev.purrnet.purrnet",
+      "displayName": "PurrNet",
+      "resolvedPath": "D:\\UnityProjects\\DeadAir\\dead-air\\Library\\PackageCache\\dev.purrnet.purrnet@f4dd26fb792b",
+      "fingerprint": "f4dd26fb792b1ba01d50922cc0a3498892d330c5",
+      "version": "1.19.1",
+      "source": "git",
+      "testable": false
+    },
     "com.unity.modules.accessibility@1.0.0": {
       "name": "com.unity.modules.accessibility",
       "displayName": "Accessibility",
@@ -407,6 +425,36 @@
       "source": "builtin",
       "testable": false
     },
+    "com.unity.nuget.mono-cecil@1.11.6": {
+      "name": "com.unity.nuget.mono-cecil",
+      "displayName": "Mono Cecil",
+      "resolvedPath": "D:\\UnityProjects\\DeadAir\\dead-air\\Library\\PackageCache\\com.unity.nuget.mono-cecil@ecb9724e46ff",
+      "fingerprint": "ecb9724e46fff855c46a4f37f0a3377a3cfffc06",
+      "editorCompatibility": "2019.4.0a1",
+      "version": "1.11.6",
+      "source": "registry",
+      "testable": false
+    },
+    "com.unity.nuget.newtonsoft-json@3.2.2": {
+      "name": "com.unity.nuget.newtonsoft-json",
+      "displayName": "Newtonsoft Json",
+      "resolvedPath": "D:\\UnityProjects\\DeadAir\\dead-air\\Library\\PackageCache\\com.unity.nuget.newtonsoft-json@4dfd81071c64",
+      "fingerprint": "4dfd81071c6475bb9c114f920bfb4e3fc5e28c6a",
+      "editorCompatibility": "2018.4.0a1",
+      "version": "3.2.2",
+      "source": "registry",
+      "testable": false
+    },
+    "com.unity.collections@2.6.2": {
+      "name": "com.unity.collections",
+      "displayName": "Collections",
+      "resolvedPath": "D:\\UnityProjects\\DeadAir\\dead-air\\Library\\PackageCache\\com.unity.collections@aea9d3bd5e19",
+      "fingerprint": "aea9d3bd5e19f2a90fc3a39919974a5f3613a159",
+      "editorCompatibility": "2022.3.20f1",
+      "version": "2.6.2",
+      "source": "registry",
+      "testable": false
+    },
     "com.unity.ext.nunit@2.0.5": {
       "name": "com.unity.ext.nunit",
       "displayName": "Custom NUnit",
@@ -447,16 +495,6 @@
       "source": "builtin",
       "testable": false
     },
-    "com.unity.searcher@4.9.4": {
-      "name": "com.unity.searcher",
-      "displayName": "Searcher",
-      "resolvedPath": "D:\\UnityProjects\\DeadAir\\dead-air\\Library\\PackageCache\\com.unity.searcher@d45a78918735",
-      "fingerprint": "d45a78918735dd5b1de2247c6e3567c60aa24115",
-      "editorCompatibility": "2019.1.0a1",
-      "version": "4.9.4",
-      "source": "registry",
-      "testable": false
-    },
     "com.unity.burst@1.8.28": {
       "name": "com.unity.burst",
       "displayName": "Burst",
@@ -477,26 +515,6 @@
       "source": "registry",
       "testable": false
     },
-    "com.unity.collections@2.6.2": {
-      "name": "com.unity.collections",
-      "displayName": "Collections",
-      "resolvedPath": "D:\\UnityProjects\\DeadAir\\dead-air\\Library\\PackageCache\\com.unity.collections@aea9d3bd5e19",
-      "fingerprint": "aea9d3bd5e19f2a90fc3a39919974a5f3613a159",
-      "editorCompatibility": "2022.3.20f1",
-      "version": "2.6.2",
-      "source": "registry",
-      "testable": false
-    },
-    "com.unity.nuget.mono-cecil@1.11.6": {
-      "name": "com.unity.nuget.mono-cecil",
-      "displayName": "Mono Cecil",
-      "resolvedPath": "D:\\UnityProjects\\DeadAir\\dead-air\\Library\\PackageCache\\com.unity.nuget.mono-cecil@ecb9724e46ff",
-      "fingerprint": "ecb9724e46fff855c46a4f37f0a3377a3cfffc06",
-      "editorCompatibility": "2019.4.0a1",
-      "version": "1.11.6",
-      "source": "registry",
-      "testable": false
-    },
     "com.unity.test-framework.performance@3.2.0": {
       "name": "com.unity.test-framework.performance",
       "displayName": "Performance testing API",
@@ -504,6 +522,16 @@
       "fingerprint": "0840f58e45624f7677679a0f8b6a5137689e607f",
       "editorCompatibility": "2020.3.0a1",
       "version": "3.2.0",
+      "source": "registry",
+      "testable": false
+    },
+    "com.unity.searcher@4.9.4": {
+      "name": "com.unity.searcher",
+      "displayName": "Searcher",
+      "resolvedPath": "D:\\UnityProjects\\DeadAir\\dead-air\\Library\\PackageCache\\com.unity.searcher@d45a78918735",
+      "fingerprint": "d45a78918735dd5b1de2247c6e3567c60aa24115",
+      "editorCompatibility": "2019.1.0a1",
+      "version": "4.9.4",
       "source": "registry",
       "testable": false
     }
