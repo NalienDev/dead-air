@@ -5,9 +5,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DissonanceVoip", "Dissonanc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DissonanceVoipEditor", "DissonanceVoipEditor.csproj", "{5D054896-9A4C-8438-830D-36D75EC286CF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-Editor", "Assembly-CSharp-Editor.csproj", "{E9A9BE46-D7EB-12AC-39BB-41BAFEA0E08D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{571FD5D3-9105-E66F-59DA-A8917FF63FF6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-Editor", "Assembly-CSharp-Editor.csproj", "{E9A9BE46-D7EB-12AC-39BB-41BAFEA0E08D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,14 +23,14 @@ Global
 		{5D054896-9A4C-8438-830D-36D75EC286CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5D054896-9A4C-8438-830D-36D75EC286CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5D054896-9A4C-8438-830D-36D75EC286CF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E9A9BE46-D7EB-12AC-39BB-41BAFEA0E08D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E9A9BE46-D7EB-12AC-39BB-41BAFEA0E08D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E9A9BE46-D7EB-12AC-39BB-41BAFEA0E08D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E9A9BE46-D7EB-12AC-39BB-41BAFEA0E08D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{571FD5D3-9105-E66F-59DA-A8917FF63FF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{571FD5D3-9105-E66F-59DA-A8917FF63FF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{571FD5D3-9105-E66F-59DA-A8917FF63FF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{571FD5D3-9105-E66F-59DA-A8917FF63FF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9A9BE46-D7EB-12AC-39BB-41BAFEA0E08D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9A9BE46-D7EB-12AC-39BB-41BAFEA0E08D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9A9BE46-D7EB-12AC-39BB-41BAFEA0E08D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9A9BE46-D7EB-12AC-39BB-41BAFEA0E08D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
