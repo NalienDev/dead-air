@@ -1,3 +1,4 @@
+using PurrNet;
 using UnityEngine;
 
 public class PlayerPickObjectsUp : MonoBehaviour
@@ -19,6 +20,12 @@ public class PlayerPickObjectsUp : MonoBehaviour
                     Debug.DrawRay(_cameraCenterTransform.position, _cameraCenterTransform.forward * 10, Color.yellow, 2);
                     if (hit.transform.TryGetComponent(out _pickedUpObject))
                     {
+                        NetworkTransform objNetTransform = _pickedUpObject.GetComponent<NetworkTransform>();
+                        if (!objNetTransform.isOwner)
+                        {
+                            NetworkTransform selfNetTransform = gameObject.GetComponent<NetworkTransform>();
+                            objNetTransform.GiveOwnership(selfNetTransform.localPlayer.Value);
+                        }
                         _pickedUpObject.Grab(_pickupPosTransform);
                     }
                 }
