@@ -2,39 +2,32 @@ using UnityEngine;
 
 public class PlayerPickObjectsUp : MonoBehaviour
 {
-    [SerializeField] private Transform _cameraCenter;
-    [SerializeField] private Transform _pickupPos;
-    private bool _objectInHand = false;
-    private GameObject _pickedUpObject;
+    [SerializeField] private Transform _cameraCenterTransform;
+    [SerializeField] private Transform _pickupPosTransform;
+    
+    private PickableObject _pickedUpObject;
 
-    private void FixedUpdate()
+    private void Update()
     {
         RaycastHit hit;
         if (Input.GetKeyDown(KeyCode.E))
         {
-            if (_objectInHand)
+            if (_pickedUpObject == null)
             {
-                _pickedUpObject.transform.SetParent(null, false);
-                _objectInHand = false;
-            } else
-            {
-                if (Physics.Raycast(_cameraCenter.position, _cameraCenter.forward, out hit, 100.0f))
+                if (Physics.Raycast(_cameraCenterTransform.position, _cameraCenterTransform.forward, out hit, 2f))
                 {
-                    Debug.DrawRay(_cameraCenter.position, _cameraCenter.forward * 10, Color.yellow, 2);
-
-                    if (hit.collider.gameObject.CompareTag("PickableObject"))
+                    Debug.DrawRay(_cameraCenterTransform.position, _cameraCenterTransform.forward * 10, Color.yellow, 2);
+                    if (hit.transform.TryGetComponent(out _pickedUpObject))
                     {
-                        print("Found an object - distance: " + hit.distance);
-                        _pickedUpObject = hit.collider.gameObject;
-                        _pickedUpObject.transform.SetParent(_pickupPos.transform, false);
-                        _pickedUpObject.transform.localPosition = Vector3.zero;
-                        _objectInHand = true;
-
+                        _pickedUpObject.Grab(_pickupPosTransform);
                     }
                 }
+            } else
+            {
+                _pickedUpObject.Drop();
+                _pickedUpObject = null;
             }
-                
+          
         }
-        
     }
 }

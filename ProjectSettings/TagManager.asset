@@ -5,7 +5,6 @@ TagManager:
   serializedVersion: 3
   tags:
   - CinemachineTarget
-  - PickableObject
   layers:
   - Default
   - TransparentFX
@@ -13,8 +12,8 @@ TagManager:
   - Ground
   - Water
   - UI
-  - 
-  - 
+  - Player
+  - Object
   - 
   - 
   - 
