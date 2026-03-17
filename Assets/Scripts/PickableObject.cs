@@ -9,7 +9,6 @@ public class PickableObject : MonoBehaviour
     {
         _rb = GetComponent<Rigidbody>();
         _rb.interpolation = RigidbodyInterpolation.Interpolate;
-        _rb.linearDamping = 5f;
     }
 
     public void Grab(Transform pickupPosTransform)
