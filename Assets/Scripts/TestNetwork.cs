@@ -5,17 +5,21 @@ public class TestNetwork : NetworkIdentity
 {
     [SerializeField] private Color _color;
     [SerializeField] private Renderer _renderer;
+    [SerializeField] private TextMesh _healthText;
+    [SerializeField] private SyncVar<int> _health = new(100); //Necessï¿½rio fazer new
 
-    [SerializeField] private SyncVar<int> _health = new(100); //Necessário fazer new
+    [SerializeField] private int _localHealth = 100;
 
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.A))
-            SetColor(_color);
-
+        {
+            SetHealth(_localHealth - 10);
+        }
         if (Input.GetKeyDown(KeyCode.S))
+        {
             TakeDamage(10);
-
+        }
     }
 
     private void Awake()
@@ -31,15 +35,22 @@ public class TestNetwork : NetworkIdentity
 
     private void OnHealthChanged(int newValue)
     {
-        Debug.Log(newValue);
+        //Debug.Log(newValue);
+        _healthText.text = newValue.ToString();
     }
 
     [ServerRpc]
     private void TakeDamage(int damage) { 
-        _health.value -= damage; //necessário fazer .value em SyncVars
+        _health.value -= damage; //necessï¿½rio fazer .value em SyncVars
     }
 
-    protected override void OnObserverAdded(PlayerID player) // Isto é chamado quando um novo cliente entra no servidor
+    [ObserversRpc(bufferLast:true)]
+    private void SetHealth(int health)
+    {
+        _localHealth = health;
+    }
+
+    protected override void OnObserverAdded(PlayerID player) // Isto ï¿½ chamado quando um novo cliente entra no servidor
     {
         base.OnObserverAdded(player);
     }
@@ -60,9 +71,9 @@ public class TestNetwork : NetworkIdentity
     /*
     [SerializeField] private NetworkIdentity _networkIdentity;
     
-    protected override void OnSpawned() // é necessário instanciar objetos aqui para apareceram para o cliente e o servidor,
-                                        // se forem instanciados no awake, o cliente e o servidor terão objetos diferentes apesar de terem o mesmo id,
-                                        // e não aparecerão para o cliente nem para o servidor
+    protected override void OnSpawned() // ï¿½ necessï¿½rio instanciar objetos aqui para apareceram para o cliente e o servidor,
+                                        // se forem instanciados no awake, o cliente e o servidor terï¿½o objetos diferentes apesar de terem o mesmo id,
+                                        // e nï¿½o aparecerï¿½o para o cliente nem para o servidor
     {
         
         base.OnSpawned();

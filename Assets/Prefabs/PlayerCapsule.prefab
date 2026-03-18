@@ -194,6 +194,7 @@ GameObject:
   - component: {fileID: 3536506675331772946}
   - component: {fileID: 5526482108342783026}
   - component: {fileID: 3292025479959441994}
+  - component: {fileID: 4253604535055835325}
   m_Layer: 6
   m_Name: PlayerCapsule
   m_TagString: Player
@@ -467,6 +468,8 @@ MonoBehaviour:
     activeAsOwner: 1
   - target: {fileID: 3292025479959441994}
     activeAsOwner: 1
+  - target: {fileID: 4253604535055835325}
+    activeAsOwner: 1
   _gameObjects:
   - target: {fileID: 7179928310667017016}
     activeAsOwner: 1
@@ -488,6 +491,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerPickObjectsUp
   _cameraCenterTransform: {fileID: 5102497996290863185}
   _pickupPosTransform: {fileID: 2309069007547316892}
+--- !u!114 &4253604535055835325
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9126679355787183082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e12967f9f8b3804eb63b36aaffcf173, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerManager
+  maxHealth: 100
+  currentHealth: 100
+  maxOxygen: 360
+  currentOxygen: 360
 --- !u!1001 &4563925786305766699
 PrefabInstance:
   m_ObjectHideFlags: 0

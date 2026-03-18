@@ -1441,10 +1441,6 @@
       <HintPath>Library\ScriptAssemblies\Unity.Collections.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.ShaderGraph.Editor">
-      <HintPath>Library\ScriptAssemblies\Unity.ShaderGraph.Editor.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Unity.RenderPipelines.Core.Editor.Shared">
       <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.Editor.Shared.dll</HintPath>
       <Private>False</Private>
@@ -1486,6 +1482,18 @@
     <ProjectReference Include="DissonanceVoip.csproj">
       <Project>{EF49A1C5-46BA-3F8B-B3B1-79A55A0CBFEF}</Project>
       <Name>DissonanceVoip</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.UI.Shaders.Sample.Editor.csproj">
+      <Project>{E0C55340-CAC6-3D4D-BFE2-C9CCEF93D44F}</Project>
+      <Name>Unity.UI.Shaders.Sample.Editor</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.UI.Shaders.Sample.csproj">
+      <Project>{2FE9EEDA-0CB6-0625-95BB-1DF181F2EFF3}</Project>
+      <Name>Unity.UI.Shaders.Sample</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.ShaderGraph.Editor.csproj">
+      <Project>{76565BB0-B844-A26F-B862-24F25E7CDF02}</Project>
+      <Name>Unity.ShaderGraph.Editor</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
