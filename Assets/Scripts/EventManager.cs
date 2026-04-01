@@ -19,9 +19,5 @@ public static class EventManager
     {
         SceneChange?.Invoke(sceneName);
     }
-    
-    //PlayerHit events & methods
-    public static event UnityAction<int> PlayerHit;
-    public static void OnPlayerHit(int currentHealth) => PlayerHit?.Invoke(currentHealth);
 
 }
