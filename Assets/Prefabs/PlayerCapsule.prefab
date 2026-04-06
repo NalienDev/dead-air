@@ -602,9 +602,9 @@ GameObject:
   - component: {fileID: 9103288766194465792}
   - component: {fileID: 5392431735233277741}
   - component: {fileID: 1412007505189304343}
-  - component: {fileID: 3292025479959441994}
   - component: {fileID: 4253604535055835325}
   - component: {fileID: 303836537548669449}
+  - component: {fileID: 5292867448715972009}
   m_Layer: 6
   m_Name: PlayerCapsule
   m_TagString: Player
@@ -683,7 +683,7 @@ MonoBehaviour:
     activeAsOwner: 1
   - target: {fileID: 2517505197877791956}
     activeAsOwner: 1
-  - target: {fileID: 3292025479959441994}
+  - target: {fileID: 5292867448715972009}
     activeAsOwner: 1
   - target: {fileID: 4253604535055835325}
     activeAsOwner: 1
@@ -888,20 +888,6 @@ MonoBehaviour:
   analogMovement: 0
   cursorLocked: 1
   cursorInputForLook: 1
---- !u!114 &3292025479959441994
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9126679355787183082}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75ec28dee43187e4da47ae19b7b3939a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerPickObjectsUp
-  _cameraCenterTransform: {fileID: 5102497996290863185}
-  _pickupPosTransform: {fileID: 2309069007547316892}
 --- !u!114 &4253604535055835325
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -953,6 +939,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerUI
   _healthText: {fileID: 2720988653651617076}
   _oxygenText: {fileID: 4794334031836266796}
+--- !u!114 &5292867448715972009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9126679355787183082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 601bdd1d33f5bd24aa707bc96195ef53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Interactor
+  _pickupPosTransform: {fileID: 2309069007547316892}
+  _interactRange: 2
+  _interactableLayers:
+    serializedVersion: 2
+    m_Bits: 255
 --- !u!1001 &4563925786305766699
 PrefabInstance:
   m_ObjectHideFlags: 0

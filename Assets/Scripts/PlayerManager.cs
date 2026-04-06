@@ -49,8 +49,8 @@ public class PlayerManager : NetworkIdentity
             DrainOxygen(1);
         }
 
-        if (Input.GetKeyDown(KeyCode.D)) Damage(10);
-        if (Input.GetKeyDown(KeyCode.F)) GainOxygen(10);
+        if (Input.GetKeyDown(KeyCode.F)) Damage(10);
+        if (Input.GetKeyDown(KeyCode.X)) GainOxygen(10);
     }
 
     [ServerRpc]

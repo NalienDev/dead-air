@@ -8,6 +8,11 @@ public class SceneChanger : MonoBehaviour
     [SerializeField] private NetworkManager _networkManager;
     [SerializeField] private string _gameScene = "TestScene";
 
+    private void Start()
+    {
+        DontDestroyOnLoad(gameObject);
+    }
+
     private void Awake()
     {
         _networkManager.onServerConnectionState += OnServerState;
