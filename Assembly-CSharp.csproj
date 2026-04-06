@@ -82,6 +82,7 @@
     <Compile Include="Assets\Dissonance\Integrations\Offline\OfflineCommsNetwork.cs" />
     <Compile Include="Assets\Scripts\GrabbableObject.cs" />
     <Compile Include="Assets\InputSystem_Actions.cs" />
+    <Compile Include="Assets\Scripts\NetworkedSceneButton.cs" />
     <Compile Include="Assets\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualButton.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\StarterAssets\FirstPersonController\Scripts\BasicRigidBodyPush.cs" />

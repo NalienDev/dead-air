@@ -16,6 +16,7 @@ public class PlayerManager : NetworkIdentity
     {
         if (isOwner)
             Local = this;
+        DontDestroyOnLoad(gameObject);
     }
 
     public int GetCurrentHealth()

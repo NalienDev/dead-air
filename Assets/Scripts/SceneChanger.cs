@@ -1,64 +1,52 @@
 using PurrNet;
+using PurrNet.Transports;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class SceneChanger : MonoBehaviour
+public class SceneChanger : NetworkIdentity
 {
+    public static SceneChanger Instance { get; private set; }
 
     [SerializeField] private NetworkManager _networkManager;
-    [SerializeField] private string _gameScene = "TestScene";
-
-    private void Start()
-    {
-        DontDestroyOnLoad(gameObject);
-    }
 
     private void Awake()
     {
+        if (Instance != null) { Destroy(gameObject); return; }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
         _networkManager.onServerConnectionState += OnServerState;
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
         _networkManager.onServerConnectionState -= OnServerState;
     }
 
-    private void OnServerState(PurrNet.Transports.ConnectionState state)
+    private void OnServerState(ConnectionState state)
     {
-        if (state == PurrNet.Transports.ConnectionState.Connected)
-        {
-            _networkManager.sceneModule.LoadSceneAsync(_gameScene);
-        }
+        if (state == ConnectionState.Connected)
+            _networkManager.sceneModule.LoadSceneAsync("GameLobby");
     }
 
-    public void LoadScene(string sceneName)
+    [ServerRpc(requireOwnership: false)]
+    public void LoadSceneForEveryone(string sceneName)
     {
-        SceneManager.LoadScene(sceneName); // Loads the scene by name
-        Time.timeScale = 1.0f;
+        _networkManager.sceneModule.LoadSceneAsync(sceneName);
+    }
+
+    [ServerRpc(requireOwnership: false)]
+    public void LoadNextSceneForEveryone()
+    {
+        int next = SceneManager.GetActiveScene().buildIndex + 1;
+        if (next < SceneManager.sceneCountInBuildSettings)
+            _networkManager.sceneModule.LoadSceneAsync(next.ToString());
+    }
+
+    public void LoadSceneLocal(string sceneName)
+    {
+        SceneManager.LoadScene(sceneName);
+        Time.timeScale = 1f;
         PauseMenu.GameIsPaused = false;
         EventManager.OnSceneChange(sceneName);
-    }
-
-    public void LoadSceneByIndex(int buildIndex)
-    {
-        SceneManager.LoadScene(buildIndex); // Loads the scene by its build index
-        Time.timeScale = 1.0f;
-        PauseMenu.GameIsPaused = false;
-        EventManager.OnSceneChange(SceneManager.GetSceneByBuildIndex(buildIndex).name);
-    }
-
-    public void LoadNextScene()
-    {
-        if (SceneManager.GetActiveScene().buildIndex != SceneManager.sceneCountInBuildSettings - 1)
-        {
-            LoadSceneByIndex(SceneManager.GetActiveScene().buildIndex + 1);
-        }
-    }
-
-    public void ReloadScene()
-    {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-        Time.timeScale = 1.0f;
-        Destroy(gameObject, 3);
     }
 }
