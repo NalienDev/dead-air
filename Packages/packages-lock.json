@@ -251,7 +251,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "68fedbec67fb6a33410e278c1941c8ea7e59106c"
+      "hash": "f44c09b037cd791f153d8e6faf5f3b43f132ae08"
     },
     "dev.purrnet.purrnet": {
       "version": "https://github.com/PurrNet/PurrNet.git?path=/Assets/PurrNet#release",

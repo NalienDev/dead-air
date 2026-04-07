@@ -605,7 +605,7 @@ GameObject:
   - component: {fileID: 4253604535055835325}
   - component: {fileID: 303836537548669449}
   - component: {fileID: 5292867448715972009}
-  - component: {fileID: 8400894615665382786}
+  - component: {fileID: 8614123747652448446}
   m_Layer: 6
   m_Name: PlayerCapsule
   m_TagString: Player
@@ -957,7 +957,7 @@ MonoBehaviour:
   _interactableLayers:
     serializedVersion: 2
     m_Bits: 255
---- !u!114 &8400894615665382786
+--- !u!114 &8614123747652448446
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
