@@ -1,45 +1,39 @@
-using PurrNet;
+﻿using PurrNet;
 using UnityEngine;
 
 public class PlayerManager : NetworkIdentity
 {
+    // ── Synced state ───────────────────────────────────────────────────────
+
     public SyncVar<int> currentHealth = new(100);
     public SyncVar<int> maxHealth = new(100);
-
     public SyncVar<int> maxOxygen = new(360);
     public SyncVar<int> currentOxygen = new(360);
+
+    /// <summary>True while this player is inside a dungeon.</summary>
+    public SyncVar<bool> isInsideDungeon = new(false);
+
+    // ── Local accessor ─────────────────────────────────────────────────────
+
     public static PlayerManager Local { get; private set; }
 
+    // ── Private state ──────────────────────────────────────────────────────
+
     private float _oxygenTimer = 0f;
+
+    // ── Lifecycle ──────────────────────────────────────────────────────────
 
     protected override void OnSpawned(bool asServer)
     {
         if (isOwner)
             Local = this;
+
         DontDestroyOnLoad(gameObject);
     }
 
-    public int GetCurrentHealth()
-    {
-        return currentHealth.value;
-    }
+    // ── Update ─────────────────────────────────────────────────────────────
 
-    public int GetMaxHealth()
-    {
-        return maxHealth.value;
-    }
-
-    public int GetMaxOxygen()
-    {
-        return maxOxygen.value;
-    }
-
-    public int GetCurrentOxygen()
-    {
-        return currentOxygen.value;
-    }
-
-    void Update()
+    private void Update()
     {
         if (!isOwner) return;
 
@@ -50,9 +44,37 @@ public class PlayerManager : NetworkIdentity
             DrainOxygen(1);
         }
 
+        // Debug bindings — remove before shipping
         if (Input.GetKeyDown(KeyCode.F)) Damage(10);
         if (Input.GetKeyDown(KeyCode.X)) GainOxygen(10);
     }
+
+    // ── Public getters ─────────────────────────────────────────────────────
+
+    public int GetCurrentHealth() => currentHealth.value;
+    public int GetMaxHealth() => maxHealth.value;
+    public int GetMaxOxygen() => maxOxygen.value;
+    public int GetCurrentOxygen() => currentOxygen.value;
+    public bool IsInsideDungeon() => isInsideDungeon.value;
+
+    // ── Dungeon state ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Called by entrance/exit scripts to track whether the player is underground.
+    /// Routes through a ServerRpc so the SyncVar is always written on the server.
+    /// </summary>
+    public void SetInsideDungeon(bool value)
+    {
+        ServerSetInsideDungeon(value);
+    }
+
+    [ServerRpc(requireOwnership: false)]
+    private void ServerSetInsideDungeon(bool value)
+    {
+        isInsideDungeon.value = value;
+    }
+
+    // ── Server RPCs ────────────────────────────────────────────────────────
 
     [ServerRpc]
     public void DrainOxygen(int amount)
@@ -63,15 +85,12 @@ public class PlayerManager : NetworkIdentity
     [ServerRpc]
     public void Damage(int damage)
     {
-        currentHealth.value -= damage;
-        if (currentHealth.value <= 0)
-            currentHealth.value = 0;
+        currentHealth.value = Mathf.Max(currentHealth.value - damage, 0);
     }
 
     [ServerRpc]
-    public void GainOxygen(int oxygen)
+    public void GainOxygen(int amount)
     {
-        currentOxygen.value += oxygen;
-        currentOxygen.value = Mathf.Clamp(currentOxygen, 0, maxOxygen);
+        currentOxygen.value = Mathf.Clamp(currentOxygen.value + amount, 0, maxOxygen.value);
     }
 }
