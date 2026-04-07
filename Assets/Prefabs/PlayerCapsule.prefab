@@ -605,6 +605,7 @@ GameObject:
   - component: {fileID: 4253604535055835325}
   - component: {fileID: 303836537548669449}
   - component: {fileID: 5292867448715972009}
+  - component: {fileID: 8400894615665382786}
   m_Layer: 6
   m_Name: PlayerCapsule
   m_TagString: Player
@@ -956,6 +957,30 @@ MonoBehaviour:
   _interactableLayers:
     serializedVersion: 2
     m_Bits: 255
+--- !u!114 &8400894615665382786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9126679355787183082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b0e765a1e0e37144ae23f180fea3d4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DissonanceVoip.PurrNet::Dissonance.Integrations.PurrNet.PurrNetDissonancePlayer
+  _isSetup: 0
+  _prefabId: -2147483648
+  _componentIndex: -2147483648
+  _shouldBePooled: 0
+  _parent: {fileID: 0}
+  _invertedPathToNearestParent: 
+  _directChildren: []
+  _networkRules: {fileID: 0}
+  _visitiblityRules: {fileID: 0}
+  trackingTransform: {fileID: 7886141918219747147}
+  dissonanceId_Debug: 
+  isTracking_Debug: 0
 --- !u!1001 &4563925786305766699
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -1,0 +1,117 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4797390768097344555
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5073746008176047070}
+  - component: {fileID: 947744661693049428}
+  - component: {fileID: 1411642117694297577}
+  - component: {fileID: 7651972395600964930}
+  - component: {fileID: 4365722524218092199}
+  m_Layer: 0
+  m_Name: DissonanceSetup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5073746008176047070
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4797390768097344555}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.86014986, y: 0, z: 2.1009502}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &947744661693049428
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4797390768097344555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cb4dc319de88dc4cb76c47aafb46b1c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DissonanceVoip::Dissonance.DissonanceComms
+  _lastPrefabError: 
+  _isMuted: 0
+  _isDeafened: 0
+  _oneMinusBaseRemoteVoiceVolume: 0
+  _playbackPrefab: {fileID: 0}
+  _playbackPrefab2: {fileID: 1000010352696724, guid: 183a5830c8c536e4b86864a17336f2af, type: 3}
+  _micName: 
+  _playerPriority: 0
+  _tokens:
+    _tokens: []
+--- !u!114 &1411642117694297577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4797390768097344555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f727ea5497ea8b4dafcd23e8a0b7f6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DissonanceVoip.PurrNet::Dissonance.Integrations.PurrNet.PurrNetCommsNetwork
+  startFlags: -1
+--- !u!114 &7651972395600964930
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4797390768097344555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a76c0688e4bd80499ffa3b6a2aed3f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DissonanceVoip::Dissonance.VoiceProximityBroadcastTrigger
+  _tokens:
+    _tokens: []
+  _range: 20
+  _roomName: Proximity
+  _useTrigger: 0
+  _roomExpanded: 1
+  _metadataExpanded: 0
+  _activationModeExpanded: 0
+  _tokensExpanded: 0
+  _inputName: 
+  _mode: 1
+  _muted: 0
+  _prority: 0
+--- !u!114 &4365722524218092199
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4797390768097344555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ced1b68963272494b9b3d3bed1584a33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DissonanceVoip::Dissonance.VoiceProximityReceiptTrigger
+  _tokens:
+    _tokens: []
+  _range: 20
+  _roomName: Proximity
+  _useTrigger: 0
+  _roomExpanded: 1
+  _tokensExpanded: 0
+  _colliderExpanded: 0

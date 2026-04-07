@@ -1,16 +1,7 @@
+using PurrNet;
 using UnityEngine;
 
-public class Bandwith : MonoBehaviour
+public class Bandwith : NetworkIdentity
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    public SyncVar<int> currentBandwith = new SyncVar<int>(2000);
 }
