@@ -25,6 +25,14 @@ public class DungeonGenerator : NetworkBehaviour
     [SerializeField] private List<GameObject> _hallways;
     [SerializeField] private GameObject _door;
 
+    [Header("Door Placement")]
+    [Tooltip("Moves the door up from the entry point. Set to half your door mesh height so it sits on the floor.")]
+    [SerializeField] private float _doorYOffset = 1f;
+    [Tooltip("Moves the door forward/back along the entry point's forward axis. Positive = into the room, negative = away.")]
+    [SerializeField] private float _doorZOffset = 0f;
+    [Tooltip("Extra Y rotation applied to the door at spawn. 0 or 180 depending on which way your mesh faces.")]
+    [SerializeField] private float _doorYRotation = 0f;
+
     [Header("Generation Settings")]
     [SerializeField] private int _targetRoomCount = 10;
     [SerializeField] private float _generationTickInterval = 0.1f;
@@ -56,7 +64,6 @@ public class DungeonGenerator : NetworkBehaviour
 
     private void Update()
     {
-        Debug.Log("is server?" + isServer + "is generated? " + _isGenerated + "should not generate ? " + !_shouldGenerate);
         if (!isServer || _isGenerated || !_shouldGenerate) return;
 
         if (_generationPaused)
@@ -126,25 +133,26 @@ public class DungeonGenerator : NetworkBehaviour
         GameObject newGo = Instantiate(prefab, transform.position, transform.rotation);
         newGo.transform.SetParent(null);
 
-        GameObject doorGo = Instantiate(_door, hostEntry.position, hostEntry.rotation);
-
         if (!newGo.TryGetComponent(out DungeonPart newPart))
             return;
 
         if (!newPart.TryGetAvailableEntrypoint(out Transform newEntry))
         {
             Destroy(newGo);
-            Destroy(doorGo);
             return;
         }
 
         _generatedRooms.Add(newPart);
-        AlignRooms(hostRoom.transform, newGo.transform, hostEntry, newEntry);
+        AlignRooms(newGo.transform, hostEntry, newEntry);
+
+        // Spawn door AFTER alignment so it sits at the correctly snapped position
+        GameObject doorGo = SpawnDoor(hostEntry);
 
         if (HasIntersection(newPart))
         {
             newPart.ReleaseEntrypoint(newEntry);
             hostRoom.ReleaseEntrypoint(hostEntry);
+            _generatedRooms.Remove(newPart);
             RetryAttachment(newGo, doorGo);
         }
     }
@@ -174,23 +182,24 @@ public class DungeonGenerator : NetworkBehaviour
             GameObject go = Instantiate(prefab, transform.position, transform.rotation);
             go.transform.SetParent(null);
 
-            GameObject doorGo = Instantiate(_door, hostEntry.position, hostEntry.rotation);
-
             if (!go.TryGetComponent(out DungeonPart part)) continue;
             if (!part.TryGetAvailableEntrypoint(out Transform newEntry))
             {
                 Destroy(go);
-                Destroy(doorGo);
                 continue;
             }
 
             _generatedRooms.Add(part);
-            AlignRooms(hostRoom.transform, go.transform, hostEntry, newEntry);
+            AlignRooms(go.transform, hostEntry, newEntry);
+
+            // Spawn door AFTER alignment
+            GameObject doorGo = SpawnDoor(hostEntry);
 
             if (HasIntersection(part))
             {
                 part.ReleaseEntrypoint(newEntry);
                 hostRoom.ReleaseEntrypoint(hostEntry);
+                _generatedRooms.Remove(part);
                 RetryAttachment(go, doorGo);
             }
         }
@@ -212,8 +221,13 @@ public class DungeonGenerator : NetworkBehaviour
         if (!partGo.TryGetComponent(out DungeonPart part)) return;
         if (!part.TryGetAvailableEntrypoint(out Transform newEntry)) return;
 
-        doorGo.transform.SetPositionAndRotation(hostEntry.position, hostEntry.rotation);
-        AlignRooms(hostRoom.transform, partGo.transform, hostEntry, newEntry);
+        AlignRooms(partGo.transform, hostEntry, newEntry);
+
+        // Move existing door to the new snapped position
+        doorGo.transform.position = hostEntry.position
+                                    + Vector3.up * _doorYOffset
+                                    + hostEntry.forward * _doorZOffset;
+        doorGo.transform.rotation = hostEntry.rotation * Quaternion.Euler(0f, _doorYRotation, 0f);
 
         if (HasIntersection(part))
         {
@@ -265,13 +279,18 @@ public class DungeonGenerator : NetworkBehaviour
     }
 
     private static void AlignRooms(
-        Transform hostRoom, Transform newRoom,
+        Transform newRoom,
         Transform hostEntry, Transform newEntry)
     {
+        // Rotate the new room so its entry forward faces OPPOSITE to the host entry forward
+        // (they should face each other). Rotate around the new entry point as pivot,
+        // not the room origin, so the entry point stays in place during rotation.
         float angleDiff = Vector3.SignedAngle(
             newEntry.forward, -hostEntry.forward, Vector3.up);
-        newRoom.Rotate(Vector3.up, angleDiff, Space.World);
 
+        newRoom.RotateAround(newEntry.position, Vector3.up, angleDiff);
+
+        // After rotation, translate so the two entry points coincide
         Vector3 offset = hostEntry.position - newEntry.position;
         newRoom.position += offset;
 
@@ -283,6 +302,16 @@ public class DungeonGenerator : NetworkBehaviour
         bool canPlaceSpecial = _specialRooms.Count > 0
                                && UnityEngine.Random.value < _specialRoomChance;
         return canPlaceSpecial ? PickRandom(_specialRooms) : PickRandom(_rooms);
+    }
+
+    // Spawns a door at an entry point with the configured Y and Z offsets and rotation correction
+    private GameObject SpawnDoor(Transform atEntry)
+    {
+        Vector3 pos = atEntry.position
+                      + Vector3.up * _doorYOffset
+                      + atEntry.forward * _doorZOffset;
+        Quaternion rot = atEntry.rotation * Quaternion.Euler(0f, _doorYRotation, 0f);
+        return Instantiate(_door, pos, rot);
     }
 
     private static GameObject PickRandom(List<GameObject> list)

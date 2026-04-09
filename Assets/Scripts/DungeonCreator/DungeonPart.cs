@@ -17,6 +17,12 @@ public class DungeonPart : NetworkBehaviour
     [SerializeField] private Transform _monsterSpawnLocation;
     [SerializeField] private LayerMask _roomsLayerMask;
 
+    [Header("Filler Wall Placement")]
+    [Tooltip("Moves the filler wall up from the entry point. Set to half your wall mesh height.")]
+    [SerializeField] private float _fillerWallYOffset = 1f;
+    [Tooltip("Extra Y rotation applied to the filler wall. Use 180 if the wall faces the wrong way.")]
+    [SerializeField] private float _fillerWallYRotation = 180f;
+
     public List<Transform> entrypoints;
     public new Collider collider;
 
@@ -69,7 +75,9 @@ public class DungeonPart : NetworkBehaviour
             if (!entry.TryGetComponent(out EntryPoint ep) || ep.IsOccupied())
                 continue;
 
-            GameObject wall = Instantiate(_fillerWall, entry.position, entry.rotation);
+            Vector3 pos = entry.position + Vector3.up * _fillerWallYOffset;
+            Quaternion rot = entry.rotation * Quaternion.Euler(0f, _fillerWallYRotation, 0f);
+            GameObject wall = Instantiate(_fillerWall, pos, rot);
             wall.transform.SetParent(null);
         }
     }

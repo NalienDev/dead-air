@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7394743500354162371}
   - component: {fileID: 1866753683333436152}
   - component: {fileID: 648750752912760972}
-  - component: {fileID: 6246809834367575779}
+  - component: {fileID: 1425787100064936729}
   m_Layer: 0
   m_Name: Entrance
   m_TagString: Untagged
@@ -66,6 +66,8 @@ MonoBehaviour:
   _roomsLayerMask:
     serializedVersion: 2
     m_Bits: 8
+  _fillerWallYOffset: 1.5
+  _fillerWallYRotation: 90
   entrypoints:
   - {fileID: 8631216389122593337}
   collider: {fileID: 648750752912760972}
@@ -88,9 +90,9 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 7, y: 4.4907885, z: 6.5723524}
-  m_Center: {x: 2, y: 0.71307987, z: 1.2138238}
---- !u!114 &6246809834367575779
+  m_Size: {x: 6.533907, y: 4.4907885, z: 6.5723524}
+  m_Center: {x: 1.9614072, y: 0.7130799, z: 1.2138238}
+--- !u!114 &1425787100064936729
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -99,9 +101,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 911949480880013668}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e33311c86c47e8b48bc6b7d8e8b824d6, type: 3}
+  m_Script: {fileID: 11500000, guid: 83b50b77ca7e5684d9e81cf977ff7e80, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MainEntrance
+  m_EditorClassIdentifier: Assembly-CSharp::DungeonEntrance
   _isSetup: 0
   _prefabId: -2147483648
   _componentIndex: -2147483648
@@ -111,7 +113,7 @@ MonoBehaviour:
   _directChildren: []
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
-  _dungeonSpawnPoint: {fileID: 3963507853810102164}
+  _outsideSpawnPoint: {fileID: 4819863369769486749, guid: 3ed659ae522df614c81fdccb949cb468, type: 3}
   _sun: {fileID: 2670891791296484397, guid: 11f707fc401ff684ca0fa1e488960adc, type: 3}
 --- !u!1 &1513024452946060287
 GameObject:

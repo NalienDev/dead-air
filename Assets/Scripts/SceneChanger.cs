@@ -22,7 +22,7 @@ public class SceneChanger : NetworkIdentity
 
     private void OnSceneLoaded(SceneID scene, bool asServer)
     {
-        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "GameLobby")
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "MainMenu")
         {
             var bridge = FindFirstObjectByType<Dissonance.Integrations.PurrNet.PurrNetCommsNetwork>();
 
@@ -31,6 +31,7 @@ public class SceneChanger : NetworkIdentity
                 PurrNet.Logging.PurrLogger.Log($"Lobby Scene Loaded. Manually starting Dissonance. AsServer: {asServer}");
 
                 bridge.TryRunManually();
+
             }
             else
             {
