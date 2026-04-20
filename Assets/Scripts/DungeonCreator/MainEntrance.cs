@@ -45,4 +45,9 @@ public class MainEntrance : Interactable
 
         return InteractionType.PRESS;
     }
+
+    public Transform getSpawnPoint()
+    {
+        return _dungeonSpawnPoint;
+    }
 }

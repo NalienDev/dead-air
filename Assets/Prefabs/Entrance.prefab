@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1866753683333436152}
   - component: {fileID: 648750752912760972}
   - component: {fileID: 1425787100064936729}
+  - component: {fileID: 5355246203533530325}
   m_Layer: 9
   m_Name: Entrance
   m_TagString: Untagged
@@ -84,7 +85,7 @@ BoxCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 4294967295
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
@@ -114,6 +115,29 @@ MonoBehaviour:
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
   _outsideSpawnPoint: {fileID: 4819863369769486749, guid: 3ed659ae522df614c81fdccb949cb468, type: 3}
+  _sun: {fileID: 2670891791296484397, guid: 11f707fc401ff684ca0fa1e488960adc, type: 3}
+--- !u!114 &5355246203533530325
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 911949480880013668}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e33311c86c47e8b48bc6b7d8e8b824d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MainEntrance
+  _isSetup: 0
+  _prefabId: -2147483648
+  _componentIndex: -2147483648
+  _shouldBePooled: 0
+  _parent: {fileID: 0}
+  _invertedPathToNearestParent: 
+  _directChildren: []
+  _networkRules: {fileID: 0}
+  _visitiblityRules: {fileID: 0}
+  _dungeonSpawnPoint: {fileID: 3963507853810102164}
   _sun: {fileID: 2670891791296484397, guid: 11f707fc401ff684ca0fa1e488960adc, type: 3}
 --- !u!1 &1513024452946060287
 GameObject:
@@ -145,8 +169,8 @@ Transform:
   m_GameObject: {fileID: 1513024452946060287}
   serializedVersion: 2
   m_LocalRotation: {x: 0.5000654, y: -0.4999346, z: -0.49993312, w: 0.50006694}
-  m_LocalPosition: {x: 2.1351223, y: -1.0928181, z: 1.004982}
-  m_LocalScale: {x: 1, y: 1.5, z: 1}
+  m_LocalPosition: {x: 2.1351223, y: -1.0928, z: 1.0976}
+  m_LocalScale: {x: 1, y: 1.5516, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1513832718644619632}
@@ -905,6 +929,7 @@ GameObject:
   - component: {fileID: 2263557035346257725}
   - component: {fileID: 1568610347695524873}
   - component: {fileID: 3816058829446400869}
+  - component: {fileID: 4659409125810528174}
   m_Layer: 9
   m_Name: Door
   m_TagString: Untagged
@@ -2015,6 +2040,28 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7205969590311452012}
+  m_Mesh: {fileID: 0}
+--- !u!64 &4659409125810528174
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7205969590311452012}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
   m_Mesh: {fileID: 0}
 --- !u!1 &7244874593647553634
 GameObject:
