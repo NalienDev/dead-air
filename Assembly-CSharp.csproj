@@ -62,8 +62,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\EnergyCell.cs" />
+    <Compile Include="Assets\Scripts\SuctionZone.cs" />
     <Compile Include="Assets\Scripts\EnergyCellTrigger.cs" />
     <Compile Include="Assets\Scripts\LocalPlayerUI.cs" />
+    <Compile Include="Assets\Scripts\SuckableObject.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\Utilities\MobileDisableAutoSwitchControls.cs" />
     <Compile Include="Assets\Packages\StarterAssets\InputSystem\StarterAssetsInputs.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\CanvasInputs\UICanvasControllerInput.cs" />
