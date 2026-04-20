@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 902302021095908093}
   - component: {fileID: 3587803839901023976}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Entry Point 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -58,7 +58,7 @@ GameObject:
   - component: {fileID: 881834014639906844}
   - component: {fileID: 4368751473837568483}
   - component: {fileID: 8493907030079247056}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Floor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -412,7 +412,7 @@ GameObject:
   - component: {fileID: 4660795087236284650}
   - component: {fileID: 1866693706964107672}
   - component: {fileID: 9210738172324024081}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Door (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1537,7 +1537,7 @@ GameObject:
   - component: {fileID: 7938277105775984712}
   - component: {fileID: 4012755446182609567}
   - component: {fileID: 7046559246049120957}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Table
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1889,7 +1889,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6066147471496233597}
   - component: {fileID: 6531501265280267760}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Entry Point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1937,7 +1937,7 @@ GameObject:
   - component: {fileID: 4586290260821359733}
   - component: {fileID: 4694451984804848053}
   - component: {fileID: 2912272494843792779}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2293,7 +2293,7 @@ GameObject:
   - component: {fileID: 7770066959689491318}
   - component: {fileID: 1606897717641667601}
   - component: {fileID: 3415615200296428644}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2646,7 +2646,7 @@ GameObject:
   - component: {fileID: 5455653600740610544}
   - component: {fileID: 8290011511788307100}
   - component: {fileID: 938365334715483466}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Prefab Room 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2738,7 +2738,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 558245242627559171}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: MonsterSpawn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2772,7 +2772,7 @@ GameObject:
   - component: {fileID: 4028512244489898831}
   - component: {fileID: 4282142987091133243}
   - component: {fileID: 1177116362212519918}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Door
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3892,7 +3892,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4738916874154701877}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Walls
   m_TagString: Untagged
   m_Icon: {fileID: 0}

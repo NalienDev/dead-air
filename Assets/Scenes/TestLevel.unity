@@ -2024,13 +2024,14 @@ MonoBehaviour:
   _doorYOffset: 1.5
   _doorZOffset: 1
   _doorYRotation: 0
-  _targetRoomCount: 40
+  _doorChance: 0.102
+  _targetRoomCount: 60
   _generationTickInterval: 0.1
   _hallwayChance: 0.5
   _specialRoomChance: 0
   _roomsLayerMask:
     serializedVersion: 2
-    m_Bits: 8
+    m_Bits: 512
 --- !u!4 &1779305306
 Transform:
   m_ObjectHideFlags: 0

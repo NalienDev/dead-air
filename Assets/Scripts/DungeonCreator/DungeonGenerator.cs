@@ -32,6 +32,9 @@ public class DungeonGenerator : NetworkBehaviour
     [SerializeField] private float _doorZOffset = 0f;
     [Tooltip("Extra Y rotation applied to the door at spawn. 0 or 180 depending on which way your mesh faces.")]
     [SerializeField] private float _doorYRotation = 0f;
+    [Tooltip("Probability (0–1) that a door is spawned at each connection point. 1 = always, 0 = never.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float _doorChance = 1f;
 
     [Header("Generation Settings")]
     [SerializeField] private int _targetRoomCount = 10;
@@ -148,7 +151,7 @@ public class DungeonGenerator : NetworkBehaviour
         // Spawn door AFTER alignment so it sits at the correctly snapped position
         GameObject doorGo = SpawnDoor(hostEntry);
 
-        if (HasIntersection(newPart))
+        if (HasIntersection(newPart, hostRoom))
         {
             newPart.ReleaseEntrypoint(newEntry);
             hostRoom.ReleaseEntrypoint(hostEntry);
@@ -176,7 +179,7 @@ public class DungeonGenerator : NetworkBehaviour
 
         foreach (GameObject prefab in _alternateEntrances)
         {
-            if (!TryFindAvitableRoom(out DungeonPart hostRoom, out Transform hostEntry))
+            if (!TryFindAvailableRoom(out DungeonPart hostRoom, out Transform hostEntry))
                 continue;
 
             GameObject go = Instantiate(prefab, transform.position, transform.rotation);
@@ -195,7 +198,7 @@ public class DungeonGenerator : NetworkBehaviour
             // Spawn door AFTER alignment
             GameObject doorGo = SpawnDoor(hostEntry);
 
-            if (HasIntersection(part))
+            if (HasIntersection(part, hostRoom))
             {
                 part.ReleaseEntrypoint(newEntry);
                 hostRoom.ReleaseEntrypoint(hostEntry);
@@ -213,7 +216,7 @@ public class DungeonGenerator : NetworkBehaviour
         {
             Debug.LogWarning("[DungeonGenerator] Max retry depth reached. Skipping part.");
             Destroy(partGo);
-            Destroy(doorGo);
+            if (doorGo != null) Destroy(doorGo);   // ← null guard
             return;
         }
 
@@ -223,17 +226,24 @@ public class DungeonGenerator : NetworkBehaviour
 
         AlignRooms(partGo.transform, hostEntry, newEntry);
 
-        // Move existing door to the new snapped position
-        doorGo.transform.position = hostEntry.position
-                                    + Vector3.up * _doorYOffset
-                                    + hostEntry.forward * _doorZOffset;
-        doorGo.transform.rotation = hostEntry.rotation * Quaternion.Euler(0f, _doorYRotation, 0f);
+        // Only reposition the door if one was actually spawned
+        if (doorGo != null)
+        {
+            doorGo.transform.position = hostEntry.position
+                                        + Vector3.up * _doorYOffset
+                                        + hostEntry.forward * _doorZOffset;
+            doorGo.transform.rotation = hostEntry.rotation * Quaternion.Euler(0f, _doorYRotation, 0f);
+        }
 
-        if (HasIntersection(part))
+        if (HasIntersection(part, hostRoom))
         {
             part.ReleaseEntrypoint(newEntry);
             hostRoom.ReleaseEntrypoint(hostEntry);
             RetryAttachment(partGo, doorGo, depth + 1);
+        }
+        else
+        {
+            _generatedRooms.Add(part);
         }
     }
 
@@ -257,30 +267,44 @@ public class DungeonGenerator : NetworkBehaviour
         return false;
     }
 
-    // Alias so both SpawnAlternateEntrances and the rest of the code compile cleanly
-    private bool TryFindAvitableRoom(out DungeonPart foundRoom, out Transform foundEntry)
-        => TryFindAvailableRoom(out foundRoom, out foundEntry);
-
-    private bool HasIntersection(DungeonPart part)
+    /// <summary>
+    /// Returns true if <paramref name="part"/> overlaps any other placed DungeonPart.
+    ///
+    /// Only hits whose root GameObject has a <see cref="DungeonPart"/> component are counted.
+    /// This means child objects (floors, walls, furniture, shelves) are ignored regardless of
+    /// their layer — only room boundary colliders participate in the check.
+    ///
+    /// The host room we just connected to is excluded because touching at the connection
+    /// point is expected and valid.
+    /// </summary>
+    private bool HasIntersection(DungeonPart part, DungeonPart hostRoom = null)
     {
+        Physics.SyncTransforms();
+
+        Collider col = part.collider;
+
         Collider[] hits = Physics.OverlapBox(
-            part.collider.bounds.center,
-            part.collider.bounds.size / 2f,
-            Quaternion.identity,
+            col.bounds.center,
+            col.bounds.size / 2f,
+            col.transform.rotation,
             _roomsLayerMask
         );
 
         foreach (Collider hit in hits)
         {
-            if (hit != part.collider)
-                return true;
+            if (hit == col) continue;                                      // ignore self
+
+            if (!hit.TryGetComponent(out DungeonPart hitPart)) continue;  // ignore child objects / furniture
+
+            if (hostRoom != null && hitPart == hostRoom) continue;        // ignore the room we connected to
+
+            return true;
         }
+
         return false;
     }
 
-    private static void AlignRooms(
-        Transform newRoom,
-        Transform hostEntry, Transform newEntry)
+    private static void AlignRooms(Transform newRoom, Transform hostEntry, Transform newEntry)
     {
         // Rotate the new room so its entry forward faces OPPOSITE to the host entry forward
         // (they should face each other). Rotate around the new entry point as pivot,
@@ -304,9 +328,12 @@ public class DungeonGenerator : NetworkBehaviour
         return canPlaceSpecial ? PickRandom(_specialRooms) : PickRandom(_rooms);
     }
 
-    // Spawns a door at an entry point with the configured Y and Z offsets and rotation correction
+    // Spawns a door at an entry point, respecting _doorChance. Returns null if skipped.
     private GameObject SpawnDoor(Transform atEntry)
     {
+        if (UnityEngine.Random.value > _doorChance)
+            return null;
+
         Vector3 pos = atEntry.position
                       + Vector3.up * _doorYOffset
                       + atEntry.forward * _doorZOffset;

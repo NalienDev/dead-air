@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1866753683333436152}
   - component: {fileID: 648750752912760972}
   - component: {fileID: 1425787100064936729}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Entrance
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -129,7 +129,7 @@ GameObject:
   - component: {fileID: 7945407063901939320}
   - component: {fileID: 6078037619947501679}
   - component: {fileID: 4958728734861229447}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Floor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -480,7 +480,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3963507853810102164}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: spawnpoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -516,7 +516,7 @@ GameObject:
   - component: {fileID: 1577492392534442070}
   - component: {fileID: 7838785688708865119}
   - component: {fileID: 7727364092304475826}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -867,7 +867,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1513832718644619632}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Walls
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -905,7 +905,7 @@ GameObject:
   - component: {fileID: 2263557035346257725}
   - component: {fileID: 1568610347695524873}
   - component: {fileID: 3816058829446400869}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Door
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2025,7 +2025,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1960680740035388535}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: MonsterSpawnLoc
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2061,7 +2061,7 @@ GameObject:
   - component: {fileID: 62964834782597427}
   - component: {fileID: 1601873329512175614}
   - component: {fileID: 2417685934729204423}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2413,7 +2413,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8631216389122593337}
   - component: {fileID: 4783058900408999191}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: entry point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2461,7 +2461,7 @@ GameObject:
   - component: {fileID: 7881481502071358203}
   - component: {fileID: 635529418990213386}
   - component: {fileID: 5160417892271587305}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
