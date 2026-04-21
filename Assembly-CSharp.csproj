@@ -82,11 +82,14 @@
     <Compile Include="Assets\Scripts\TestGen.cs" />
     <Compile Include="Assets\Packages\StarterAssets\FirstPersonController\Scripts\BasicRigidBodyPush.cs" />
     <Compile Include="Assets\Packages\StarterAssets\FirstPersonController\Scripts\FirstPersonController.cs" />
+    <Compile Include="Assets\Scripts\RoverSpawnLocation.cs" />
     <Compile Include="Assets\Scripts\TestNetwork.cs" />
     <Compile Include="Assets\Scripts\RoverManager.cs" />
     <Compile Include="Assets\Scripts\MainMenuUI.cs" />
+    <Compile Include="Assets\Scripts\DDOL.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\EntryPoint.cs" />
     <Compile Include="Assets\Dissonance\Integrations\Offline\OfflineCommsNetwork.cs" />
+    <Compile Include="Assets\Scripts\Sucker.cs" />
     <Compile Include="Assets\Scripts\GrabbableObject.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualButton.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonPart.cs" />

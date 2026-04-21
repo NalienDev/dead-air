@@ -9,4 +9,9 @@ public class NetworkedSceneButton : Interactable
         SceneChanger.Instance.LoadSceneForEveryone(_sceneName);
         return InteractionType.PRESS;
     }
+
+    public void setSceneName(string sceneName)
+    {
+        _sceneName = sceneName;
+    }
 }

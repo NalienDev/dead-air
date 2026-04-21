@@ -42,8 +42,8 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _FresnelPower: 2.49
-    - _InnerAlpha: 0.3
+    - _FresnelPower: 2.36
+    - _InnerAlpha: 0.17
     - _QueueControl: 0
     - _QueueOffset: 0
     - _WaveSpeed: 1

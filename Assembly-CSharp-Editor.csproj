@@ -666,7 +666,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="K4os.Compression.LZ4">
-      <HintPath>Library\PackageCache\dev.purrnet.purrnet@f4dd26fb792b\Externals\7zip\K4os.Compression.LZ4.dll</HintPath>
+      <HintPath>Library\PackageCache\dev.purrnet.purrnet@c8887b51a468\Externals\7zip\K4os.Compression.LZ4.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
@@ -682,7 +682,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
-      <HintPath>Library\PackageCache\dev.purrnet.purrnet@f4dd26fb792b\Externals\7zip\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+      <HintPath>Library\PackageCache\dev.purrnet.purrnet@c8887b51a468\Externals\7zip\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="log4netPlastic">

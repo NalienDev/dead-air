@@ -3,11 +3,14 @@ using UnityEngine;
 
 public class LocalPlayerUI : MonoBehaviour
 {
+    public static LocalPlayerUI Instance { get; private set; }
     [SerializeField] private TextMeshProUGUI _healthText;
     [SerializeField] private TextMeshProUGUI _oxygenText;
 
     private void Start()
     {
+        if (Instance != null) { Destroy(gameObject); return; }
+        Instance = this;
         DontDestroyOnLoad(gameObject);
     }
 
