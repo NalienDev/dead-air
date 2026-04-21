@@ -42,7 +42,7 @@ public class RoverManager : NetworkBehaviour
     {
         RepositionAtSpawn();
         UpdateSceneButton(scene.name);
-
+        _sucker.canSuck = false;
         // Release stored objects now that the destination scene is ready
         if (_sucker != null && _sucker.StoredCount > 0)
             _sucker.ReleaseAll();

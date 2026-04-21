@@ -61,6 +61,7 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\ActivateVacuumButton.cs" />
     <Compile Include="Assets\Scripts\EnergyCell.cs" />
     <Compile Include="Assets\Scripts\SuctionZone.cs" />
     <Compile Include="Assets\Scripts\EnergyCellTrigger.cs" />

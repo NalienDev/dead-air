@@ -90,7 +90,6 @@ public class Sucker : NetworkBehaviour
         if (!other.TryGetComponent(out NetworkIdentity identity)) return;
         if (!identity.isSpawned) return;
 
-        // Stop attraction before parking — OnTriggerExit won't fire on SetActive(false)
         if (other.TryGetComponent(out SuckableObject suckable))
             suckable.EndAttraction();
 
