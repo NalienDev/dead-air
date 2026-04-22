@@ -2919,6 +2919,8 @@ MonoBehaviour:
   _roomsLayerMask:
     serializedVersion: 2
     m_Bits: 512
+  _maxConsecutiveFailures: 50
+  _maxRestartAttempts: 20
 --- !u!4 &1779305306
 Transform:
   m_ObjectHideFlags: 0

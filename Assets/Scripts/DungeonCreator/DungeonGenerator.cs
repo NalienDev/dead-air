@@ -7,7 +7,18 @@ using UnityEngine;
 /// Server-authoritative dungeon generator.
 /// Runs exclusively on the server; all Instantiate() calls are
 /// automatically propagated to clients by PurrNet.
+///
+/// If placement fails too many times in a single generation attempt,
+/// the generator tears everything down and restarts automatically.
 /// </summary>
+/// <summary>Outcome of a single part placement attempt.</summary>
+public enum PlacementResult
+{
+    Success,
+    NoSlotAvailable,  // No free entry point exists yet — not a geometry problem
+    GeometryFailure,  // A slot was found but every position intersected another room
+}
+
 public class DungeonGenerator : NetworkBehaviour
 {
     public static DungeonGenerator Instance { get; private set; }
@@ -32,7 +43,7 @@ public class DungeonGenerator : NetworkBehaviour
     [SerializeField] private float _doorZOffset = 0f;
     [Tooltip("Extra Y rotation applied to the door at spawn. 0 or 180 depending on which way your mesh faces.")]
     [SerializeField] private float _doorYRotation = 0f;
-    [Tooltip("Probability (0–1) that a door is spawned at each connection point. 1 = always, 0 = never.")]
+    [Tooltip("Probability (0-1) that a door is spawned at each connection point. 1 = always, 0 = never.")]
     [Range(0f, 1f)]
     [SerializeField] private float _doorChance = 1f;
 
@@ -43,15 +54,25 @@ public class DungeonGenerator : NetworkBehaviour
     [SerializeField] private float _specialRoomChance = 0.1f;
     [SerializeField] private LayerMask _roomsLayerMask;
 
+    [Header("Failure Recovery")]
+    [Tooltip("How many consecutive placement failures before the entire dungeon is scrapped and restarted.")]
+    [SerializeField] private int _maxConsecutiveFailures = 10;
+    [Tooltip("How many full restart attempts before giving up entirely and logging an error.")]
+    [SerializeField] private int _maxRestartAttempts = 20;
+
     // ── State ──────────────────────────────────────────────────────────────
 
     private readonly List<DungeonPart> _generatedRooms = new();
+    private readonly List<GameObject> _spawnedDoors = new();
     private bool _isGenerated = false;
     private bool _shouldGenerate = false;
     private bool _generationPaused = false;
     private float _tickTimer = 0f;
 
-    private const int MaxRetries = 100;
+    private int _consecutiveFailures = 0;
+    private int _restartAttempts = 0;
+
+    private const int MaxPlacementRetries = 100;
 
     // ── Unity lifecycle ────────────────────────────────────────────────────
 
@@ -115,12 +136,31 @@ public class DungeonGenerator : NetworkBehaviour
 
         bool placeHallway = UnityEngine.Random.value < _hallwayChance && _hallways.Count > 0;
         GameObject prefab = placeHallway ? PickRandom(_hallways) : PickRoomPrefab();
-        TryAttachPart(prefab);
+
+        PlacementResult result = TryAttachPart(prefab);
+
+        switch (result)
+        {
+            case PlacementResult.Success:
+                _consecutiveFailures = 0;
+                break;
+
+            case PlacementResult.GeometryFailure:
+                _consecutiveFailures++;
+                Debug.LogWarning($"[DungeonGenerator] Placement failure #{_consecutiveFailures}/{_maxConsecutiveFailures}.");
+                if (_consecutiveFailures >= _maxConsecutiveFailures)
+                    RestartGeneration();
+                break;
+
+            case PlacementResult.NoSlotAvailable:
+                // All current entry points are occupied — not a geometry problem,
+                // just wait for the next tick; do not touch the failure counter.
+                break;
+        }
     }
 
     private void SpawnEntrance()
     {
-        // PurrNet: plain Instantiate() auto-spawns across the network
         GameObject go = Instantiate(_entrance, transform.position, transform.rotation);
         go.transform.SetParent(null);
 
@@ -128,36 +168,57 @@ public class DungeonGenerator : NetworkBehaviour
             _generatedRooms.Add(part);
     }
 
-    private void TryAttachPart(GameObject prefab)
+    /// <summary>
+    /// Instantiates <paramref name="prefab"/>, finds a valid non-overlapping position for it,
+    /// and adds it to <see cref="_generatedRooms"/>.
+    /// The part is only ever added to the list once placement is confirmed successful —
+    /// never speculatively, so destroyed objects can never linger in the list.
+    /// Returns true on success, false if the part had to be abandoned.
+    /// </summary>
+    private PlacementResult TryAttachPart(GameObject prefab)
     {
         if (!TryFindAvailableRoom(out DungeonPart hostRoom, out Transform hostEntry))
-            return;
+            return PlacementResult.NoSlotAvailable;
 
         GameObject newGo = Instantiate(prefab, transform.position, transform.rotation);
         newGo.transform.SetParent(null);
 
         if (!newGo.TryGetComponent(out DungeonPart newPart))
-            return;
+        {
+            Destroy(newGo);
+            return PlacementResult.GeometryFailure;
+        }
 
         if (!newPart.TryGetAvailableEntrypoint(out Transform newEntry))
         {
             Destroy(newGo);
-            return;
+            return PlacementResult.GeometryFailure;
         }
 
-        _generatedRooms.Add(newPart);
         AlignRooms(newGo.transform, hostEntry, newEntry);
-
-        // Spawn door AFTER alignment so it sits at the correctly snapped position
         GameObject doorGo = SpawnDoor(hostEntry);
 
-        if (HasIntersection(newPart, hostRoom))
+        // No intersection on first try — commit immediately
+        if (!HasIntersection(newPart, hostRoom))
         {
-            newPart.ReleaseEntrypoint(newEntry);
-            hostRoom.ReleaseEntrypoint(hostEntry);
-            _generatedRooms.Remove(newPart);
-            RetryAttachment(newGo, doorGo);
+            _generatedRooms.Add(newPart);
+            return PlacementResult.Success;
         }
+
+        // First position intersected — release and try other entry point combos
+        newPart.ReleaseEntrypoint(newEntry);
+        hostRoom.ReleaseEntrypoint(hostEntry);
+
+        bool success = RetryAttachment(newGo, doorGo);
+
+        if (!success)
+        {
+            Destroy(newGo);
+            if (doorGo != null) Destroy(doorGo);
+            return PlacementResult.GeometryFailure;
+        }
+
+        return PlacementResult.Success;
     }
 
     private void FinalizeGeneration()
@@ -168,7 +229,44 @@ public class DungeonGenerator : NetworkBehaviour
             room.FillEmptyDoors();
 
         _isGenerated = true;
+        Debug.Log($"[DungeonGenerator] Generation complete after {_restartAttempts} restart(s). {_generatedRooms.Count} parts placed.");
         OnGenerated?.Invoke();
+    }
+
+    // ── Full restart ───────────────────────────────────────────────────────
+
+    private void RestartGeneration()
+    {
+        _restartAttempts++;
+
+        if (_restartAttempts > _maxRestartAttempts)
+        {
+            Debug.LogError($"[DungeonGenerator] Failed to generate dungeon after {_maxRestartAttempts} restart attempts. " +
+                           "Consider increasing room variety, reducing target room count, or checking prefab colliders.");
+            _shouldGenerate = false;
+            return;
+        }
+
+        Debug.LogWarning($"[DungeonGenerator] Restarting generation (attempt {_restartAttempts}/{_maxRestartAttempts}).");
+
+        foreach (DungeonPart part in _generatedRooms)
+        {
+            if (part != null)
+                Destroy(part.gameObject);
+        }
+
+        foreach (GameObject door in _spawnedDoors)
+        {
+            if (door != null)
+                Destroy(door);
+        }
+
+        _generatedRooms.Clear();
+        _spawnedDoors.Clear();
+        _consecutiveFailures = 0;
+        _generationPaused = false;
+        _tickTimer = 0f;
+        // _shouldGenerate stays true so Update() resumes automatically next tick
     }
 
     // ── Alternate entrances ────────────────────────────────────────────────
@@ -186,47 +284,57 @@ public class DungeonGenerator : NetworkBehaviour
             go.transform.SetParent(null);
 
             if (!go.TryGetComponent(out DungeonPart part)) continue;
+
             if (!part.TryGetAvailableEntrypoint(out Transform newEntry))
             {
                 Destroy(go);
                 continue;
             }
 
-            _generatedRooms.Add(part);
             AlignRooms(go.transform, hostEntry, newEntry);
-
-            // Spawn door AFTER alignment
             GameObject doorGo = SpawnDoor(hostEntry);
 
-            if (HasIntersection(part, hostRoom))
+            // Only add to the list once we know it doesn't intersect
+            if (!HasIntersection(part, hostRoom))
             {
-                part.ReleaseEntrypoint(newEntry);
-                hostRoom.ReleaseEntrypoint(hostEntry);
-                _generatedRooms.Remove(part);
-                RetryAttachment(go, doorGo);
+                _generatedRooms.Add(part);
+                continue;
+            }
+
+            // Intersected — release and retry without touching _generatedRooms
+            part.ReleaseEntrypoint(newEntry);
+            hostRoom.ReleaseEntrypoint(hostEntry);
+
+            bool placed = RetryAttachment(go, doorGo);
+            if (!placed)
+            {
+                Destroy(go);
+                if (doorGo != null) Destroy(doorGo);
             }
         }
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
 
-    private void RetryAttachment(GameObject partGo, GameObject doorGo, int depth = 0)
+    /// <summary>
+    /// Tries all remaining available entry point combinations to place <paramref name="partGo"/>.
+    /// On success, adds the part to <see cref="_generatedRooms"/> and returns true.
+    /// On failure, returns false — the caller is responsible for destroying the GameObjects.
+    /// </summary>
+    private bool RetryAttachment(GameObject partGo, GameObject doorGo, int depth = 0)
     {
-        if (depth >= MaxRetries)
+        if (depth >= MaxPlacementRetries)
         {
-            Debug.LogWarning("[DungeonGenerator] Max retry depth reached. Skipping part.");
-            Destroy(partGo);
-            if (doorGo != null) Destroy(doorGo);   // ← null guard
-            return;
+            Debug.LogWarning("[DungeonGenerator] Max per-part retry depth reached — abandoning this part.");
+            return false;
         }
 
-        if (!TryFindAvailableRoom(out DungeonPart hostRoom, out Transform hostEntry)) return;
-        if (!partGo.TryGetComponent(out DungeonPart part)) return;
-        if (!part.TryGetAvailableEntrypoint(out Transform newEntry)) return;
+        if (!TryFindAvailableRoom(out DungeonPart hostRoom, out Transform hostEntry)) return false;
+        if (!partGo.TryGetComponent(out DungeonPart part)) return false;
+        if (!part.TryGetAvailableEntrypoint(out Transform newEntry)) return false;
 
         AlignRooms(partGo.transform, hostEntry, newEntry);
 
-        // Only reposition the door if one was actually spawned
         if (doorGo != null)
         {
             doorGo.transform.position = hostEntry.position
@@ -239,14 +347,23 @@ public class DungeonGenerator : NetworkBehaviour
         {
             part.ReleaseEntrypoint(newEntry);
             hostRoom.ReleaseEntrypoint(hostEntry);
-            RetryAttachment(partGo, doorGo, depth + 1);
+            // BUG WAS HERE: old code did `RetryAttachment(...); return false`
+            // which discarded the recursive success result and always told the
+            // caller the part failed, causing it to Destroy() a part that was
+            // actually placed — leaving dead Transform references in _generatedRooms.
+            return RetryAttachment(partGo, doorGo, depth + 1);
         }
-        else
-        {
-            _generatedRooms.Add(part);
-        }
+
+        // Valid position found — commit
+        _generatedRooms.Add(part);
+        return true;
     }
 
+    /// <summary>
+    /// Finds any placed room that still has a free entry point.
+    /// The list is shuffled first to avoid always connecting to the same rooms.
+    /// Skips any rooms whose GameObject has been destroyed (safety guard during restarts).
+    /// </summary>
     private bool TryFindAvailableRoom(out DungeonPart foundRoom, out Transform foundEntry)
     {
         foundRoom = null;
@@ -257,6 +374,9 @@ public class DungeonGenerator : NetworkBehaviour
 
         foreach (DungeonPart candidate in shuffled)
         {
+            // Guard against destroyed parts that may still be in the list mid-restart
+            if (candidate == null) continue;
+
             if (candidate.TryGetAvailableEntrypoint(out Transform entry))
             {
                 foundRoom = candidate;
@@ -269,13 +389,9 @@ public class DungeonGenerator : NetworkBehaviour
 
     /// <summary>
     /// Returns true if <paramref name="part"/> overlaps any other placed DungeonPart.
-    ///
-    /// Only hits whose root GameObject has a <see cref="DungeonPart"/> component are counted.
-    /// This means child objects (floors, walls, furniture, shelves) are ignored regardless of
-    /// their layer — only room boundary colliders participate in the check.
-    ///
-    /// The host room we just connected to is excluded because touching at the connection
-    /// point is expected and valid.
+    /// Only root GameObjects with a <see cref="DungeonPart"/> component are counted.
+    /// Child objects (floors, walls, furniture) are ignored regardless of layer.
+    /// The host room is excluded because touching at the connection point is expected.
     /// </summary>
     private bool HasIntersection(DungeonPart part, DungeonPart hostRoom = null)
     {
@@ -292,12 +408,9 @@ public class DungeonGenerator : NetworkBehaviour
 
         foreach (Collider hit in hits)
         {
-            if (hit == col) continue;                                      // ignore self
-
-            if (!hit.TryGetComponent(out DungeonPart hitPart)) continue;  // ignore child objects / furniture
-
-            if (hostRoom != null && hitPart == hostRoom) continue;        // ignore the room we connected to
-
+            if (hit == col) continue;
+            if (!hit.TryGetComponent(out DungeonPart hitPart)) continue;
+            if (hostRoom != null && hitPart == hostRoom) continue;
             return true;
         }
 
@@ -306,15 +419,11 @@ public class DungeonGenerator : NetworkBehaviour
 
     private static void AlignRooms(Transform newRoom, Transform hostEntry, Transform newEntry)
     {
-        // Rotate the new room so its entry forward faces OPPOSITE to the host entry forward
-        // (they should face each other). Rotate around the new entry point as pivot,
-        // not the room origin, so the entry point stays in place during rotation.
         float angleDiff = Vector3.SignedAngle(
             newEntry.forward, -hostEntry.forward, Vector3.up);
 
         newRoom.RotateAround(newEntry.position, Vector3.up, angleDiff);
 
-        // After rotation, translate so the two entry points coincide
         Vector3 offset = hostEntry.position - newEntry.position;
         newRoom.position += offset;
 
@@ -328,7 +437,6 @@ public class DungeonGenerator : NetworkBehaviour
         return canPlaceSpecial ? PickRandom(_specialRooms) : PickRandom(_rooms);
     }
 
-    // Spawns a door at an entry point, respecting _doorChance. Returns null if skipped.
     private GameObject SpawnDoor(Transform atEntry)
     {
         if (UnityEngine.Random.value > _doorChance)
@@ -338,7 +446,9 @@ public class DungeonGenerator : NetworkBehaviour
                       + Vector3.up * _doorYOffset
                       + atEntry.forward * _doorZOffset;
         Quaternion rot = atEntry.rotation * Quaternion.Euler(0f, _doorYRotation, 0f);
-        return Instantiate(_door, pos, rot);
+        GameObject door = Instantiate(_door, pos, rot);
+        _spawnedDoors.Add(door);
+        return door;
     }
 
     private static GameObject PickRandom(List<GameObject> list)
