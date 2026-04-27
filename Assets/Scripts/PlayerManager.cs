@@ -1,5 +1,6 @@
 ﻿using PurrNet;
 using UnityEngine;
+using static UnityEngine.UI.GridLayoutGroup;
 
 public class PlayerManager : NetworkIdentity
 {
@@ -92,5 +93,41 @@ public class PlayerManager : NetworkIdentity
     public void GainOxygen(int amount)
     {
         currentOxygen.value = Mathf.Clamp(currentOxygen.value + amount, 0, maxOxygen.value);
+    }
+
+    // ── Voice recording relay ──────────────────────────────────────────────
+
+    /// <summary>
+    /// Called by <see cref="VoiceRecorder"/> on the owner to ship raw PCM samples
+    /// to the server, where they are rebuilt into an AudioClip and stored.
+    /// Only the owning client calls this — the ServerRpc sends it to the server.
+    /// </summary>
+    public void SubmitVoiceClipToServer(float[] samples, int sampleRate, int channels)
+    {
+        ServerReceiveVoiceClip(samples, sampleRate, channels);
+    }
+
+    [ServerRpc]
+    private void ServerReceiveVoiceClip(float[] samples, int sampleRate, int channels)
+    {
+        if (VoiceRecordingStore.Instance == null)
+        {
+            Debug.LogWarning("[PlayerManager] VoiceRecordingStore not found in scene.");
+            return;
+        }
+
+        // Rebuild the AudioClip on the server
+        AudioClip clip = AudioClip.Create(
+            $"voice_{owner}",
+            samples.Length / channels,
+            channels,
+            sampleRate,
+            stream: false
+        );
+        clip.SetData(samples, offsetSamples: 0);
+
+        string playerId = owner?.ToString() ?? "unknown";
+        var captured = new CapturedVoiceClip(playerId, clip, Time.time);
+        VoiceRecordingStore.Instance.Enqueue(captured);
     }
 }

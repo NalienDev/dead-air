@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: DebugSettings
   m_EditorClassIdentifier: DissonanceVoip::Dissonance.Config.DebugSettings
   _levels: 02000000020000000200000002000000
-  EnableRecordingDiagnostics: 0
-  RecordMicrophoneRawAudio: 0
+  EnableRecordingDiagnostics: 1
+  RecordMicrophoneRawAudio: 1
   RecordPreprocessorOutput: 0
   EnablePlaybackDiagnostics: 0
   RecordDecodedAudio: 0
-  RecordFinalAudio: 0
+  RecordFinalAudio: 1
   EnableNetworkSimulation: 0
   PacketLoss: 0
