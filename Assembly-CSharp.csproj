@@ -92,6 +92,7 @@
     <Compile Include="Assets\Scripts\RoverSpawnLocation.cs" />
     <Compile Include="Assets\Scripts\TestNetwork.cs" />
     <Compile Include="Assets\Scripts\RoverManager.cs" />
+    <Compile Include="Assets\Scripts\RuntimeDebugConsole.cs" />
     <Compile Include="Assets\Scripts\MainMenuUI.cs" />
     <Compile Include="Assets\Scripts\DDOL.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\EntryPoint.cs" />
@@ -689,6 +690,10 @@
       <HintPath>Library\PackageCache\com.unity.ext.nunit@d8c07649098d\net40\unity-custom\nunit.framework.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="ReportGeneratorMerged">
+      <HintPath>Library\PackageCache\com.unity.testtools.codecoverage@19a841221620\lib\ReportGenerator\ReportGeneratorMerged.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System.IO.Hashing">
       <HintPath>Library\PackageCache\com.unity.collections@aea9d3bd5e19\Unity.Collections.Tests\System.IO.Hashing\System.IO.Hashing.dll</HintPath>
       <Private>False</Private>
@@ -711,10 +716,6 @@
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
       <HintPath>Library\PackageCache\dev.purrnet.purrnet@f4dd26fb792b\Externals\7zip\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="ReportGeneratorMerged">
-      <HintPath>Library\PackageCache\com.unity.testtools.codecoverage@19a841221620\lib\ReportGenerator\ReportGeneratorMerged.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="netstandard">

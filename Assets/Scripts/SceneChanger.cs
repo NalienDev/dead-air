@@ -20,23 +20,27 @@ public class SceneChanger : NetworkIdentity
         _networkManager.onClientConnectionState += OnClientState;
     }
 
+    private bool _dissonanceStarted;
+
     private void OnSceneLoaded(SceneID scene, bool asServer)
     {
-        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "MainMenu")
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu")
+            return;
+
+        // On a host, this fires twice (asServer=true and asServer=false).
+        // Only run once per scene load.
+        if (_dissonanceStarted) return;
+        _dissonanceStarted = true;
+
+        var bridge = FindFirstObjectByType<Dissonance.Integrations.PurrNet.PurrNetCommsNetwork>();
+        if (bridge != null)
         {
-            var bridge = FindFirstObjectByType<Dissonance.Integrations.PurrNet.PurrNetCommsNetwork>();
-
-            if (bridge != null)
-            {
-                PurrNet.Logging.PurrLogger.Log($"Lobby Scene Loaded. Manually starting Dissonance. AsServer: {asServer}");
-
-                bridge.TryRunManually();
-
-            }
-            else
-            {
-                PurrNet.Logging.PurrLogger.LogError("Could not find PurrNetCommsNetwork in GameLobby!");
-            }
+            PurrNet.Logging.PurrLogger.Log($"Lobby Scene Loaded. Manually starting Dissonance. AsServer: {asServer}");
+            bridge.TryRunManually();
+        }
+        else
+        {
+            PurrNet.Logging.PurrLogger.LogError("Could not find PurrNetCommsNetwork in GameLobby!");
         }
     }
 
@@ -61,6 +65,7 @@ public class SceneChanger : NetworkIdentity
     {
         if (state == ConnectionState.Connected)
         {
+            _dissonanceStarted = false; // reset for fresh scene load
             _networkManager.sceneModule.LoadSceneAsync("GameLobby");
             _networkManager.sceneModule.onSceneLoaded += OnSceneLoaded;
         }

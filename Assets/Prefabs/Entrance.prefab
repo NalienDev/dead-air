@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 648750752912760972}
   - component: {fileID: 1425787100064936729}
   - component: {fileID: 5355246203533530325}
+  - component: {fileID: -8196324303362408358}
   m_Layer: 9
   m_Name: Entrance
   m_TagString: Untagged
@@ -139,6 +140,37 @@ MonoBehaviour:
   _visitiblityRules: {fileID: 0}
   _dungeonSpawnPoint: {fileID: 3963507853810102164}
   _sun: {fileID: 2670891791296484397, guid: 11f707fc401ff684ca0fa1e488960adc, type: 3}
+--- !u!114 &-8196324303362408358
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 911949480880013668}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 817fe5016bd0a2a49a95b6eb338bb132, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PurrNet.Runtime::PurrNet.NetworkTransform
+  _isSetup: 0
+  _prefabId: -2147483648
+  _componentIndex: -2147483648
+  _shouldBePooled: 0
+  _parent: {fileID: 0}
+  _invertedPathToNearestParent: 
+  _directChildren: []
+  _networkRules: {fileID: 0}
+  _visitiblityRules: {fileID: 0}
+  _syncPosition: 1
+  _syncRotation: 1
+  _syncScale: 1
+  _syncParent: 1
+  _interpolateSettings: 7
+  _minBufferSize: 1
+  _maxBufferSize: 2
+  _characterControllerPatch: 0
+  _ownerAuth: 1
+  _interpolationTiming: 0
 --- !u!1 &1513024452946060287
 GameObject:
   m_ObjectHideFlags: 0

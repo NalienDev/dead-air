@@ -3062,7 +3062,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1411642117694297577, guid: 7813daff2fc023c4fae278ccff2d355e, type: 3}
       propertyPath: startFlags
-      value: 0
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 4797390768097344555, guid: 7813daff2fc023c4fae278ccff2d355e, type: 3}
       propertyPath: m_Name
