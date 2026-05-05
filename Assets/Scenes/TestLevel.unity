@@ -6605,11 +6605,13 @@ MonoBehaviour:
   _entrance: {fileID: 911949480880013668, guid: 2dc5de21eb15bd243957b4bdb3b9d469, type: 3}
   _rooms:
   - {fileID: 8385200692948620012, guid: db45de1a55d7f2c478efb698f527f6ca, type: 3}
+  - {fileID: 8385200692948620012, guid: 5d5d7ae817b04d346ab2520602473d21, type: 3}
   _specialRooms: []
   _alternateEntrances:
   - {fileID: 911949480880013668, guid: 2dc5de21eb15bd243957b4bdb3b9d469, type: 3}
   _hallways:
   - {fileID: 8843619782282464795, guid: f069cda0ef33a934f9141050cd22d744, type: 3}
+  - {fileID: 8843619782282464795, guid: c4997aee11ba6ab48843bfceaf6d5705, type: 3}
   _door: {fileID: 1612309275916227888, guid: d8cd806de753f034b9ade00aaa160c63, type: 3}
   _doorYOffset: 0
   _doorZOffset: 0
