@@ -1,7 +1,10 @@
 ﻿using PurrNet;
 using UnityEngine;
-using static UnityEngine.UI.GridLayoutGroup;
 
+/// <summary>
+/// Manages synced player state: health, oxygen, dungeon flag, and voice relay.
+/// IsDead is a convenience property that reads from PlayerDeathHandler.
+/// </summary>
 public class PlayerManager : NetworkIdentity
 {
     // ── Synced state ───────────────────────────────────────────────────────
@@ -12,15 +15,31 @@ public class PlayerManager : NetworkIdentity
     public SyncVar<int> currentOxygen = new(360);
 
     /// <summary>True while this player is inside a dungeon.</summary>
-    public SyncVar<bool> isInsideDungeon = new(false);
+    public SyncVar<bool> isInsideDungeon = new(false); 
 
     // ── Local accessor ─────────────────────────────────────────────────────
 
     public static PlayerManager Local { get; private set; }
 
+    // ── Convenience ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// True when this player is dead. Reads from PlayerDeathHandler.isDead so
+    /// there is a single source of truth — no duplicated SyncVar.
+    /// </summary>
+    public bool IsDead
+    {
+        get
+        {
+            if (_deathHandler == null) _deathHandler = GetComponent<PlayerDeathHandler>();
+            return _deathHandler != null && _deathHandler.isDead.value;
+        }
+    }
+
     // ── Private state ──────────────────────────────────────────────────────
 
     private float _oxygenTimer = 0f;
+    private PlayerDeathHandler _deathHandler;
 
     // ── Lifecycle ──────────────────────────────────────────────────────────
 
@@ -37,6 +56,7 @@ public class PlayerManager : NetworkIdentity
     private void Update()
     {
         if (!isOwner) return;
+        if (IsDead) return; // Stop draining oxygen / accepting debug input when dead
 
         _oxygenTimer += Time.deltaTime;
         if (_oxygenTimer >= 1f)
@@ -60,52 +80,45 @@ public class PlayerManager : NetworkIdentity
 
     // ── Dungeon state ──────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Called by entrance/exit scripts to track whether the player is underground.
-    /// Routes through a ServerRpc so the SyncVar is always written on the server.
-    /// </summary>
-    public void SetInsideDungeon(bool value)
-    {
-        ServerSetInsideDungeon(value);
-    }
+    public void SetInsideDungeon(bool value) => ServerSetInsideDungeon(value);
 
     [ServerRpc(requireOwnership: false)]
-    private void ServerSetInsideDungeon(bool value)
-    {
-        isInsideDungeon.value = value;
-    }
+    private void ServerSetInsideDungeon(bool value) => isInsideDungeon.value = value;
 
     // ── Server RPCs ────────────────────────────────────────────────────────
 
     [ServerRpc]
     public void DrainOxygen(int amount)
     {
+        if (IsDead) return;
         currentOxygen.value = Mathf.Clamp(currentOxygen.value - amount, 0, maxOxygen.value);
     }
 
     [ServerRpc]
     public void Damage(int damage)
     {
+        if (IsDead) return;
         currentHealth.value = Mathf.Max(currentHealth.value - damage, 0);
     }
 
     [ServerRpc]
     public void GainOxygen(int amount)
     {
+        if (IsDead) return;
         currentOxygen.value = Mathf.Clamp(currentOxygen.value + amount, 0, maxOxygen.value);
+    }
+
+    [ServerRpc]
+    public void Heal(int amount)
+    {
+        if (IsDead) return;
+        currentHealth.value = Mathf.Clamp(currentHealth.value + amount, 0, maxHealth.value);
     }
 
     // ── Voice recording relay ──────────────────────────────────────────────
 
-    /// <summary>
-    /// Called by <see cref="VoiceRecorder"/> on the owner to ship raw PCM samples
-    /// to the server, where they are rebuilt into an AudioClip and stored.
-    /// Only the owning client calls this — the ServerRpc sends it to the server.
-    /// </summary>
     public void SubmitVoiceClipToServer(float[] samples, int sampleRate, int channels)
-    {
-        ServerReceiveVoiceClip(samples, sampleRate, channels);
-    }
+        => ServerReceiveVoiceClip(samples, sampleRate, channels);
 
     [ServerRpc]
     private void ServerReceiveVoiceClip(float[] samples, int sampleRate, int channels)
@@ -116,7 +129,6 @@ public class PlayerManager : NetworkIdentity
             return;
         }
 
-        // Rebuild the AudioClip on the server
         AudioClip clip = AudioClip.Create(
             $"voice_{owner}",
             samples.Length / channels,
