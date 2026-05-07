@@ -16,7 +16,7 @@ public class EnergyCellTrigger : MonoBehaviour
     {
         if (other.GetComponent<GrabbableObject>() != null)
         {
-            other.GetComponent<GrabbableObject>().ForceDrop();
+            other.GetComponent<GrabbableObject>().Drop();
             Destroy(other.gameObject);
             _meshRenderer.enabled = true;
             _collider.isTrigger = false;
