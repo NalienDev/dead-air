@@ -74,6 +74,7 @@
     <Compile Include="Assets\Packages\StarterAssets\InputSystem\StarterAssetsInputs.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\CanvasInputs\UICanvasControllerInput.cs" />
     <Compile Include="Assets\Dissonance\Core\Jetbrains.cs" />
+    <Compile Include="Assets\Packages\Kevin Iglesias\Human Animations\Scripts\SpineProxy.cs" />
     <Compile Include="Assets\Scripts\Interactable.cs" />
     <Compile Include="Assets\Scripts\PlayerHealthBar.cs" />
     <Compile Include="Assets\Samples\Shader Graph\17.3.0\UGUI Shaders\Scripts\Timer.cs" />
@@ -81,6 +82,7 @@
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonGenerator.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualTouchZone.cs" />
     <Compile Include="Assets\Scripts\PlayerManager.cs" />
+    <Compile Include="Assets\Scripts\PlayerAnimationHandler.cs" />
     <Compile Include="Assets\Scripts\Spectator\PlayerRegistry.cs" />
     <Compile Include="Assets\Scripts\Voice\TheEchoAI.cs" />
     <Compile Include="Assets\Scripts\DestructibleObjects\Spawner.cs" />

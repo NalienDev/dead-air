@@ -6003,6 +6003,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocalPlayerUI
   _healthText: {fileID: 109248143}
   _oxygenText: {fileID: 368895331}
+  _deadOverlay: {fileID: 0}
+  _spectatorPanel: {fileID: 0}
+  _spectatorTargetText: {fileID: 0}
+  _spectatorHintText: {fileID: 0}
 --- !u!1 &1109716850
 GameObject:
   m_ObjectHideFlags: 0
@@ -11257,7 +11261,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1614604744}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.62
+  m_Size: 0.61999995
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -13034,8 +13038,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 166505392}
   m_HandleRect: {fileID: 166505391}
   m_Direction: 0
-  m_Value: 1
-  m_Size: 0.9999999
+  m_Value: 0
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:

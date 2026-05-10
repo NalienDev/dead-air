@@ -61,9 +61,11 @@ namespace StarterAssets
 		private float _rotationVelocity;
 		private float _verticalVelocity;
 		private float _terminalVelocity = 53.0f;
+        private bool _canJump = true;
+        public bool CanJump => _canJump;
 
-		// timeout deltatime
-		private float _jumpTimeoutDelta;
+        // timeout deltatime
+        private float _jumpTimeoutDelta;
 		private float _fallTimeoutDelta;
 
 	
@@ -121,7 +123,17 @@ namespace StarterAssets
 			Move();
 		}
 
-		private void LateUpdate()
+        public void OnLandAnimationEnd()
+        {
+            _canJump = true;
+        }
+
+        public void SetCanJump(bool value)
+        {
+            _canJump = value;
+        }
+
+        private void LateUpdate()
 		{
 			CameraRotation();
 		}
@@ -157,8 +169,8 @@ namespace StarterAssets
 
 		private void Move()
 		{
-			// set target speed based on move speed, sprint speed and if sprint is pressed
-			float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            // set target speed based on move speed, sprint speed and if sprint is pressed
+            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
 
 			// a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
@@ -216,7 +228,7 @@ namespace StarterAssets
 				}
 
 				// Jump
-				if (_input.jump && _jumpTimeoutDelta <= 0.0f)
+				if (_input.jump && _jumpTimeoutDelta <= 0.0f && _canJump)
 				{
 					// the square root of H * -2 * G = how much velocity needed to reach desired height
 					_verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
