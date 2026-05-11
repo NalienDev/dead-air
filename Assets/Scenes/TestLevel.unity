@@ -5738,6 +5738,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocalPlayerUI
   _healthText: {fileID: 1742577959}
   _oxygenText: {fileID: 1541800007}
+  _deadOverlay: {fileID: 0}
+  _spectatorPanel: {fileID: 0}
+  _spectatorTargetText: {fileID: 0}
+  _spectatorHintText: {fileID: 0}
 --- !u!4 &1413915638
 Transform:
   m_ObjectHideFlags: 0
@@ -6606,6 +6610,7 @@ MonoBehaviour:
   _rooms:
   - {fileID: 8385200692948620012, guid: db45de1a55d7f2c478efb698f527f6ca, type: 3}
   - {fileID: 8385200692948620012, guid: 5d5d7ae817b04d346ab2520602473d21, type: 3}
+  - {fileID: 8385200692948620012, guid: 93668cdb29ecf5b429e28ed0e999bfe6, type: 3}
   _specialRooms: []
   _alternateEntrances:
   - {fileID: 911949480880013668, guid: 2dc5de21eb15bd243957b4bdb3b9d469, type: 3}
