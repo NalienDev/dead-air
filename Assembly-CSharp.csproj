@@ -68,6 +68,7 @@
     <Compile Include="Assets\Samples\Shader Graph\17.3.0\UGUI Shaders\Scripts\Timer.cs" />
     <Compile Include="Assets\Scripts\EventManager.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonGenerator.cs" />
+    <Compile Include="Assets\Scripts\QuotaManager.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualTouchZone.cs" />
     <Compile Include="Assets\Scripts\PlayerManager.cs" />
     <Compile Include="Assets\Scripts\PlayerAnimationHandler.cs" />
@@ -100,10 +101,13 @@
     <Compile Include="Assets\Scripts\Spectator\PlayerDeathHandler.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualJoystick.cs" />
     <Compile Include="Assets\Scripts\PlayerMovement.cs" />
+    <Compile Include="Assets\Scripts\BandwidthObject.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonEntrance.cs" />
     <Compile Include="Assets\Scripts\Bandwith.cs" />
     <Compile Include="Assets\Scripts\ReviveDeadPlayersButton.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\MainEntrance.cs" />
+    <Compile Include="Assets\Scripts\QuotaUI.cs" />
+    <Compile Include="Assets\Scripts\GameOverHandler.cs" />
     <Compile Include="Assets\Scripts\Voice\VoiceRecordingStore.cs" />
     <Compile Include="Assets\Scripts\Voice\CapturedVoiceClip.cs" />
     <Compile Include="Assets\Samples\Shader Graph\17.3.0\UGUI Shaders\Scripts\BlurredHexagonController.cs" />

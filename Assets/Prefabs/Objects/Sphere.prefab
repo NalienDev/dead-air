@@ -12,10 +12,10 @@ GameObject:
   - component: {fileID: 7021828873584993151}
   - component: {fileID: 4306662921663430035}
   - component: {fileID: 8682627634784432447}
-  - component: {fileID: 5275158401596090510}
   - component: {fileID: 784272542476831442}
   - component: {fileID: 4412806569190372864}
   - component: {fileID: 7477050722200428830}
+  - component: {fileID: 1368825567169513877}
   m_Layer: 7
   m_Name: Sphere
   m_TagString: Untagged
@@ -116,28 +116,6 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &5275158401596090510
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 322975916374066887}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 78756e0d9237c054cbae6c15ea81bc85, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PickableObject
-  _isSetup: 0
-  _prefabId: -2147483648
-  _componentIndex: -2147483648
-  _shouldBePooled: 0
-  _parent: {fileID: 0}
-  _invertedPathToNearestParent: 
-  _directChildren: []
-  _networkRules: {fileID: 0}
-  _visitiblityRules: {fileID: 0}
-  _heldLayerName: Held
 --- !u!114 &784272542476831442
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -235,3 +213,27 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1368825567169513877
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322975916374066887}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e368b67cf733e00448f46c1d349d7c86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BandwidthObject
+  _isSetup: 0
+  _prefabId: -2147483648
+  _componentIndex: -2147483648
+  _shouldBePooled: 0
+  _parent: {fileID: 0}
+  _invertedPathToNearestParent: 
+  _directChildren: []
+  _networkRules: {fileID: 0}
+  _visitiblityRules: {fileID: 0}
+  _heldLayerName: Held
+  _throwForce: 8
+  _bandwidthValue: 300

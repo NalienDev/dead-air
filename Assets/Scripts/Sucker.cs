@@ -1,100 +1,76 @@
-﻿using System.Collections.Generic;
 using PurrNet;
-using PurrNet.Modules;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Collects networked objects on trigger enter and holds them across scene loads
-/// by moving them into DontDestroyOnLoad space.
-/// Uses SyncList of NetworkIdentity so PurrNet tracks the references network-side.
+/// Trigger volume that collects SuckableObjects and hands them off to
+/// RoverManager for cross-scene persistence.
+/// Sucker itself holds NO networked state — it is a scene-bound object
+/// that is destroyed and recreated on every scene load.
 /// </summary>
-public class Sucker : NetworkBehaviour
+public class Sucker : MonoBehaviour
 {
     // ── Inspector ──────────────────────────────────────────────────────────
+    [SerializeField] private Transform _objectSpawnTransform;
 
-    public Transform objectSpawnTransform;
-    public bool canSuck = false;
-
-    // ── Networked State ────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Synced list of stored networked identities.
-    /// PurrNet resolves these across scenes automatically.
-    /// </summary>
-    private readonly SyncList<NetworkIdentity> _storedObjects = new();
+    // ── Private State ──────────────────────────────────────────────────────
+    private RoverManager _roverManager;
     private SuctionZone _suctionZone;
+    private bool _canSuck;
 
-    private void Start()
+    // ── Initialisation ─────────────────────────────────────────────────────
+    private void Awake()
     {
-        _suctionZone = GetComponentInChildren<SuctionZone>();
+        _suctionZone = GetComponentInChildren<SuctionZone>(includeInactive: true);
     }
 
-    private void Update()
+    /// <summary>
+    /// Called by RoverManager immediately after instantiating the rover prefab.
+    /// Provides the authoritative storage back-reference.
+    /// </summary>
+    public void Initialise(RoverManager roverManager)
     {
-        if (!canSuck)
-        {
-            _suctionZone.gameObject.SetActive(false);
-        }
-        else
-        {
-            _suctionZone.gameObject.SetActive(true);
-        }
+        _roverManager = roverManager;
     }
 
     // ── Public API ─────────────────────────────────────────────────────────
+    public Transform ObjectSpawnTransform => _objectSpawnTransform;
 
-    public int StoredCount => _storedObjects.Count;
-
-    /// <summary>
-    /// Releases all stored objects into the active scene at the spawn point.
-    /// Safe to call from OnSceneLoaded after the destination scene is ready.
-    /// </summary>
-    public void ReleaseAll()
+    public bool CanSuck()
     {
-        for (int i = _storedObjects.Count - 1; i >= 0; i--)
-        {
-            NetworkIdentity identity = _storedObjects[i];
-            if (identity == null) continue;
+        return _canSuck;
+    }
 
-            if (identity.TryGetComponent(out SuckableObject suckable))
-                suckable.EndAttraction();
+    public void SetCanSuck(bool value)
+    {
+        _canSuck = value;
 
-            SceneManager.MoveGameObjectToScene(
-                identity.gameObject,
-                SceneManager.GetActiveScene()
-            );
-
-            identity.transform.SetPositionAndRotation(
-                objectSpawnTransform.position,
-                objectSpawnTransform.rotation
-            );
-
-            if (identity.TryGetComponent(out Rigidbody rb))
-            {
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-            }
-
-            identity.gameObject.SetActive(true);
-        }
-
-        _storedObjects.Clear();
+        if (_suctionZone != null)
+            _suctionZone.gameObject.SetActive(_canSuck);
     }
 
     // ── Trigger ────────────────────────────────────────────────────────────
-
     private void OnTriggerEnter(Collider other)
     {
-        if (!canSuck) return;
+        if (!_canSuck) return;
+        if (_roverManager == null)
+        {
+            Debug.LogWarning("[Sucker] No RoverManager reference — call Initialise() first.");
+            return;
+        }
+
         if (!other.TryGetComponent(out NetworkIdentity identity)) return;
         if (!identity.isSpawned) return;
 
+        // Stop attraction VFX before hiding the object.
         if (other.TryGetComponent(out SuckableObject suckable))
             suckable.EndAttraction();
 
+        // Move to DDOL so the GameObject survives scene transitions.
         DontDestroyOnLoad(identity.gameObject);
-        _storedObjects.Add(identity);
+
+        // Hand off to RoverManager — it owns the list.
+        _roverManager.AddCargo(identity);
+
         identity.gameObject.SetActive(false);
     }
 }
