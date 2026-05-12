@@ -1,6 +1,20 @@
-using PurrNet;
+﻿using PurrNet;
 using UnityEngine;
 
+/// <summary>
+/// DDOL singleton tracking quota state.
+/// Uses NetworkIdentity for SyncVar replication to clients.
+///
+/// IMPORTANT: Do NOT use [ServerRpc] on this class. This object is moved to
+/// DontDestroyOnLoad in Awake() — outside PurrNet's spawn pipeline — so
+/// PurrNet considers it "not spawned" and rejects all RPCs on it.
+///
+/// Instead, call these methods only from server/host context (e.g. from
+/// ReturnToBaseButton which runs on the interacting player's machine).
+/// On a host, networkManager.isServer is true. On a dedicated server,
+/// same applies. Pure clients should never call these directly — add a
+/// [ServerRpc] on the caller side if pure-client support is needed later.
+/// </summary>
 public class QuotaManager : NetworkIdentity
 {
     public static QuotaManager Instance { get; private set; }
@@ -23,64 +37,49 @@ public class QuotaManager : NetworkIdentity
         if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        
         if (currentQuota.value == 0) currentQuota.value = _baseQuota;
     }
 
-    [ServerRpc(requireOwnership: false)]
     public void ServerProcessItems(int bandwidth, int energyCells)
     {
         sessionBandwidth.value += bandwidth;
         currentEnergyCells.value += energyCells;
-        
-        Debug.Log($"[QuotaManager] Processed items: +{bandwidth} bandwidth, +{energyCells} energy cells. Session Total: {sessionBandwidth.value}/{currentQuota.value}");
-        
-        // After processing, check if this was a return to lobby and if we should evaluate the day
-        // The user says: "returning from testlevel, theyll go to another scene... to indicate game over"
-        // This suggests the check happens on return.
+
+        Debug.Log($"[QuotaManager] +{bandwidth} bandwidth, +{energyCells} energy cells. " +
+                  $"Session: {sessionBandwidth.value}/{currentQuota.value}");
     }
 
-    [ServerRpc(requireOwnership: false)]
     public void ServerCheckQuotaAndProceed()
     {
         if (sessionBandwidth.value >= currentQuota.value)
         {
-            // Quota met! Bank the collected bandwidth
             totalBandwidth.value += sessionBandwidth.value;
             sessionBandwidth.value = 0;
-            
             currentDay.value++;
             currentQuota.value = Mathf.RoundToInt(currentQuota.value * _quotaMultiplier);
-            
-            Debug.Log("[QuotaManager] Quota met! Proceeding to next day upgrades.");
+
+            Debug.Log("[QuotaManager] Quota met — advancing to next day.");
+            SceneChanger.Instance.LoadSceneForEveryone(_lobbySceneName);
         }
         else
         {
-            // Quota NOT met! Game Over
-            Debug.Log("[QuotaManager] Quota NOT met! Game Over.");
+            Debug.Log("[QuotaManager] Quota NOT met — Game Over.");
             SceneChanger.Instance.LoadSceneForEveryone(_gameOverSceneName);
         }
     }
 
-    [ServerRpc(requireOwnership: false)]
     public void ServerSpendBandwidth(int amount)
     {
         if (totalBandwidth.value >= amount)
-        {
             totalBandwidth.value -= amount;
-        }
     }
 
-    [ServerRpc(requireOwnership: false)]
     public void ServerUseEnergyCell()
     {
         if (currentEnergyCells.value > 0)
-        {
             currentEnergyCells.value--;
-        }
     }
 
-    [ServerRpc(requireOwnership: false)]
     public void ServerResetGame()
     {
         currentDay.value = 1;
@@ -88,8 +87,8 @@ public class QuotaManager : NetworkIdentity
         totalBandwidth.value = 0;
         sessionBandwidth.value = 0;
         currentEnergyCells.value = 0;
-        
-        Debug.Log("[QuotaManager] Game Reset.");
+
+        Debug.Log("[QuotaManager] Game reset.");
         SceneChanger.Instance.LoadSceneForEveryone(_lobbySceneName);
     }
 }

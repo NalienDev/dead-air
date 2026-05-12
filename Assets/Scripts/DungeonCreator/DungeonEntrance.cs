@@ -8,18 +8,12 @@ using UnityEngine;
 /// </summary>
 public class DungeonEntrance : Interactable
 {
-    // ── Inspector ──────────────────────────────────────────────────────────
-
-    [Tooltip("The world-space point the player is sent to when they use this exit.")]
-    [SerializeField] private Transform _outsideSpawnPoint;
-
-    [Tooltip("Optional sun GameObject to re-enable when the player exits the dungeon.")]
-    [SerializeField] private GameObject _sun;
-
-    // ── Interactable ───────────────────────────────────────────────────────
-
     public override InteractionType OnInteract(GameObject user)
     {
+        Debug.Log("Ran lol");
+
+        GameObject _outsideSpawnPoint = FindFirstObjectByType<OutsideSpawnPoint>().gameObject;
+
         if (_outsideSpawnPoint == null)
         {
             Debug.LogWarning("[DungeonEntrance] No outside spawn point assigned.", this);
@@ -31,8 +25,8 @@ public class DungeonEntrance : Interactable
         if (cc != null) cc.enabled = false;
 
         user.transform.SetPositionAndRotation(
-            _outsideSpawnPoint.position,
-            _outsideSpawnPoint.rotation
+            _outsideSpawnPoint.transform.position,
+            _outsideSpawnPoint.transform.rotation
         );
 
         if (cc != null) cc.enabled = true;
@@ -41,8 +35,6 @@ public class DungeonEntrance : Interactable
         PlayerManager playerManager = user.GetComponent<PlayerManager>();
         if (playerManager != null)
             playerManager.SetInsideDungeon(false);
-
-        _sun?.SetActive(true);
 
         return InteractionType.PRESS;
     }

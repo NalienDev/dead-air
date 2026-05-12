@@ -11,63 +11,59 @@ public class Interactor : MonoBehaviour
 
     private readonly GrabbableObject[] _slots = new GrabbableObject[InventorySize];
     private int _activeSlot = 0;
-
     private Camera _cam;
 
     public int ActiveSlot => _activeSlot;
     public GrabbableObject[] Slots => _slots;
 
-    private void Awake()
-    {
-        _cam = Camera.main;
-    }
+    private void Awake() => _cam = Camera.main;
 
     private void Update()
     {
         HandleSlotSwitch();
-        HandlePickup();
+        HandleInteract();
         HandleDrop();
         HandleThrow();
     }
 
-    // ── Slot switching ────────────────────────────────────────────────────────
-
+    // ── Slot switching ─────────────────────────────────────────────────────
     private void HandleSlotSwitch()
     {
         float scroll = Input.GetAxisRaw("Mouse ScrollWheel");
         if (scroll == 0f) return;
 
-        int direction = scroll > 0f ? -1 : 1;
-        int newSlot = (_activeSlot + direction + InventorySize) % InventorySize;
-
+        int newSlot = (_activeSlot + (scroll > 0f ? -1 : 1) + InventorySize) % InventorySize;
         if (newSlot == _activeSlot) return;
 
-        // Hide the item leaving the active slot
         _slots[_activeSlot]?.SetVisible(false);
-
         _activeSlot = newSlot;
-
-        // Show the item entering the active slot
         _slots[_activeSlot]?.SetVisible(true);
     }
 
-    // ── Pick up ───────────────────────────────────────────────────────────────
-
-    private void HandlePickup()
+    // ── Interact ───────────────────────────────────────────────────────────
+    private void HandleInteract()
     {
         if (!Input.GetKeyDown(KeyCode.E)) return;
-        if (_slots[_activeSlot] != null) return;  // slot occupied
-
         if (!TryRaycast(out Interactable interactable, out RaycastHit hit)) return;
+
+        // If the target is a grabbable and the active slot is already occupied,
+        // bail out before calling OnInteract. This MUST be checked client-side
+        // before the call — _isHeld is a SyncVar with replication latency, so
+        // by the time it flips to true a second E press could already call
+        // TryPickup and jam two objects into the same slot.
+        if (hit.transform.TryGetComponent(out GrabbableObject _) && _slots[_activeSlot] != null)
+            return;
 
         InteractionType result = interactable.OnInteract(gameObject);
 
         if (result == InteractionType.GRAB)
             _slots[_activeSlot] = hit.transform.GetComponent<GrabbableObject>();
+
+        // InteractionType.PRESS needs no handling here — the interactable
+        // already did its work inside OnInteract.
     }
 
-    // ── Drop ──────────────────────────────────────────────────────────────────
-
+    // ── Drop ──────────────────────────────────────────────────────────────
     private void HandleDrop()
     {
         if (!Input.GetKeyDown(KeyCode.Q)) return;
@@ -77,8 +73,7 @@ public class Interactor : MonoBehaviour
         _slots[_activeSlot] = null;
     }
 
-    // ── Throw ─────────────────────────────────────────────────────────────────
-
+    // ── Throw ─────────────────────────────────────────────────────────────
     private void HandleThrow()
     {
         if (!Input.GetKeyDown(KeyCode.G)) return;
@@ -88,8 +83,7 @@ public class Interactor : MonoBehaviour
         _slots[_activeSlot] = null;
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
+    // ── Helpers ───────────────────────────────────────────────────────────
     private bool TryRaycast(out Interactable interactable, out RaycastHit hit)
     {
         interactable = null;
