@@ -5,7 +5,7 @@ using UnityEngine;
 /// Manages synced player state: health, oxygen, dungeon flag, and voice relay.
 /// IsDead is a convenience property that reads from PlayerDeathHandler.
 /// </summary>
-public class PlayerManager : NetworkIdentity
+public class PlayerManager : NetworkIdentity, ISoundListener
 {
     // ── Synced state ───────────────────────────────────────────────────────
 
@@ -141,5 +141,10 @@ public class PlayerManager : NetworkIdentity
         string playerId = owner?.ToString() ?? "unknown";
         var captured = new CapturedVoiceClip(playerId, clip, Time.time);
         VoiceRecordingStore.Instance.Enqueue(captured);
+    }
+
+    public void OnHearSound(Vector3 origin)
+    {
+        Debug.Log($"[{owner}] Ouvi um som em {origin}");
     }
 }
