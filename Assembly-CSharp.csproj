@@ -62,6 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\DestructibleObjects\Explosion.cs" />
+    <Compile Include="Assets\Scripts\Player\PlayerHealthBar.cs" />
     <Compile Include="Assets\Scripts\EnergyCell.cs" />
     <Compile Include="Assets\Scripts\DestructibleObjects\Despawn.cs" />
     <Compile Include="Assets\Scripts\Rover\SuckableObject.cs" />
@@ -76,18 +77,16 @@
     <Compile Include="Assets\Dissonance\Core\Jetbrains.cs" />
     <Compile Include="Assets\Packages\Kevin Iglesias\Human Animations\Scripts\SpineProxy.cs" />
     <Compile Include="Assets\Scripts\Interactable.cs" />
-    <Compile Include="Assets\Scripts\PlayerHealthBar.cs" />
     <Compile Include="Assets\Samples\Shader Graph\17.3.0\UGUI Shaders\Scripts\Timer.cs" />
     <Compile Include="Assets\Scripts\EventManager.cs" />
     <Compile Include="Assets\Scripts\ISoundListener.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonGenerator.cs" />
     <Compile Include="Assets\Scripts\QuotaManager.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualTouchZone.cs" />
-    <Compile Include="Assets\Scripts\PlayerManager.cs" />
-    <Compile Include="Assets\Scripts\PlayerAnimationHandler.cs" />
     <Compile Include="Assets\Scripts\Spectator\PlayerRegistry.cs" />
     <Compile Include="Assets\Scripts\Voice\TheEchoAI.cs" />
     <Compile Include="Assets\Scripts\DestructibleObjects\Spawner.cs" />
+    <Compile Include="Assets\Scripts\Spectator\ReviveDeadPlayersButton.cs" />
     <Compile Include="Assets\Scripts\DestructibleObjects\DestructibleObject.cs" />
     <Compile Include="Assets\Scripts\SceneChanger.cs" />
     <Compile Include="Assets\Scripts\PauseMenu.cs" />
@@ -96,7 +95,7 @@
     <Compile Include="Assets\Packages\StarterAssets\FirstPersonController\Scripts\BasicRigidBodyPush.cs" />
     <Compile Include="Assets\Scripts\Rover\ActivateVacuumButton.cs" />
     <Compile Include="Assets\Packages\StarterAssets\FirstPersonController\Scripts\FirstPersonController.cs" />
-    <Compile Include="Assets\Scripts\Rover\ReviveDeadPlayersButton.cs" />
+    <Compile Include="Assets\Scripts\Player\PlayerMovement.cs" />
     <Compile Include="Assets\Scripts\TestNetwork.cs" />
     <Compile Include="Assets\Scripts\InventoryHud.cs" />
     <Compile Include="Assets\Scripts\RuntimeDebugConsole.cs" />
@@ -114,11 +113,12 @@
     <Compile Include="Assets\Scripts\Spectator\PlayerDeathHandler.cs" />
     <Compile Include="Assets\Scripts\Rover\SuctionZone.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualJoystick.cs" />
-    <Compile Include="Assets\Scripts\PlayerMovement.cs" />
     <Compile Include="Assets\Scripts\BandwidthObject.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonEntrance.cs" />
+    <Compile Include="Assets\Scripts\Player\PlayerAnimationHandler.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\OutsideSpawnPoint.cs" />
     <Compile Include="Assets\Scripts\Bandwith.cs" />
+    <Compile Include="Assets\Scripts\Player\PlayerManager.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\MainEntrance.cs" />
     <Compile Include="Assets\Scripts\QuotaUI.cs" />
     <Compile Include="Assets\Scripts\GameOverHandler.cs" />
