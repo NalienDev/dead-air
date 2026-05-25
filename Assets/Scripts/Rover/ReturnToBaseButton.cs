@@ -21,12 +21,6 @@ public class ReturnToBaseButton : Interactable
             return InteractionType.NONE;
         }
 
-        if (QuotaManager.Instance == null)
-        {
-            Debug.LogWarning("[ReturnToBaseButton] QuotaManager.Instance is null.");
-            return InteractionType.NONE;
-        }
-
         RoverManager.Instance.GetCargoValues(out int bandwidth, out int energyCells);
 
         Debug.Log($"[ReturnToBaseButton] Submitting cargo — bandwidth: {bandwidth}, energy cells: {energyCells}");

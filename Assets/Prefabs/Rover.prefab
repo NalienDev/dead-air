@@ -2435,7 +2435,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae4fafc4937b58a4e86613b962dcc819, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  _objectSpawnTransform: {fileID: 2602124741307309966}
 --- !u!1 &5256925916329629896
 GameObject:
   m_ObjectHideFlags: 0
@@ -2447,7 +2446,7 @@ GameObject:
   - component: {fileID: 5931841450742910301}
   m_Layer: 0
   m_Name: Rover
-  m_TagString: Untagged
+  m_TagString: Rover
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
