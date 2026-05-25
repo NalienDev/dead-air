@@ -155,21 +155,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6df0017fec6ca4d4c97045d46eb7c26d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _isSetup: 0
+  _prefabId: -2147483648
+  _componentIndex: -2147483648
+  _shouldBePooled: 0
+  _parent: {fileID: 0}
+  _invertedPathToNearestParent: 
+  _directChildren: []
+  _networkRules: {fileID: 0}
+  _visitiblityRules: {fileID: 0}
   debrisPrefab:
     name: 
     prefab: {fileID: 2408344539904083828, guid: 41236d4781165b34bbaee242ef7906f3, type: 3}
-  forceRequired: 5
-  ditherMaterial: {fileID: 2100000, guid: bf21e6c1f76cb484ab24f6798122f1f0, type: 2}
+  forceRequired: 6
+  ditherMaterial: {fileID: 2100000, guid: 811e6948370fa2849a15d360df8f7e57, type: 2}
   despawnPercentage: 100
   despawnTime: 3
   audioClips:
   - {fileID: 8300000, guid: 7eb48b1ee23012b48a2d6530e6d0ab30, type: 3}
-  - {fileID: 8300000, guid: dc7724320e7f5a34d994515d42ac1cb9, type: 3}
-  - {fileID: 8300000, guid: 9c9202f6f00d04c489a7eab8d91cc942, type: 3}
-  - {fileID: 8300000, guid: 43119588cb2c1da4dbbb021a1151f9dd, type: 3}
-  volume: 1
-  volumeVariation: 0.1
-  pitchVariation: 0.25
+  volume: 0.289
+  volumeVariation: 0
+  pitchVariation: 0.06
 --- !u!114 &724390403349039662
 MonoBehaviour:
   m_ObjectHideFlags: 0

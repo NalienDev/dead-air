@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using PurrNet;
@@ -29,6 +29,7 @@ public class DestructibleObject : NetworkBehaviour
     private GameObject debris;
     private new Rigidbody rigidbody;
 
+    [ServerOnly]
     public void Break(){
         float velocityMagnitude = rigidbody.linearVelocity.magnitude;
         debris.transform.position = transform.position;
@@ -46,14 +47,22 @@ public class DestructibleObject : NetworkBehaviour
         Destroy(gameObject);
     }
 
-    void Start(){
+    void Start()
+    {
         rigidbody = GetComponent<Rigidbody>();
+        SpawnDebris();
+    }
+
+    [ServerOnly]
+    void SpawnDebris(){
+        Debug.Log("Running here!");
         debris = Instantiate(debrisPrefab.prefab, transform.position, Quaternion.identity);
         debris.SetActive(false);
     }
 
+    [ServerOnly]
     void OnCollisionEnter(Collision collision){
-        if(collision.relativeVelocity.magnitude > forceRequired){
+        if (collision.relativeVelocity.magnitude > forceRequired){
             Break();
         }
     }
