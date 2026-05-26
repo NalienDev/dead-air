@@ -5,17 +5,23 @@ using UnityEngine;
 /// <summary>
 /// Sits on the PlayerCapsule alongside PlayerManager.
 /// Watches health and oxygen SyncVars and triggers death / revival.
-/// 
+///
+/// KEY FIX: Extends NetworkBehaviour (not NetworkIdentity) so it shares
+/// the same network context as PlayerManager on the same GameObject.
+/// Multiple NetworkIdentity components on one GameObject causes PurrNet
+/// to only properly spawn/track one of them, breaking SyncVar replication
+/// for the second — which was why death only worked on the host.
+///
 /// Death conditions (either one):
 ///   • currentHealth reaches 0
 ///   • currentOxygen reaches 0
-/// 
+///
 /// All state is server-authoritative via SyncVar.
 /// Owner-side components (FPC, VoiceRecorder) are toggled locally when
 /// the SyncVar replicates down.
 /// </summary>
 [RequireComponent(typeof(PlayerManager))]
-public class PlayerDeathHandler : NetworkIdentity
+public class PlayerDeathHandler : NetworkBehaviour
 {
     // ── Inspector ──────────────────────────────────────────────────────────
 
@@ -35,7 +41,6 @@ public class PlayerDeathHandler : NetworkIdentity
     // ── Private ────────────────────────────────────────────────────────────
 
     private PlayerManager _playerManager;
-    private bool _lastDeadState;
 
     // ── Lifecycle ──────────────────────────────────────────────────────────
 
@@ -66,10 +71,9 @@ public class PlayerDeathHandler : NetworkIdentity
             PlayerRegistry.Instance.Unregister(_playerManager);
     }
 
+    [ServerRpc]
     private void Update()
     {
-        // Only the server evaluates death conditions
-        if (!isServer) return;
         if (isDead.value) return;
 
         bool shouldDie = _playerManager.GetCurrentHealth() <= 0
@@ -83,7 +87,7 @@ public class PlayerDeathHandler : NetworkIdentity
 
     /// <summary>
     /// Revive this player with the given health and oxygen values.
-    /// Call from any context — routes through ServerRpc.
+    /// Safe to call from any context — routes through ServerRpc.
     /// </summary>
     public void Revive(int restoreHealth, int restoreOxygen)
     {
@@ -94,7 +98,6 @@ public class PlayerDeathHandler : NetworkIdentity
 
     private void Die()
     {
-        // Guard: server only, not already dead
         if (!isServer || isDead.value) return;
 
         PurrLogger.Log($"[PlayerDeathHandler] Player {owner} died.");
@@ -117,6 +120,10 @@ public class PlayerDeathHandler : NetworkIdentity
         _playerManager.currentOxygen.value = Mathf.Clamp(restoreOxygen, 1, _playerManager.maxOxygen.value);
 
         isDead.value = false; // Replicates — all clients react
+
+        Transform reviveLoc = GameObject.FindGameObjectWithTag("ReviveLocation").transform;
+        if (reviveLoc != null) gameObject.transform.SetPositionAndRotation(reviveLoc.position, reviveLoc.rotation); else Debug.LogError("Revive Location Tag is not Set");
+
     }
 
     // ── SyncVar callback (runs on ALL clients + server) ────────────────────
@@ -131,7 +138,6 @@ public class PlayerDeathHandler : NetworkIdentity
 
     private void ApplyDeadState()
     {
-        // Disable movement & voice only for the owner — other clients don't have these active anyway
         if (isOwner)
         {
             if (_fpc != null) _fpc.enabled = false;
@@ -139,18 +145,15 @@ public class PlayerDeathHandler : NetworkIdentity
             if (_characterController != null) _characterController.enabled = false;
         }
 
-        // Hide the visual mesh for everyone (so other players see a "ghost" / nothing)
         if (_playerVisualRoot != null)
             _playerVisualRoot.SetActive(false);
 
-        // Notify UI (owner only)
         if (isOwner)
             LocalPlayerUI.Instance?.OnPlayerDied();
     }
 
     private void ApplyAliveState()
     {
-        // Re-enable movement & voice for owner
         if (isOwner)
         {
             if (_fpc != null) _fpc.enabled = true;
@@ -158,11 +161,9 @@ public class PlayerDeathHandler : NetworkIdentity
             if (_characterController != null) _characterController.enabled = true;
         }
 
-        // Restore visuals for everyone
         if (_playerVisualRoot != null)
             _playerVisualRoot.SetActive(true);
 
-        // Notify UI
         if (isOwner)
             LocalPlayerUI.Instance?.OnPlayerRevived();
     }

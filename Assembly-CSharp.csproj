@@ -74,6 +74,7 @@
     <Compile Include="Assets\Packages\StarterAssets\InputSystem\StarterAssetsInputs.cs" />
     <Compile Include="Assets\Scripts\Rover\RoverSpawnLocation.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\CanvasInputs\UICanvasControllerInput.cs" />
+    <Compile Include="Assets\Scripts\TeleportPlayersTestButton.cs" />
     <Compile Include="Assets\Dissonance\Core\Jetbrains.cs" />
     <Compile Include="Assets\Packages\Kevin Iglesias\Human Animations\Scripts\SpineProxy.cs" />
     <Compile Include="Assets\Scripts\Interactable.cs" />

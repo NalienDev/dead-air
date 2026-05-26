@@ -495,7 +495,7 @@ MonoBehaviour:
   _fpc: {fileID: 9103288766194465792}
   _voiceRecorder: {fileID: 5991265490983206294}
   _characterController: {fileID: 9119509886162617476}
-  _playerVisualRoot: {fileID: 0}
+  _playerVisualRoot: {fileID: 1817662473826417746}
   isDead:
     _value: 0
     _ownerAuth: 0
@@ -589,6 +589,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1638885507378615232}
   m_SourcePrefab: {fileID: 100100000, guid: 69f101977fccb77408cd20953cd05a50, type: 3}
+--- !u!1 &1817662473826417746 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3383189926506665113, guid: 69f101977fccb77408cd20953cd05a50, type: 3}
+  m_PrefabInstance: {fileID: 4020064321628743883}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &3965231242964994139 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 57834298766696592, guid: 69f101977fccb77408cd20953cd05a50, type: 3}

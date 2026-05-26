@@ -13,9 +13,15 @@ using UnityEngine;
 ///
 /// The spectator camera is re-parented to each target's camera root so Cinemachine
 /// continues to work naturally.
+///
+/// IMPROVEMENTS:
+///   - Uses PlayerRegistry (backed by PurrNet PlayerID) for reliable alive tracking.
+///   - Watches PlayerDeathHandler.isDead SyncVar on each target so auto-advance
+///     fires the moment a spectated player dies, not one frame later.
+///   - All spectator state is cleaned up properly on revive.
 /// </summary>
 [RequireComponent(typeof(PlayerDeathHandler))]
-public class SpectatorController : NetworkIdentity
+public class SpectatorController : NetworkBehaviour
 {
     // ── Inspector ──────────────────────────────────────────────────────────
 
@@ -39,9 +45,14 @@ public class SpectatorController : NetworkIdentity
     // ── Private state ──────────────────────────────────────────────────────
 
     private PlayerDeathHandler _deathHandler;
+    private PlayerManager _playerManager;
+
     private bool _isSpectating;
     private int _spectatorIndex;
     private List<PlayerManager> _targets = new();
+
+    // Subscribed target's death handler so we can react instantly when they die
+    private PlayerDeathHandler _watchedTargetDeathHandler;
 
     // Original parent/position so we can restore on revive
     private Transform _originalCameraParent;
@@ -53,13 +64,13 @@ public class SpectatorController : NetworkIdentity
     private void Awake()
     {
         _deathHandler = GetComponent<PlayerDeathHandler>();
+        _playerManager = GetComponent<PlayerManager>();
     }
 
     protected override void OnSpawned(bool asServer)
     {
         if (!isOwner) return;
 
-        // Cache original camera transform so we can restore it on revive
         if (_spectatorCameraRoot != null)
         {
             _originalCameraParent = _spectatorCameraRoot.parent;
@@ -74,14 +85,13 @@ public class SpectatorController : NetworkIdentity
     {
         if (!isOwner) return;
         _deathHandler.isDead.onChanged -= OnDeadChanged;
+        UnwatchCurrentTarget();
     }
 
     private void Update()
     {
         if (!isOwner || !_isSpectating) return;
-
         HandleInput();
-        FollowCurrentTarget();
     }
 
     // ── Death / Revive callbacks ───────────────────────────────────────────
@@ -108,18 +118,18 @@ public class SpectatorController : NetworkIdentity
         if (_targets.Count == 0)
         {
             PurrLogger.LogWarning("[SpectatorController] No alive players to spectate.");
+            LocalPlayerUI.Instance?.OnSpectatorTargetChanged(null);
             return;
         }
 
         AttachToTarget(_spectatorIndex);
-        PurrLogger.Log($"[SpectatorController] Spectating {_targets[_spectatorIndex].name}");
     }
 
     private void EndSpectating()
     {
         _isSpectating = false;
+        UnwatchCurrentTarget();
 
-        // Restore camera root to original parent & transform
         if (_spectatorCameraRoot != null)
         {
             _spectatorCameraRoot.SetParent(_originalCameraParent, false);
@@ -141,40 +151,59 @@ public class SpectatorController : NetworkIdentity
     private void CycleTarget(int direction)
     {
         RefreshTargetList();
+        if (_targets.Count == 0)
+        {
+            LocalPlayerUI.Instance?.OnSpectatorTargetChanged(null);
+            return;
+        }
 
-        if (_targets.Count == 0) return;
-        if (_spectatorCameraRoot != null) _spectatorCameraObject.gameObject.SetActive(false);
+        if (_spectatorCameraObject != null)
+            _spectatorCameraObject.SetActive(false);
 
         _spectatorIndex = (_spectatorIndex + direction + _targets.Count) % _targets.Count;
         AttachToTarget(_spectatorIndex);
-        PurrLogger.Log($"[SpectatorController] Now spectating {_targets[_spectatorIndex].name}");
     }
 
     private void RefreshTargetList()
     {
         if (PlayerRegistry.Instance == null) return;
-        _targets = PlayerRegistry.Instance.GetAlivePlayersExcept(GetComponent<PlayerManager>());
+        _targets = PlayerRegistry.Instance.GetAlivePlayersExcept(_playerManager);
     }
 
     /// <summary>
-    /// Re-parents our spectator camera root to the target's PlayerCameraRoot transform
-    /// so the Cinemachine virtual camera naturally follows them.
+    /// Re-parents our spectator camera root to the target's PlayerCameraRoot.
+    /// Also subscribes to the target's isDead SyncVar so we auto-advance if they die.
     /// </summary>
     private void AttachToTarget(int index)
     {
+        UnwatchCurrentTarget();
+
         if (index < 0 || index >= _targets.Count) return;
 
-        var target = _targets[index];
+        PlayerManager target = _targets[index];
+        if (target == null) return;
 
-        // Find the target's camera root — it's named "PlayerCameraRoot" by convention
+        // Watch this target's death state so we react the moment they die
+        PlayerDeathHandler targetDeathHandler = target.GetComponent<PlayerDeathHandler>();
+        if (targetDeathHandler != null)
+        {
+            targetDeathHandler.isDead.onChanged += OnSpectatedTargetDied;
+            _watchedTargetDeathHandler = targetDeathHandler;
+        }
+
         Transform targetCamRoot = FindCameraRoot(target.transform);
-        
+
         if (targetCamRoot == null)
         {
-            PurrLogger.LogWarning($"[SpectatorController] Could not find PlayerCameraRoot on {target.name}");
+            PurrLogger.LogWarning($"[SpectatorController] Could not find PlayerCameraRoot on {target.name}. Skipping.");
+            // Try next available target rather than getting stuck
+            if (_targets.Count > 1)
+                CycleTarget(+1);
             return;
         }
+
         targetCamRoot.gameObject.SetActive(true);
+
         if (_spectatorCameraRoot != null)
         {
             _spectatorCameraRoot.SetParent(targetCamRoot, false);
@@ -182,18 +211,33 @@ public class SpectatorController : NetworkIdentity
             _spectatorCameraRoot.localRotation = Quaternion.identity;
         }
 
-        // Notify UI about who we're watching
+        if (_spectatorCameraObject != null)
+            _spectatorCameraObject.SetActive(true);
+
         LocalPlayerUI.Instance?.OnSpectatorTargetChanged(target);
+        PurrLogger.Log($"[SpectatorController] Now spectating {target.name}");
     }
 
-    private void FollowCurrentTarget()
+    /// <summary>
+    /// Called via SyncVar callback the instant the spectated target dies.
+    /// Automatically cycles to the next alive player.
+    /// </summary>
+    private void OnSpectatedTargetDied(bool isDead)
     {
-        // Safety: if target died while we were spectating, auto-advance
-        if (_targets.Count == 0 || _spectatorIndex >= _targets.Count) return;
+        if (!isDead || !_isSpectating) return;
 
-        var current = _targets[_spectatorIndex];
-        if (current == null || current.IsDead)
-            CycleTarget(+1);
+        PurrLogger.Log("[SpectatorController] Spectated player died — auto-advancing.");
+        CycleTarget(+1);
+    }
+
+    /// <summary>Unsubscribes from the currently watched target's death event.</summary>
+    private void UnwatchCurrentTarget()
+    {
+        if (_watchedTargetDeathHandler != null)
+        {
+            _watchedTargetDeathHandler.isDead.onChanged -= OnSpectatedTargetDied;
+            _watchedTargetDeathHandler = null;
+        }
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
@@ -201,12 +245,11 @@ public class SpectatorController : NetworkIdentity
     /// <summary>Searches direct children for a transform named "PlayerCameraRoot".</summary>
     private static Transform FindCameraRoot(Transform parent)
     {
-        // First try direct child (most common case)
-        var direct = parent.Find("PlayerCameraRoot");
+        Transform direct = parent.Find("PlayerCameraRoot");
         if (direct != null) return direct;
 
         // Fallback: deep search
-        foreach (Transform child in parent.GetComponentsInChildren<Transform>())
+        foreach (Transform child in parent.GetComponentsInChildren<Transform>(true))
         {
             if (child.name == "PlayerCameraRoot")
                 return child;
