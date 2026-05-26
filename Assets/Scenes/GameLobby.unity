@@ -2654,7 +2654,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1479470572}
   - {fileID: 1153981306}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -3297,8 +3296,6 @@ MonoBehaviour:
   _directChildren: []
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
-  _lobbyScene: GameLobby
-  _gameScene: TestLevel
 --- !u!1 &879314344
 GameObject:
   m_ObjectHideFlags: 0
@@ -6476,11 +6473,11 @@ Transform:
   m_GameObject: {fileID: 1479470569}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 5.54718, y: -2.07595, z: -10.91969}
+  m_LocalPosition: {x: -0.86014986, y: 0, z: 2.1009502}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 617584273}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1479470573
 MonoBehaviour:
@@ -6491,14 +6488,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1479470569}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc64ff707d914a64e95f2ac0bf554c09, type: 3}
+  m_Script: {fileID: 11500000, guid: 332e746c3c3253246aacad4d5559f1fb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: PurrNet.Runtime::PurrNet.Transports.UDPTransport
-  _automaticCloudSetups:
-    _adaptToEdgegap: 1
-  _serverPort: 5000
-  _maxConnections: 100
-  _address: 127.0.0.1
+  m_EditorClassIdentifier: PurrNet.Runtime::PurrNet.Transports.PurrTransport
+  _masterServer: https://purrtransport.purrservers.com/
+  _roomName: PurrNet
+  _region: france
+  _host: purrtransport-france.purrservers.com
   _timeoutInSeconds: 5
   _pollEventsInUpdate: 0
 --- !u!1 &1488628861
@@ -12497,4 +12493,5 @@ SceneRoots:
   - {fileID: 869237749}
   - {fileID: 387380123}
   - {fileID: 1749836333}
+  - {fileID: 1479470572}
   - {fileID: 728572523}
