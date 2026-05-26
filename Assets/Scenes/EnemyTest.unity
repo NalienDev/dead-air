@@ -462,6 +462,67 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 142596152}
   m_CullTransparentMesh: 1
+--- !u!1001 &187696058
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -7840867231617242486, guid: e5d8ad1569039af478054920236752ad, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 305c00733825cc24cb81c718f5c5dc33, type: 2}
+    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 13.282879
+      objectReference: {fileID: 0}
+    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.00000016611065
+      objectReference: {fileID: 0}
+    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1.0285995
+      objectReference: {fileID: 0}
+    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4357118449180629203, guid: e5d8ad1569039af478054920236752ad, type: 3}
+      propertyPath: m_Name
+      value: DeadAirTeamMember
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 8686905464242370237, guid: e5d8ad1569039af478054920236752ad, type: 3}
 --- !u!1 &201041508
 GameObject:
   m_ObjectHideFlags: 0
@@ -2834,7 +2895,6 @@ MonoBehaviour:
   _directChildren: []
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
-  _reviveSpawnLocation: {fileID: 1742461903}
   _restoreHealth: 100
   _restoreOxygen: 360
 --- !u!1 &1608645271
@@ -4125,3 +4185,4 @@ SceneRoots:
   - {fileID: 1771133837665322057}
   - {fileID: 1124469465}
   - {fileID: 1343899202}
+  - {fileID: 187696058}
