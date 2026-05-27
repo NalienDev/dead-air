@@ -1,7 +1,6 @@
 ﻿using PurrNet;
 using Unity.VisualScripting;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
 
 /// <summary>
 /// Interactable button that revives all dead players.

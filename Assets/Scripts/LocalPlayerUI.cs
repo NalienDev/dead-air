@@ -46,7 +46,6 @@ public class LocalPlayerUI : MonoBehaviour
     {
         if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
 
         // Start with spectator / dead UI hidden
         SetDeadOverlayVisible(false);

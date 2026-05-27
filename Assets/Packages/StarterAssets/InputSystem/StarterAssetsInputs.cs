@@ -45,8 +45,11 @@ namespace StarterAssets
 		}
 #endif
 
-
-		public void MoveInput(Vector2 newMoveDirection)
+        private void Start()
+        {
+            SetCursorState(cursorLocked);
+        }
+        public void MoveInput(Vector2 newMoveDirection)
 		{
 			move = newMoveDirection;
 		} 

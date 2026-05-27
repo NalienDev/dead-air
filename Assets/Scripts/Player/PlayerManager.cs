@@ -48,7 +48,6 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         if (isOwner)
             Local = this;
 
-        DontDestroyOnLoad(gameObject);
     }
 
     // ── Update ─────────────────────────────────────────────────────────────
