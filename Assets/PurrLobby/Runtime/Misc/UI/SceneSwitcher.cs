@@ -50,6 +50,14 @@ namespace PurrLobby
         /// </summary>
         public void SwitchScene()
         {
+            // Prevent duplicate scene switches
+            if (_hasAlreadySwitched)
+            {
+                PurrLogger.LogWarning("SwitchScene already called - ignoring duplicate", this);
+                return;
+            }
+            
+            _hasAlreadySwitched = true;
             
             if (string.IsNullOrEmpty(nextScene))
             {

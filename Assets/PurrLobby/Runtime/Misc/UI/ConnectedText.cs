@@ -9,12 +9,11 @@ namespace PurrLobby
 {
     public class ConnectedText : MonoBehaviour
     {
-        private NetworkManager networkManager;
+        [SerializeField] private NetworkManager networkManager;
         [SerializeField] private TMP_Text connectedText;
 
         private void Awake()
         {
-            networkManager = FindFirstObjectByType<NetworkManager>();
             networkManager.onClientConnectionState += OnConnectionState;
         }
 

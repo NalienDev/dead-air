@@ -462,67 +462,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 142596152}
   m_CullTransparentMesh: 1
---- !u!1001 &187696058
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: -7840867231617242486, guid: e5d8ad1569039af478054920236752ad, type: 3}
-      propertyPath: m_Controller
-      value: 
-      objectReference: {fileID: 9100000, guid: 305c00733825cc24cb81c718f5c5dc33, type: 2}
-    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 13.282879
-      objectReference: {fileID: 0}
-    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.00000016611065
-      objectReference: {fileID: 0}
-    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 1.0285995
-      objectReference: {fileID: 0}
-    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -3500460014136483016, guid: e5d8ad1569039af478054920236752ad, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4357118449180629203, guid: e5d8ad1569039af478054920236752ad, type: 3}
-      propertyPath: m_Name
-      value: DeadAirTeamMember
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 8686905464242370237, guid: e5d8ad1569039af478054920236752ad, type: 3}
 --- !u!1 &201041508
 GameObject:
   m_ObjectHideFlags: 0
@@ -809,6 +748,7 @@ GameObject:
   - component: {fileID: 433046419}
   - component: {fileID: 433046421}
   - component: {fileID: 433046420}
+  - component: {fileID: 433046422}
   m_Layer: 0
   m_Name: Network Manager
   m_TagString: Untagged
@@ -863,8 +803,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: PurrNet.Runtime::PurrNet.NetworkManager
   _stopPlayingOnDisconnect: 0
-  _startServerFlags: 9
-  _startClientFlags: 7
+  _startServerFlags: 0
+  _startClientFlags: 0
   _cookieScope: 1
   _dontDestroyOnLoad: 1
   _transport: {fileID: 433046420}
@@ -875,6 +815,18 @@ MonoBehaviour:
   _authenticator: {fileID: 0}
   _tickRate: 20
   _patchLingeringProcessBug: 0
+--- !u!114 &433046422
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 433046418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5c476fd9733ed148b4631bd99c76108, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PurrNetLobbySetup::PurrLobby.ConnectionStarter
 --- !u!1 &461395929
 GameObject:
   m_ObjectHideFlags: 0
@@ -4185,4 +4137,3 @@ SceneRoots:
   - {fileID: 1771133837665322057}
   - {fileID: 1124469465}
   - {fileID: 1343899202}
-  - {fileID: 187696058}

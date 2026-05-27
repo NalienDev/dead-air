@@ -2171,7 +2171,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2072866401}
   m_HandleRect: {fileID: 2072866400}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -2351,8 +2351,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1097043113}
   - component: {fileID: 1097043115}
+  - component: {fileID: 1097043114}
   - component: {fileID: 1097043116}
-  - component: {fileID: 1097043117}
   m_Layer: 0
   m_Name: LobbyManager
   m_TagString: Untagged
@@ -2375,6 +2375,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1097043114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097043112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15156e7f57bff964485891eba8344bbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lobbyType: 2
+  maxLobbiesToFind: 10
+  handleSteamInit: 1
 --- !u!114 &1097043115
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2387,7 +2402,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 018749c98c25d47418932e090d8f8fbf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentProvider: {fileID: 1097043117}
+  currentProvider: {fileID: 1097043114}
   createRoomArgs:
     maxPlayers: 5
     roomProperties:
@@ -2548,21 +2563,6 @@ MonoBehaviour:
   lobbyManager: {fileID: 1097043115}
   nextScene: GameLobby
   subscribeToOnAllReady: 1
---- !u!114 &1097043117
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1097043112}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15156e7f57bff964485891eba8344bbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: PurrNetLobbySetup::PurrLobby.Providers.SteamLobbyProvider
-  lobbyType: 2
-  maxLobbiesToFind: 10
-  handleSteamInit: 1
 --- !u!1 &1101296062
 GameObject:
   m_ObjectHideFlags: 0
@@ -3170,7 +3170,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.2414873, y: 0.38946795}
   m_AnchorMax: {x: 0.761489, y: 0.60240436}
-  m_AnchoredPosition: {x: -2.0497131, y: 1.4103394}
+  m_AnchoredPosition: {x: -2.0496826, y: 1.4103394}
   m_SizeDelta: {x: -4.794899, y: -0.8588028}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1229674653
@@ -3236,7 +3236,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 94.9
+  m_fontSize: 94.85
   m_fontSizeBase: 60
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -6367,7 +6367,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1433267950}
   m_HandleRect: {fileID: 1433267949}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:

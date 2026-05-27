@@ -607,7 +607,7 @@ MonoBehaviour:
   _fpc: {fileID: 9103288766194465792}
   _voiceRecorder: {fileID: 5991265490983206294}
   _characterController: {fileID: 9119509886162617476}
-  _playerVisualRoot: {fileID: 0}
+  _playerVisualRoot: {fileID: 5511561592928705580}
   isDead:
     _value: 0
     _ownerAuth: 0
