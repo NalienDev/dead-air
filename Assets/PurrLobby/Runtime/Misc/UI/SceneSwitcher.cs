@@ -72,7 +72,7 @@ namespace PurrLobby
             {
                 lobbyManager.SetLobbyStarted();
             }
-            
+
             // Load game scene - ConnectionStarter in new scene will handle network initialization
             SceneManager.LoadSceneAsync(nextScene);
         }

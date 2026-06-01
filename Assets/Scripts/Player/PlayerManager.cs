@@ -1,4 +1,4 @@
-﻿using PurrNet;
+using PurrNet;
 using UnityEngine;
 
 /// <summary>
@@ -46,8 +46,16 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     protected override void OnSpawned(bool asServer)
     {
         if (isOwner)
+        {
             Local = this;
-
+            
+            // Hide the loading screen once the local player is fully spawned in the City
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "City")
+            {
+                if (LoadingScreenManager.Instance != null)
+                    LoadingScreenManager.Instance.HideLoadingScreen();
+            }
+        }
     }
 
     // ── Update ─────────────────────────────────────────────────────────────

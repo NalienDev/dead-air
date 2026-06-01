@@ -96,7 +96,12 @@ public class RoverManager : NetworkBehaviour
             PlayerManager[] players = FindObjectsByType<PlayerManager>(FindObjectsSortMode.None);
             foreach (var player in players)
             {
+                CharacterController cc = player.GetComponent<CharacterController>();
+                if (cc != null) cc.enabled = false;
+
                 player.transform.SetPositionAndRotation(teleportPoint.position, teleportPoint.rotation);
+
+                if (cc != null) cc.enabled = true;
             }
         }
 

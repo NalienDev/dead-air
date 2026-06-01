@@ -66,9 +66,10 @@ public class DungeonPart : NetworkBehaviour
 
     /// <summary>
     /// Spawns a filler wall on every unoccupied entry point.
+    /// Registers each spawned wall into <paramref name="wallRegistry"/> for later cleanup.
     /// Must be called on the server — PurrNet auto-syncs the Instantiate to clients.
     /// </summary>
-    public void FillEmptyDoors()
+    public void FillEmptyDoors(System.Collections.Generic.List<GameObject> wallRegistry = null)
     {
         foreach (Transform entry in entrypoints)
         {
@@ -79,6 +80,8 @@ public class DungeonPart : NetworkBehaviour
             Quaternion rot = entry.rotation * Quaternion.Euler(0f, _fillerWallYRotation, 0f);
             GameObject wall = Instantiate(_fillerWall, pos, rot);
             wall.transform.SetParent(null);
+
+            wallRegistry?.Add(wall);
         }
     }
 
