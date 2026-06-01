@@ -121,6 +121,31 @@ public class DungeonGenerator : NetworkBehaviour
         _shouldGenerate = true;
     }
 
+    /// <summary>Destroys the current dungeon and restarts generation cleanly. Server-only.</summary>
+    public void RegenerateDungeon()
+    {
+        if (!isServer) return;
+
+        foreach (DungeonPart part in _generatedRooms)
+        {
+            if (part != null) Destroy(part.gameObject);
+        }
+
+        foreach (GameObject door in _spawnedDoors)
+        {
+            if (door != null) Destroy(door);
+        }
+
+        _generatedRooms.Clear();
+        _spawnedDoors.Clear();
+        _consecutiveFailures = 0;
+        _restartAttempts = 0;
+        _isGenerated = false;
+        _generationPaused = false;
+        _tickTimer = 0f;
+        _shouldGenerate = true;
+    }
+
     public List<DungeonPart> GetGeneratedRooms() => _generatedRooms;
     public bool IsGenerated() => _isGenerated;
 

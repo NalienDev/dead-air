@@ -68,6 +68,9 @@ public class QuotaManager : NetworkIdentity
 
             Debug.Log("[QuotaManager] Quota met — advancing to next day.");
             // Teleportation to lobby is handled by ReturnToBaseButton now, no scene load needed.
+            
+            if (DungeonGenerator.Instance != null)
+                DungeonGenerator.Instance.RegenerateDungeon();
         }
         else
         {
@@ -99,5 +102,7 @@ public class QuotaManager : NetworkIdentity
         Debug.Log("[QuotaManager] Game reset.");
         // Resetting game doesn't need to load the lobby scene, as we teleport back to the lobby point.
         // If a specific reset sequence is needed, handle it here.
+        if (DungeonGenerator.Instance != null)
+            DungeonGenerator.Instance.RegenerateDungeon();
     }
 }
