@@ -301,7 +301,7 @@ MonoBehaviour:
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
   _networkManager: {fileID: 704429911}
-  firstScene: GameLobby
+  firstScene: City
 --- !u!4 &1879512053
 Transform:
   m_ObjectHideFlags: 0

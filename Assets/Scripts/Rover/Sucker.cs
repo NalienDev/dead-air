@@ -6,11 +6,11 @@ using UnityEngine;
 /// Stateless — delegates all cargo storage to RoverManager.
 /// Starts INACTIVE every scene; enabled via ActivateVacuumButton.
 /// </summary>
-public class Sucker : MonoBehaviour
+public class Sucker : NetworkBehaviour
 {
     private RoverManager _roverManager;
     private SuctionZone _suctionZone;
-    private bool _canSuck;
+    private SyncVar<bool> _canSuck;
 
     private void Awake()
     {
@@ -28,7 +28,7 @@ public class Sucker : MonoBehaviour
 
     public void SetCanSuck(bool value)
     {
-        _canSuck = value;
+        _canSuck.value = value;
         if (_suctionZone != null)
             _suctionZone.gameObject.SetActive(_canSuck);
     }
