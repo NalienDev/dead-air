@@ -8,13 +8,14 @@ public class RoverManager : NetworkBehaviour
 {
     public static RoverManager Instance { get; private set; }
 
+    [SerializeField] private Transform _lobbyDropPoint;
+    [SerializeField] private Sucker _expeditionSucker;
+    [SerializeField] private Sucker _lobbySucker;
+
     private readonly List<NetworkIdentity> _cargo = new();
 
-    private GameObject _rover;
-    private Sucker _sucker;
-
     public int CargoCount => _cargo.Count;
-    public Sucker Sucker => _sucker;
+    public Sucker Sucker => _expeditionSucker;
 
     protected override void OnSpawned(bool asServer)
     {
@@ -22,10 +23,13 @@ public class RoverManager : NetworkBehaviour
 
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
 
-        SceneManager.sceneLoaded += OnSceneLoaded;
-        FindRover();
+        if (_expeditionSucker != null)
+            _expeditionSucker.Initialise(this);
+
+        if (_lobbySucker != null)
+            _lobbySucker.Initialise(this);
+
         if (_cargo.Count > 0)
             ReleaseAllCargo();
     }
@@ -33,31 +37,7 @@ public class RoverManager : NetworkBehaviour
     protected override void OnDespawned(bool asServer)
     {
         base.OnDespawned(asServer);
-        SceneManager.sceneLoaded -= OnSceneLoaded;
         if (Instance == this) Instance = null;
-    }
-
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        FindRover();
-        if (_cargo.Count > 0)
-            ReleaseAllCargo();
-    }
-
-    private void FindRover()
-    {
-        _rover = GameObject.FindWithTag("Rover");
-
-        if (_rover == null)
-        {
-            Debug.LogWarning("[RoverManager] No GameObject with tag 'Rover' found in scene.");
-            return;
-        }
-
-        _sucker = _rover.GetComponentInChildren<Sucker>(includeInactive: true);
-
-        if (_sucker != null)
-            _sucker.Initialise(this);
     }
 
     public void AddCargo(NetworkIdentity identity)
@@ -85,8 +65,7 @@ public class RoverManager : NetworkBehaviour
 
     private void ReleaseAllCargo()
     {
-        RoverSpawnLocation spawnLocation = FindFirstObjectByType<RoverSpawnLocation>();
-        Transform releasePoint = spawnLocation != null ? spawnLocation.transform : transform;
+        Transform releasePoint = _lobbyDropPoint != null ? _lobbyDropPoint : transform;
 
         for (int i = _cargo.Count - 1; i >= 0; i--)
         {
@@ -96,7 +75,6 @@ public class RoverManager : NetworkBehaviour
             if (identity.TryGetComponent(out SuckableObject suckable))
                 suckable.EndAttraction();
 
-            SceneManager.MoveGameObjectToScene(identity.gameObject, SceneManager.GetActiveScene());
             identity.transform.SetPositionAndRotation(releasePoint.position, releasePoint.rotation);
 
             if (identity.TryGetComponent(out Rigidbody rb))
@@ -109,5 +87,24 @@ public class RoverManager : NetworkBehaviour
         }
 
         _cargo.Clear();
+    }
+
+    public void ReturnToLobby(Transform teleportPoint)
+    {
+        if (teleportPoint != null)
+        {
+            PlayerManager[] players = FindObjectsByType<PlayerManager>(FindObjectsSortMode.None);
+            foreach (var player in players)
+            {
+                CharacterController cc = player.GetComponent<CharacterController>();
+                if (cc != null) cc.enabled = false;
+
+                player.transform.SetPositionAndRotation(teleportPoint.position, teleportPoint.rotation);
+
+                if (cc != null) cc.enabled = true;
+            }
+        }
+
+        ReleaseAllCargo();
     }
 }

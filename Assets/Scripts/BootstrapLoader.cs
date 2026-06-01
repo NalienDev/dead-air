@@ -8,6 +8,9 @@ public class BootstrapLoader : NetworkBehaviour
 
     protected override void OnSpawned(bool asServer)
     {
+        if (LoadingScreenManager.Instance != null)
+            LoadingScreenManager.Instance.ShowLoadingScreen();
+            
         _networkManager.sceneModule.LoadSceneAsync(firstScene);
     }
 }

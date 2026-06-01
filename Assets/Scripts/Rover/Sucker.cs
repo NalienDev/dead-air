@@ -6,15 +6,14 @@ using UnityEngine;
 /// Stateless — delegates all cargo storage to RoverManager.
 /// Starts INACTIVE every scene; enabled via ActivateVacuumButton.
 /// </summary>
-public class Sucker : MonoBehaviour
+public class Sucker : NetworkBehaviour
 {
     private RoverManager _roverManager;
-    private SuctionZone _suctionZone;
-    private bool _canSuck;
+    [SerializeField]private SuctionZone _suctionZone;
+    private SyncVar<bool> _canSuck = new SyncVar<bool>(false);
 
     private void Awake()
     {
-        _suctionZone = GetComponentInChildren<SuctionZone>(includeInactive: true);
         // Always start off — ActivateVacuumButton enables it explicitly.
         SetCanSuck(false);
     }
@@ -25,12 +24,12 @@ public class Sucker : MonoBehaviour
     }
 
     public bool CanSuck() => _canSuck;
-
     public void SetCanSuck(bool value)
     {
-        _canSuck = value;
+        Debug.Log("Setting Sucker to " + value);
+        _canSuck.value = value;
         if (_suctionZone != null)
-            _suctionZone.gameObject.SetActive(_canSuck);
+            _suctionZone.gameObject.SetActive(_canSuck.value);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -41,6 +40,8 @@ public class Sucker : MonoBehaviour
             Debug.LogWarning("[Sucker] Not initialised — call Initialise() first.");
             return;
         }
+
+        if (other.gameObject.tag == "Player") return;
 
         // Require a NetworkIdentity — but do NOT check isSpawned.
         // Objects moved to DDOL lose their PurrNet spawn state, so that check

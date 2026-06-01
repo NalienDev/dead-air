@@ -18,15 +18,31 @@ public class SceneChanger : NetworkIdentity
         DontDestroyOnLoad(gameObject);
     }
 
+    [ObserversRpc(runLocally: true)]
+    public void RpcShowLoadingScreen()
+    {
+        if (LoadingScreenManager.Instance != null)
+            LoadingScreenManager.Instance.ShowLoadingScreen();
+    }
+
+    [ObserversRpc(runLocally: true)]
+    public void RpcHideLoadingScreen()
+    {
+        if (LoadingScreenManager.Instance != null)
+            LoadingScreenManager.Instance.HideLoadingScreen();
+    }
+
     [ServerRpc(requireOwnership: false)]
     public void LoadSceneForEveryone(string sceneName)
     {
+        RpcShowLoadingScreen();
         _networkManager.sceneModule.LoadSceneAsync(sceneName);
     }
 
     [ServerRpc(requireOwnership: false)]
     public void LoadNextSceneForEveryone()
     {
+        RpcShowLoadingScreen();
         int next = SceneManager.GetActiveScene().buildIndex + 1;
         if (next < SceneManager.sceneCountInBuildSettings)
             _networkManager.sceneModule.LoadSceneAsync(next.ToString());
@@ -34,6 +50,9 @@ public class SceneChanger : NetworkIdentity
 
     public void LoadSceneLocal(string sceneName)
     {
+        if (LoadingScreenManager.Instance != null)
+            LoadingScreenManager.Instance.ShowLoadingScreen();
+            
         SceneManager.LoadScene(sceneName);
         Time.timeScale = 1f;
         PauseMenu.GameIsPaused = false;

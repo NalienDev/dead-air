@@ -97,6 +97,7 @@
     <Compile Include="Assets\Scripts\GrabbableObject.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualButton.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonPart.cs" />
+    <Compile Include="Assets\Scripts\LoadingScreenManager.cs" />
     <Compile Include="Assets\InputSystem_Actions.cs" />
     <Compile Include="Assets\Scripts\NetworkedSceneButton.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
@@ -108,6 +109,7 @@
     <Compile Include="Assets\Scripts\Player\PlayerAnimationHandler.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\OutsideSpawnPoint.cs" />
     <Compile Include="Assets\Scripts\Bandwith.cs" />
+    <Compile Include="Assets\Scripts\Rover\StartExpeditionButton.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerManager.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\MainEntrance.cs" />
     <Compile Include="Assets\Scripts\QuotaUI.cs" />

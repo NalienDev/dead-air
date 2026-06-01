@@ -64,6 +64,7 @@ public class DungeonGenerator : NetworkBehaviour
 
     private readonly List<DungeonPart> _generatedRooms = new();
     private readonly List<GameObject> _spawnedDoors = new();
+    private readonly List<GameObject> _spawnedFillerWalls = new();
     private bool _isGenerated = false;
     private bool _shouldGenerate = false;
     private bool _generationPaused = false;
@@ -118,6 +119,37 @@ public class DungeonGenerator : NetworkBehaviour
     public void StartGeneration()
     {
         if (!isServer || _isGenerated) return;
+        _shouldGenerate = true;
+    }
+
+    /// <summary>Destroys the current dungeon and restarts generation cleanly. Server-only.</summary>
+    public void RegenerateDungeon()
+    {
+        if (!isServer) return;
+
+        foreach (DungeonPart part in _generatedRooms)
+        {
+            if (part != null) Destroy(part.gameObject);
+        }
+
+        foreach (GameObject door in _spawnedDoors)
+        {
+            if (door != null) Destroy(door);
+        }
+
+        foreach (GameObject wall in _spawnedFillerWalls)
+        {
+            if (wall != null) Destroy(wall);
+        }
+
+        _generatedRooms.Clear();
+        _spawnedDoors.Clear();
+        _spawnedFillerWalls.Clear();
+        _consecutiveFailures = 0;
+        _restartAttempts = 0;
+        _isGenerated = false;
+        _generationPaused = false;
+        _tickTimer = 0f;
         _shouldGenerate = true;
     }
 
@@ -226,7 +258,7 @@ public class DungeonGenerator : NetworkBehaviour
         SpawnAlternateEntrances();
 
         foreach (DungeonPart room in _generatedRooms)
-            room.FillEmptyDoors();
+            room.FillEmptyDoors(_spawnedFillerWalls);
 
         _isGenerated = true;
         Debug.Log($"[DungeonGenerator] Generation complete after {_restartAttempts} restart(s). {_generatedRooms.Count} parts placed.");
@@ -261,8 +293,15 @@ public class DungeonGenerator : NetworkBehaviour
                 Destroy(door);
         }
 
+        foreach (GameObject wall in _spawnedFillerWalls)
+        {
+            if (wall != null)
+                Destroy(wall);
+        }
+
         _generatedRooms.Clear();
         _spawnedDoors.Clear();
+        _spawnedFillerWalls.Clear();
         _consecutiveFailures = 0;
         _generationPaused = false;
         _tickTimer = 0f;

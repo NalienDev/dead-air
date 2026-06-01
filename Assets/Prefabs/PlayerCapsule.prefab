@@ -797,6 +797,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8762286023885395323, guid: 9c489a8547f4d9e4387da15a4ff82c81, type: 3}
+      propertyPath: m_Lens.FieldOfView
+      value: 60
+      objectReference: {fileID: 0}
     - target: {fileID: 8762286024517199033, guid: 9c489a8547f4d9e4387da15a4ff82c81, type: 3}
       propertyPath: m_Layer
       value: 6
@@ -837,15 +841,15 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: 70bb379c36393ac4ca1f443fd14bdd9c, type: 2}
     - target: {fileID: -3500460014136483016, guid: 8949e8c47b6ca364597ff54ac5e38926, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.0001399517
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -3500460014136483016, guid: 8949e8c47b6ca364597ff54ac5e38926, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.98014
+      value: -1.115
       objectReference: {fileID: 0}
     - target: {fileID: -3500460014136483016, guid: 8949e8c47b6ca364597ff54ac5e38926, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.26173002
+      value: -0.022
       objectReference: {fileID: 0}
     - target: {fileID: -3500460014136483016, guid: 8949e8c47b6ca364597ff54ac5e38926, type: 3}
       propertyPath: m_LocalRotation.w

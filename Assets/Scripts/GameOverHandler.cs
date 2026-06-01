@@ -14,14 +14,16 @@ public class GameOverHandler : MonoBehaviour
     {
         yield return new WaitForSeconds(_delayBeforeReset);
         
+        if (LoadingScreenManager.Instance != null)
+            LoadingScreenManager.Instance.ShowLoadingScreen();
+
         if (QuotaManager.Instance != null)
-        {
             QuotaManager.Instance.ServerResetGame();
-        }
+
+        // Game Over is a separate scene, so we MUST load back into the main game scene
+        if (SceneChanger.Instance != null)
+            SceneChanger.Instance.LoadSceneForEveryone("City"); // Ensure this matches your main scene name
         else
-        {
-            // Fallback if QuotaManager is missing
-            UnityEngine.SceneManagement.SceneManager.LoadScene("GameLobby");
-        }
+            UnityEngine.SceneManagement.SceneManager.LoadScene("City");
     }
 }
