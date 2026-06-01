@@ -13,6 +13,8 @@ using UnityEngine;
 /// </summary>
 public class ReturnToBaseButton : Interactable
 {
+    [SerializeField] private Transform _lobbyTeleportPoint;
+
     public override InteractionType OnInteract(GameObject user)
     {
         if (RoverManager.Instance == null)
@@ -26,9 +28,11 @@ public class ReturnToBaseButton : Interactable
         Debug.Log($"[ReturnToBaseButton] Submitting cargo — bandwidth: {bandwidth}, energy cells: {energyCells}");
 
         // Submit items, then evaluate quota. QuotaManager.ServerCheckQuotaAndProceed
-        // handles the scene transition (lobby or game over) internally.
+        // handles the game over scene transition internally if failed.
         QuotaManager.Instance.ServerProcessItems(bandwidth, energyCells);
         QuotaManager.Instance.ServerCheckQuotaAndProceed();
+
+        RoverManager.Instance.ReturnToLobby(_lobbyTeleportPoint);
 
         return InteractionType.PRESS;
     }

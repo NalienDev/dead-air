@@ -120,6 +120,7 @@
     <Compile Include="Assets\Scripts\Player\PlayerAnimationHandler.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\OutsideSpawnPoint.cs" />
     <Compile Include="Assets\Scripts\Bandwith.cs" />
+    <Compile Include="Assets\Scripts\Rover\StartExpeditionButton.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerManager.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\MainEntrance.cs" />
     <Compile Include="Assets\Scripts\QuotaUI.cs" />

@@ -7,22 +7,28 @@ using UnityEngine;
 /// </summary>
 public class ActivateVacuumButton : Interactable
 {
+    [Tooltip("The Sucker this button controls. If left empty, it will try to find one on this Rover.")]
+    [SerializeField] private Sucker _targetSucker;
+
+    private void Awake()
+    {
+        if (_targetSucker == null)
+        {
+            _targetSucker = GetComponentInParent<Sucker>();
+        }
+    }
+
     public override InteractionType OnInteract(GameObject user)
     {
-        if (RoverManager.Instance == null)
+        Debug.Log("ActivateVacuumButton Pressed");
+
+        if (_targetSucker == null)
         {
-            Debug.LogWarning("[ActivateVacuumButton] RoverManager.Instance is null.");
+            Debug.LogWarning("[ActivateVacuumButton] No Sucker assigned or found in parent!");
             return InteractionType.NONE;
         }
 
-        Sucker sucker = RoverManager.Instance.Sucker;
-        if (sucker == null)
-        {
-            Debug.LogWarning("[ActivateVacuumButton] No Sucker found on RoverManager.");
-            return InteractionType.NONE;
-        }
-
-        sucker.SetCanSuck(!sucker.CanSuck());
+        _targetSucker.SetCanSuck(!_targetSucker.CanSuck());
         return InteractionType.PRESS;
     }
 }

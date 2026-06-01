@@ -1,4 +1,4 @@
-﻿using PurrNet;
+using PurrNet;
 using UnityEngine;
 
 /// <summary>
@@ -23,7 +23,6 @@ public class QuotaManager : NetworkIdentity
     [SerializeField] private int _baseQuota = 1000;
     [SerializeField] private float _quotaMultiplier = 1.3f;
     [SerializeField] private string _gameOverSceneName = "GameOver";
-    [SerializeField] private string _lobbySceneName = "GameLobby";
 
     [Header("Synced State")]
     public SyncVar<int> currentDay = new SyncVar<int>(1);
@@ -32,12 +31,21 @@ public class QuotaManager : NetworkIdentity
     public SyncVar<int> sessionBandwidth = new SyncVar<int>(0);
     public SyncVar<int> currentEnergyCells = new SyncVar<int>(0);
 
-    private void Awake()
+    protected override void OnSpawned(bool asServer)
     {
-        if (Instance != null) { Destroy(gameObject); return; }
+        base.OnSpawned(asServer);
+
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
-        if (currentQuota.value == 0) currentQuota.value = _baseQuota;
+        
+        if (asServer && currentQuota.value == 0) 
+            currentQuota.value = _baseQuota;
+    }
+
+    protected override void OnDespawned(bool asServer)
+    {
+        base.OnDespawned(asServer);
+        if (Instance == this) Instance = null;
     }
 
     public void ServerProcessItems(int bandwidth, int energyCells)
@@ -59,7 +67,7 @@ public class QuotaManager : NetworkIdentity
             currentQuota.value = Mathf.RoundToInt(currentQuota.value * _quotaMultiplier);
 
             Debug.Log("[QuotaManager] Quota met — advancing to next day.");
-            SceneChanger.Instance.LoadSceneForEveryone(_lobbySceneName);
+            // Teleportation to lobby is handled by ReturnToBaseButton now, no scene load needed.
         }
         else
         {
@@ -89,6 +97,7 @@ public class QuotaManager : NetworkIdentity
         currentEnergyCells.value = 0;
 
         Debug.Log("[QuotaManager] Game reset.");
-        SceneChanger.Instance.LoadSceneForEveryone(_lobbySceneName);
+        // Resetting game doesn't need to load the lobby scene, as we teleport back to the lobby point.
+        // If a specific reset sequence is needed, handle it here.
     }
 }
