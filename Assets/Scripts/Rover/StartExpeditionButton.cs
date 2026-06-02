@@ -42,23 +42,13 @@ public class StartExpeditionButton : Interactable
         TeleportAndHide();
         return InteractionType.PRESS;
     }
-
     private void TeleportPlayers()
     {
         Debug.Log("[StartExpeditionButton] Teleporting players to the expedition area.");
-        PlayerManager[] players = FindObjectsByType<PlayerManager>(FindObjectsSortMode.None);
-        foreach (var player in players)
+        
+        if (PlayerManager.Local != null)
         {
-            // Must disable CharacterController first — it blocks transform position changes.
-            CharacterController cc = player.GetComponent<CharacterController>();
-            if (cc != null) cc.enabled = false;
-
-            player.transform.SetPositionAndRotation(
-                _expeditionSpawnPoint.position,
-                _expeditionSpawnPoint.rotation
-            );
-
-            if (cc != null) cc.enabled = true;
+            PlayerManager.Local.RequestTeleportAllPlayers(_expeditionSpawnPoint.position, _expeditionSpawnPoint.rotation);
         }
     }
 

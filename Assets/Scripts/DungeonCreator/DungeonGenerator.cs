@@ -65,7 +65,10 @@ public class DungeonGenerator : NetworkBehaviour
     private readonly List<DungeonPart> _generatedRooms = new();
     private readonly List<GameObject> _spawnedDoors = new();
     private readonly List<GameObject> _spawnedFillerWalls = new();
-    private bool _isGenerated = false;
+
+    /// <summary>Synced to all clients — true once generation is complete.</summary>
+    public SyncVar<bool> isGenerated = new(false);
+    private bool _isGenerated => isGenerated.value;
     private bool _shouldGenerate = false;
     private bool _generationPaused = false;
     private float _tickTimer = 0f;
@@ -118,7 +121,7 @@ public class DungeonGenerator : NetworkBehaviour
     /// <summary>Kicks off dungeon generation. Server-only.</summary>
     public void StartGeneration()
     {
-        if (!isServer || _isGenerated) return;
+        if (!isServer || isGenerated.value) return;
         _shouldGenerate = true;
     }
 
@@ -147,14 +150,14 @@ public class DungeonGenerator : NetworkBehaviour
         _spawnedFillerWalls.Clear();
         _consecutiveFailures = 0;
         _restartAttempts = 0;
-        _isGenerated = false;
+        isGenerated.value = false;
         _generationPaused = false;
         _tickTimer = 0f;
         _shouldGenerate = true;
     }
 
     public List<DungeonPart> GetGeneratedRooms() => _generatedRooms;
-    public bool IsGenerated() => _isGenerated;
+    public bool IsGenerated() => isGenerated.value;
 
     // ── Core generation ────────────────────────────────────────────────────
 
@@ -260,7 +263,7 @@ public class DungeonGenerator : NetworkBehaviour
         foreach (DungeonPart room in _generatedRooms)
             room.FillEmptyDoors(_spawnedFillerWalls);
 
-        _isGenerated = true;
+        isGenerated.value = true;
         Debug.Log($"[DungeonGenerator] Generation complete after {_restartAttempts} restart(s). {_generatedRooms.Count} parts placed.");
         OnGenerated?.Invoke();
     }
@@ -305,6 +308,7 @@ public class DungeonGenerator : NetworkBehaviour
         _consecutiveFailures = 0;
         _generationPaused = false;
         _tickTimer = 0f;
+        isGenerated.value = false;
         // _shouldGenerate stays true so Update() resumes automatically next tick
     }
 

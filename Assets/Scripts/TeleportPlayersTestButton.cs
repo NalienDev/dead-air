@@ -7,17 +7,17 @@ public class TeleportPlayersTestButton : Interactable
 
     public override InteractionType OnInteract(GameObject user)
     {
-
-        PlayerManager[] players = FindObjectsByType<PlayerManager>(FindObjectsSortMode.None);
-
-        for (int i = 0; i < players.Length; i++)
+        if (!DungeonGenerator.Instance.IsGenerated())
         {
-            PlayerManager player = players[i];
-            player.gameObject.transform.SetPositionAndRotation(_teleportTransform.position, _teleportTransform.rotation);
-
+            Debug.Log("[TeleportPlayersTestButton] Dungeon is still generating, please wait.");
+            return InteractionType.NONE;
         }
+
+        // Ask the server to teleport every player — only server can authoritatively move players
+        PlayerManager presser = user.GetComponent<PlayerManager>();
+        if (presser != null)
+            presser.RequestTeleportAllPlayers(_teleportTransform.position, _teleportTransform.rotation);
 
         return InteractionType.PRESS;
     }
-
 }

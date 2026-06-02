@@ -92,6 +92,30 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     [ServerRpc(requireOwnership: false)]
     private void ServerSetInsideDungeon(bool value) => isInsideDungeon.value = value;
 
+    // ── Teleport all players (server-authoritative) ────────────────────────
+
+    /// <summary>
+    /// Any client can call this. The server finds every PlayerManager and
+    /// tells each one to warp to <paramref name="position"/> via ObserversRpc.
+    /// </summary>
+    [ServerRpc(requireOwnership: false)]
+    public void RequestTeleportAllPlayers(Vector3 position, Quaternion rotation)
+    {
+        PlayerManager[] all = FindObjectsByType<PlayerManager>(FindObjectsSortMode.None);
+        foreach (PlayerManager pm in all)
+            pm.TeleportToPosition(position, rotation);
+    }
+
+    /// <summary>Runs on every client (and the server) for this specific player object.</summary>
+    [ObserversRpc(runLocally: true)]
+    public void TeleportToPosition(Vector3 position, Quaternion rotation)
+    {
+        CharacterController cc = GetComponent<CharacterController>();
+        if (cc != null) cc.enabled = false;
+        transform.SetPositionAndRotation(position, rotation);
+        if (cc != null) cc.enabled = true;
+    }
+
     // ── Server RPCs ────────────────────────────────────────────────────────
 
     [ServerRpc]
