@@ -1,4 +1,4 @@
-﻿using PurrNet;
+using PurrNet;
 using StarterAssets;
 using UnityEngine;
 
@@ -40,9 +40,13 @@ public class PlayerAnimationHandler : NetworkBehaviour
     private float _airTimer;
     private float _spawnTimer;
 
-    private void Start()
+    private void Awake()
     {
         _animator = GetComponent<NetworkAnimator>();
+    }
+
+    private void Start()
+    {
         _input = GetComponentInParent<StarterAssetsInputs>();
         _controller = GetComponentInParent<FirstPersonController>();
         _characterController = GetComponentInParent<CharacterController>();
@@ -137,27 +141,28 @@ public class PlayerAnimationHandler : NetworkBehaviour
     // ── Trigger Sync ──────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Fires a trigger locally then tells the server to broadcast a reset
-    /// to all clients so nobody gets stuck with a pending trigger.
+    /// Fires a trigger locally then tells the server to broadcast it
+    /// to all other clients so they play the same animation.
     /// </summary>
     private void TriggerOnAllClients(int hash)
     {
         _animator.SetTrigger(hash);
-        ServerResetTrigger(hash);
+        ServerSyncTrigger(hash);
     }
 
     [ServerRpc(requireOwnership: true)]
-    private void ServerResetTrigger(int hash)
+    private void ServerSyncTrigger(int hash)
     {
-        ResetTriggerOnClients(hash);
+        SyncTriggerOnClients(hash);
     }
 
     [ObserversRpc]
-    private void ResetTriggerOnClients(int hash)
+    private void SyncTriggerOnClients(int hash)
     {
-        // Don't reset on the owner — they already consumed it
+        // Owner already set it locally
         if (isOwner) return;
-        _animator.ResetTrigger(hash);
+        if (!_animator) return;
+        _animator.SetTrigger(hash);
     }
 
     // ── Animation Events ──────────────────────────────────────────────────────

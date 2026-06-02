@@ -1,29 +1,58 @@
-using PurrNet;
-using PurrNet.Transports;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using TMPro;
 
-public class MainMenu : MonoBehaviour
+/// <summary>
+/// Steam-free main menu. Stores the player's intent via ConnectionIntent,
+/// then does a plain SceneManager load to BootstrapScene where the
+/// NetworkManager lives and will handle starting host / client.
+/// </summary>
+public class MainMenuUI : MonoBehaviour
 {
-    [SerializeField] private NetworkManager _networkManager;
-    [SerializeField] private PurrTransport _transport;
-    [SerializeField] private TMP_InputField _roomInput;
+    [Header("Scene")]
+    [Tooltip("Exact name of your Bootstrap scene as it appears in Build Settings.")]
+    [SerializeField] private string _bootstrapSceneName = "BootstrapScene";
+
+    [Header("UI References")]
+    [SerializeField] private TMP_InputField _roomCodeInput;
     [SerializeField] private TextMeshProUGUI _statusText;
-    [SerializeField] private GameObject _canvas;
 
-    public void Host()
+    // ── Button callbacks ──────────────────────────────────────────────
+
+    public void OnHostClicked()
     {
-        string room = System.Guid.NewGuid().ToString()[..6].ToUpper(); // short random code
-        _transport.roomName = room;
-        _networkManager.StartHost();
-        _statusText.text = "Room code: " + room;
-        DontDestroyOnLoad(_canvas.gameObject);
+        SetStatus("Starting as host...");
+        ConnectionIntent.SetHost();
+        LoadBootstrap();
     }
 
-    public void Join(string text)
+    public void OnJoinClicked()
     {
-        _transport.roomName = text.ToUpper();
-        _networkManager.StartClient();
+        string code = _roomCodeInput != null ? _roomCodeInput.text.Trim() : string.Empty;
+
+        if (string.IsNullOrEmpty(code))
+        {
+            SetStatus("Enter a room code first.");
+            return;
+        }
+
+        SetStatus($"Joining room {code.ToUpper()}...");
+        ConnectionIntent.SetJoin(code);
+        LoadBootstrap();
     }
 
+    // ── Helpers ───────────────────────────────────────────────────────
+
+    private void LoadBootstrap()
+    {
+        SceneManager.LoadScene(_bootstrapSceneName);
+    }
+
+    private void SetStatus(string message)
+    {
+        if (_statusText != null)
+            _statusText.text = message;
+
+        Debug.Log($"[MainMenuUI] {message}");
+    }
 }
