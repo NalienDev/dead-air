@@ -31,7 +31,10 @@ public class RoverManager : NetworkBehaviour
             _lobbySucker.Initialise(this);
 
         if (_cargo.Count > 0)
-            ReleaseAllCargo();
+        {
+            Transform releasePoint = _lobbyDropPoint != null ? _lobbyDropPoint : transform;
+            ServerReleaseAllCargo(releasePoint.position, releasePoint.rotation);
+        }
     }
 
     protected override void OnDespawned(bool asServer)
@@ -63,10 +66,9 @@ public class RoverManager : NetworkBehaviour
         }
     }
 
-    private void ReleaseAllCargo()
+    [ServerRpc(requireOwnership: false)]
+    private void ServerReleaseAllCargo(Vector3 releasePos, Quaternion releaseRot)
     {
-        Transform releasePoint = _lobbyDropPoint != null ? _lobbyDropPoint : transform;
-
         for (int i = _cargo.Count - 1; i >= 0; i--)
         {
             NetworkIdentity identity = _cargo[i];
@@ -75,7 +77,7 @@ public class RoverManager : NetworkBehaviour
             if (identity.TryGetComponent(out SuckableObject suckable))
                 suckable.EndAttraction();
 
-            identity.transform.SetPositionAndRotation(releasePoint.position, releasePoint.rotation);
+            identity.transform.SetPositionAndRotation(releasePos, releaseRot);
 
             if (identity.TryGetComponent(out Rigidbody rb))
             {
@@ -84,27 +86,39 @@ public class RoverManager : NetworkBehaviour
             }
 
             identity.gameObject.SetActive(true);
+            RpcReleaseCargo(identity, releasePos, releaseRot);
         }
 
         _cargo.Clear();
     }
 
-    public void ReturnToLobby(Transform teleportPoint)
+    [ObserversRpc(runLocally: false)]
+    private void RpcReleaseCargo(NetworkIdentity identity, Vector3 releasePos, Quaternion releaseRot)
     {
-        if (teleportPoint != null)
+        if (identity == null) return;
+        identity.transform.SetPositionAndRotation(releasePos, releaseRot);
+        identity.gameObject.SetActive(true);
+    }
+
+    [ServerRpc(requireOwnership: false)]
+    public void ServerRequestReturnToBase(Vector3 teleportPos, Quaternion teleportRot)
+    {
+        GetCargoValues(out int bandwidth, out int energyCells);
+        Debug.Log($"[RoverManager] Submitting cargo — bandwidth: {bandwidth}, energy cells: {energyCells}");
+
+        if (QuotaManager.Instance != null)
         {
-            PlayerManager[] players = FindObjectsByType<PlayerManager>(FindObjectsSortMode.None);
-            foreach (var player in players)
-            {
-                CharacterController cc = player.GetComponent<CharacterController>();
-                if (cc != null) cc.enabled = false;
-
-                player.transform.SetPositionAndRotation(teleportPoint.position, teleportPoint.rotation);
-
-                if (cc != null) cc.enabled = true;
-            }
+            QuotaManager.Instance.ServerProcessItems(bandwidth, energyCells);
+            QuotaManager.Instance.ServerCheckQuotaAndProceed();
         }
 
-        ReleaseAllCargo();
+        PlayerManager[] players = FindObjectsByType<PlayerManager>(FindObjectsSortMode.None);
+        foreach (var player in players)
+        {
+            player.TeleportToPosition(teleportPos, teleportRot);
+        }
+
+        Transform releasePoint = _lobbyDropPoint != null ? _lobbyDropPoint : transform;
+        ServerReleaseAllCargo(releasePoint.position, releasePoint.rotation);
     }
 }

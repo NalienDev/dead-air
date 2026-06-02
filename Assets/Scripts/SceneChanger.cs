@@ -36,7 +36,11 @@ public class SceneChanger : NetworkIdentity
     public void LoadSceneForEveryone(string sceneName)
     {
         RpcShowLoadingScreen();
-        _networkManager.sceneModule.LoadSceneAsync(sceneName);
+        NetworkManager nm = _networkManager != null ? _networkManager : NetworkManager.main;
+        if (nm != null && nm.sceneModule != null)
+            nm.sceneModule.LoadSceneAsync(sceneName);
+        else
+            Debug.LogError("[SceneChanger] Cannot load scene: NetworkManager or SceneModule is null.");
     }
 
     [ServerRpc(requireOwnership: false)]
@@ -45,7 +49,13 @@ public class SceneChanger : NetworkIdentity
         RpcShowLoadingScreen();
         int next = SceneManager.GetActiveScene().buildIndex + 1;
         if (next < SceneManager.sceneCountInBuildSettings)
-            _networkManager.sceneModule.LoadSceneAsync(next.ToString());
+        {
+            NetworkManager nm = _networkManager != null ? _networkManager : NetworkManager.main;
+            if (nm != null && nm.sceneModule != null)
+                nm.sceneModule.LoadSceneAsync(next.ToString());
+            else
+                Debug.LogError("[SceneChanger] Cannot load next scene: NetworkManager or SceneModule is null.");
+        }
     }
 
     public void LoadSceneLocal(string sceneName)

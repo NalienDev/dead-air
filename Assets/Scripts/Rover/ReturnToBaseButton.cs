@@ -23,16 +23,8 @@ public class ReturnToBaseButton : Interactable
             return InteractionType.NONE;
         }
 
-        RoverManager.Instance.GetCargoValues(out int bandwidth, out int energyCells);
-
-        Debug.Log($"[ReturnToBaseButton] Submitting cargo — bandwidth: {bandwidth}, energy cells: {energyCells}");
-
-        // Submit items, then evaluate quota. QuotaManager.ServerCheckQuotaAndProceed
-        // handles the game over scene transition internally if failed.
-        QuotaManager.Instance.ServerProcessItems(bandwidth, energyCells);
-        QuotaManager.Instance.ServerCheckQuotaAndProceed();
-
-        RoverManager.Instance.ReturnToLobby(_lobbyTeleportPoint);
+        // Submit items, evaluate quota, and teleport players securely on the server.
+        RoverManager.Instance.ServerRequestReturnToBase(_lobbyTeleportPoint.position, _lobbyTeleportPoint.rotation);
 
         return InteractionType.PRESS;
     }

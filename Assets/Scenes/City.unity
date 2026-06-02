@@ -2316,7 +2316,7 @@ GameObject:
   - component: {fileID: 182322723}
   - component: {fileID: 182322722}
   - component: {fileID: 182322721}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Cube (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2930,7 +2930,7 @@ GameObject:
   - component: {fileID: 207091266}
   - component: {fileID: 207091265}
   - component: {fileID: 207091264}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: ReturnToLobby
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -15533,7 +15533,7 @@ GameObject:
   - component: {fileID: 1221557593}
   - component: {fileID: 1221557592}
   - component: {fileID: 1221557591}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: ActivateButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18404,7 +18404,7 @@ GameObject:
   - component: {fileID: 1542315813}
   - component: {fileID: 1542315812}
   - component: {fileID: 1542315811}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Cube (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20323,6 +20323,10 @@ MonoBehaviour:
     m_Bits: 512
   _maxConsecutiveFailures: 5
   _maxRestartAttempts: 15
+  isGenerated:
+    _value: 0
+    _ownerAuth: 0
+    _sendIntervalInSeconds: 0
 --- !u!4 &1712980456
 Transform:
   m_ObjectHideFlags: 0
@@ -23960,7 +23964,7 @@ GameObject:
   - component: {fileID: 1876975101}
   - component: {fileID: 1876975100}
   - component: {fileID: 1876975099}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Cube (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27095,7 +27099,7 @@ GameObject:
   - component: {fileID: 2097755654}
   - component: {fileID: 2097755653}
   - component: {fileID: 2097755652}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Cube (6)
   m_TagString: Untagged
   m_Icon: {fileID: 0}

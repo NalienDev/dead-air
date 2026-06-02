@@ -15,7 +15,9 @@ public class Sucker : NetworkBehaviour
     private void Awake()
     {
         // Always start off — ActivateVacuumButton enables it explicitly.
-        SetCanSuck(false);
+        _canSuck.value = false;
+        if (_suctionZone != null)
+            _suctionZone.gameObject.SetActive(false);
     }
 
     public void Initialise(RoverManager roverManager)
@@ -26,22 +28,50 @@ public class Sucker : NetworkBehaviour
     public bool CanSuck() => _canSuck;
     public void SetCanSuck(bool value)
     {
+        if (isServer)
+        {
+            ApplyCanSuck(value);
+        }
+        else
+        {
+            ServerSetCanSuck(value);
+        }
+    }
+
+    [ServerRpc(requireOwnership: false)]
+    private void ServerSetCanSuck(bool value)
+    {
+        ApplyCanSuck(value);
+    }
+
+    private void ApplyCanSuck(bool value)
+    {
         Debug.Log("Setting Sucker to " + value);
         _canSuck.value = value;
         if (_suctionZone != null)
-            _suctionZone.gameObject.SetActive(_canSuck.value);
+            _suctionZone.gameObject.SetActive(value);
+        
+        RpcApplyCanSuck(value);
+    }
+
+    [ObserversRpc(runLocally: false)]
+    private void RpcApplyCanSuck(bool value)
+    {
+        if (_suctionZone != null)
+            _suctionZone.gameObject.SetActive(value);
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!_canSuck) return;
+        if (!isServer) return;
+        if (!_canSuck.value) return;
         if (_roverManager == null)
         {
             Debug.LogWarning("[Sucker] Not initialised — call Initialise() first.");
             return;
         }
 
-        if (other.gameObject.tag == "Player") return;
+        if (other.gameObject.CompareTag("Player")) return;
 
         // Require a NetworkIdentity — but do NOT check isSpawned.
         // Objects moved to DDOL lose their PurrNet spawn state, so that check
@@ -51,10 +81,17 @@ public class Sucker : NetworkBehaviour
         if (other.TryGetComponent(out SuckableObject suckable))
             suckable.EndAttraction();
 
+        _roverManager.AddCargo(identity);
+        RpcHideObject(identity);
+    }
+
+    [ObserversRpc(runLocally: true)]
+    private void RpcHideObject(NetworkIdentity identity)
+    {
+        if (identity == null) return;
+        
         // Keep the object alive across scene transitions.
         DontDestroyOnLoad(identity.gameObject);
-
-        _roverManager.AddCargo(identity);
         identity.gameObject.SetActive(false);
     }
 }
