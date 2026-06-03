@@ -7311,6 +7311,7 @@ GameObject:
   m_Component:
   - component: {fileID: 558175556}
   - component: {fileID: 558175555}
+  - component: {fileID: 558175557}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -7352,6 +7353,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &558175557
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 558175554}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 535956c4038f17c4199fb6c0db5b2f41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerRegistry
 --- !u!1 &580052282
 GameObject:
   m_ObjectHideFlags: 0
@@ -8883,8 +8896,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2063536506}
   m_HandleRect: {fileID: 2063536505}
   m_Direction: 0
-  m_Value: 0
-  m_Size: 1
+  m_Value: 1
+  m_Size: 0.99999994
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -11989,7 +12002,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1557097778}
   m_HandleRect: {fileID: 1557097776}
   m_Direction: 2
-  m_Value: 1.0000055
+  m_Value: 1.0000057
   m_Size: 0.465852
   m_NumberOfSteps: 0
   m_OnValueChanged:
