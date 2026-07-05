@@ -77,8 +77,29 @@ public class GrabbableObject : Interactable
     /// <summary>
     /// Shows or hides this object while it sits in an inactive inventory slot.
     /// Colliders are also disabled so the hidden item doesn't block raycasts or physics.
+    /// Applied locally immediately, then relayed through the server so every
+    /// other client hides/shows the same object — otherwise it stays visible
+    /// (and interactable) for everyone but the owner.
     /// </summary>
     public void SetVisible(bool visible)
+    {
+        ApplyVisible(visible);
+        ServerSetVisible(visible);
+    }
+
+    [ServerRpc(requireOwnership: false)]
+    private void ServerSetVisible(bool visible)
+    {
+        RpcSetVisible(visible);
+    }
+
+    [ObserversRpc(runLocally: false)]
+    private void RpcSetVisible(bool visible)
+    {
+        ApplyVisible(visible);
+    }
+
+    private void ApplyVisible(bool visible)
     {
         foreach (Renderer r in _renderers) r.enabled = visible;
         foreach (Collider c in _colliders) c.enabled = visible;
