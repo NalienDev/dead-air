@@ -86,7 +86,6 @@
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonGenerator.cs" />
     <Compile Include="Assets\Scripts\QuotaManager.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualTouchZone.cs" />
-    <Compile Include="Assets\Scripts\Spectator\PlayerRegistry.cs" />
     <Compile Include="Assets\Scripts\Voice\TheEchoAI.cs" />
     <Compile Include="Assets\Scripts\DestructibleObjects\Spawner.cs" />
     <Compile Include="Assets\Scripts\Spectator\ReviveDeadPlayersButton.cs" />

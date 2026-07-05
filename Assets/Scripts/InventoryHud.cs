@@ -22,9 +22,19 @@ public class InventoryHUD : MonoBehaviour
     [SerializeField] private Color _occupiedTint = new Color(0.6f, 1f, 0.6f, 1f);
 
     private Interactor _interactor;
+    private bool _hidden;
 
     private void Update()
     {
+        // Hide the inventory UI while the local player is dead / spectating.
+        bool dead = PlayerManager.Local != null && PlayerManager.Local.IsDead;
+        if (dead)
+        {
+            if (!_hidden) SetSlotsVisible(false);
+            return;
+        }
+        if (_hidden) SetSlotsVisible(true);
+
         if (_interactor == null)
         {
             // Try to find the local player's Interactor once it exists
@@ -33,6 +43,16 @@ public class InventoryHUD : MonoBehaviour
         }
 
         Refresh();
+    }
+
+    private void SetSlotsVisible(bool visible)
+    {
+        _hidden = !visible;
+        foreach (SlotUI slot in _slotUIs)
+        {
+            if (slot.background != null) slot.background.gameObject.SetActive(visible);
+            if (slot.itemLabel != null) slot.itemLabel.gameObject.SetActive(visible);
+        }
     }
 
     private void Refresh()

@@ -123,6 +123,7 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     {
         if (IsDead) return;
         currentOxygen.value = Mathf.Clamp(currentOxygen.value - amount, 0, maxOxygen.value);
+        CheckServerDeath();
     }
 
     [ServerRpc]
@@ -130,6 +131,7 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     {
         if (IsDead) return;
         currentHealth.value = Mathf.Max(currentHealth.value - damage, 0);
+        CheckServerDeath();
     }
 
     [ServerRpc]
@@ -144,6 +146,20 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     {
         if (IsDead) return;
         currentHealth.value = Mathf.Clamp(currentHealth.value + amount, 0, maxHealth.value);
+    }
+
+    /// <summary>
+    /// Server-authoritative death check, run after any server-side change to
+    /// health/oxygen. This lives here — not in PlayerDeathHandler.Update —
+    /// because NetworkOwnershipToggle disables PlayerDeathHandler (and this
+    /// component) on the server's copy of a remote client, so their Update never
+    /// runs. These ServerRpc bodies, however, always execute on the server, and
+    /// calling a method on a disabled component is still valid.
+    /// </summary>
+    private void CheckServerDeath()
+    {
+        if (_deathHandler == null) _deathHandler = GetComponent<PlayerDeathHandler>();
+        if (_deathHandler != null) _deathHandler.ServerCheckDeath();
     }
 
     // ── Voice recording relay ──────────────────────────────────────────────

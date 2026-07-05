@@ -1,260 +1,157 @@
 using System.Collections.Generic;
-using PurrNet;
-using PurrNet.Logging;
 using UnityEngine;
 
 /// <summary>
-/// Attached to the PlayerCapsule. Activates only for the owning client when they die.
-/// Moves a free-floating spectator camera through alive players.
+/// Local-only third-person spectator camera.
 ///
-/// Requirements in the Inspector:
-///   • SpectatorCameraRoot  — assign the PlayerCameraRoot transform
-///   • SpectatorCamera      — assign the PlayerFollowCamera (Cinemachine Vcam) GameObject
+/// This is NOT a networked component. <see cref="PlayerDeathHandler"/> adds it at
+/// runtime on the owning client the moment they die and drives it via
+/// <see cref="BeginSpectating"/> / <see cref="EndSpectating"/>. Nothing to wire in
+/// the Inspector and nothing to place in the scene.
 ///
-/// The spectator camera is re-parented to each target's camera root so Cinemachine
-/// continues to work naturally.
+/// How the camera works:
+///   The player's FirstPersonController normally drives the "PlayerCameraRoot"
+///   (its CinemachineCameraTarget) and the scene's Cinemachine vcam follows it.
+///   On death the FPC is disabled, so this component is free to steer that same
+///   camera root. Each LateUpdate it parks the root behind + above the spectated
+///   player and looks at them — a third-person orbit-follow. Because the vcam
+///   still follows the camera root, the rendered view follows along.
 ///
-/// IMPROVEMENTS:
-///   - Uses PlayerRegistry (backed by PurrNet PlayerID) for reliable alive tracking.
-///   - Watches PlayerDeathHandler.isDead SyncVar on each target so auto-advance
-///     fires the moment a spectated player dies, not one frame later.
-///   - All spectator state is cleaned up properly on revive.
+/// Controls: Left / Right arrow keys cycle through the other alive players.
 /// </summary>
-[RequireComponent(typeof(PlayerDeathHandler))]
-public class SpectatorController : NetworkBehaviour
+[DisallowMultipleComponent]
+public class SpectatorController : MonoBehaviour
 {
-    // ── Inspector ──────────────────────────────────────────────────────────
+    // ── Third-person framing (tweak to taste) ──────────────────────────────
+    [Header("Third-person framing")]
+    [Tooltip("How far behind the spectated player the camera sits.")]
+    [SerializeField] private float _distance = 4f;
 
-    [Header("Camera")]
-    [Tooltip("The PlayerCameraRoot transform on this prefab.")]
-    [SerializeField] private Transform _spectatorCameraRoot;
+    [Tooltip("How high above the spectated player the camera sits.")]
+    [SerializeField] private float _height = 1.8f;
 
-    [Tooltip("The PlayerFollowCamera (Cinemachine VCam) GameObject.")]
-    [SerializeField] private GameObject _spectatorCameraObject;
+    [Tooltip("Point on the target the camera looks at, measured up from their feet.")]
+    [SerializeField] private float _lookHeight = 1.4f;
 
     [Header("Input")]
-    [Tooltip("Key to cycle to the next alive player.")]
-    [SerializeField] private KeyCode _nextPlayerKey = KeyCode.RightArrow;
+    [SerializeField] private KeyCode _nextKey = KeyCode.RightArrow;
+    [SerializeField] private KeyCode _prevKey = KeyCode.LeftArrow;
 
-    [Tooltip("Key to cycle to the previous alive player.")]
-    [SerializeField] private KeyCode _prevPlayerKey = KeyCode.LeftArrow;
-
-    [Header("Offset from spectated player's camera root")]
-    [SerializeField] private Vector3 _cameraOffset = new(0f, 0.5f, 0f);
-
-    // ── Private state ──────────────────────────────────────────────────────
-
-    private PlayerDeathHandler _deathHandler;
-    private PlayerManager _playerManager;
-
+    // ── State ──────────────────────────────────────────────────────────────
     private bool _isSpectating;
-    private int _spectatorIndex;
-    private List<PlayerManager> _targets = new();
+    private Transform _cameraTarget;          // local PlayerCameraRoot (vcam follows this)
+    private PlayerManager _self;
 
-    // Subscribed target's death handler so we can react instantly when they die
-    private PlayerDeathHandler _watchedTargetDeathHandler;
+    private readonly List<PlayerManager> _targets = new();
+    private int _index;
 
-    // Original parent/position so we can restore on revive
-    private Transform _originalCameraParent;
-    private Vector3 _originalCameraLocalPos;
-    private Quaternion _originalCameraLocalRot;
+    // Saved so the camera root snaps back to first-person on revive.
+    private Vector3 _originalLocalPos;
+    private Quaternion _originalLocalRot;
+    private bool _savedTransform;
 
-    // ── Lifecycle ──────────────────────────────────────────────────────────
+    private PlayerManager CurrentTarget =>
+        (_index >= 0 && _index < _targets.Count) ? _targets[_index] : null;
 
-    private void Awake()
+    // ── Public API (called by PlayerDeathHandler, owner only) ──────────────
+
+    public void BeginSpectating(PlayerManager self, Transform cameraTarget)
     {
-        _deathHandler = GetComponent<PlayerDeathHandler>();
-        _playerManager = GetComponent<PlayerManager>();
-    }
+        _self = self;
+        _cameraTarget = cameraTarget;
 
-    protected override void OnSpawned(bool asServer)
-    {
-        if (!isOwner) return;
-
-        if (_spectatorCameraRoot != null)
+        if (_cameraTarget != null && !_savedTransform)
         {
-            _originalCameraParent = _spectatorCameraRoot.parent;
-            _originalCameraLocalPos = _spectatorCameraRoot.localPosition;
-            _originalCameraLocalRot = _spectatorCameraRoot.localRotation;
+            _originalLocalPos = _cameraTarget.localPosition;
+            _originalLocalRot = _cameraTarget.localRotation;
+            _savedTransform = true;
         }
 
-        _deathHandler.isDead.onChanged += OnDeadChanged;
+        _isSpectating = true;
+        _index = 0;
+        RefreshTargets();
     }
 
-    protected override void OnDespawned(bool asServer)
+    public void EndSpectating()
     {
-        if (!isOwner) return;
-        _deathHandler.isDead.onChanged -= OnDeadChanged;
-        UnwatchCurrentTarget();
+        _isSpectating = false;
+        _targets.Clear();
+
+        // Restore the camera root so the FirstPersonController resumes cleanly.
+        if (_cameraTarget != null && _savedTransform)
+        {
+            _cameraTarget.localPosition = _originalLocalPos;
+            _cameraTarget.localRotation = _originalLocalRot;
+        }
+        _savedTransform = false;
     }
+
+    // ── Loop ───────────────────────────────────────────────────────────────
 
     private void Update()
     {
-        if (!isOwner || !_isSpectating) return;
-        HandleInput();
+        if (!_isSpectating) return;
+
+        if (Input.GetKeyDown(_nextKey)) Cycle(+1);
+        else if (Input.GetKeyDown(_prevKey)) Cycle(-1);
+
+        // Auto-advance if the player we were watching died or disconnected.
+        if (CurrentTarget == null || CurrentTarget.IsDead)
+            RefreshTargets();
     }
 
-    // ── Death / Revive callbacks ───────────────────────────────────────────
-
-    private void OnDeadChanged(bool newVal)
+    private void LateUpdate()
     {
-        if (!isOwner) return;
+        if (!_isSpectating || _cameraTarget == null) return;
 
-        if (newVal)
-            BeginSpectating();
-        else
-            EndSpectating();
-    }
-
-    // ── Spectator logic ────────────────────────────────────────────────────
-
-    private void BeginSpectating()
-    {
-        _isSpectating = true;
-        _spectatorIndex = 0;
-
-        RefreshTargetList();
-
-        if (_targets.Count == 0)
-        {
-            PurrLogger.LogWarning("[SpectatorController] No alive players to spectate.");
-            LocalPlayerUI.Instance?.OnSpectatorTargetChanged(null);
-            return;
-        }
-
-        AttachToTarget(_spectatorIndex);
-    }
-
-    private void EndSpectating()
-    {
-        _isSpectating = false;
-        UnwatchCurrentTarget();
-
-        if (_spectatorCameraRoot != null)
-        {
-            _spectatorCameraRoot.SetParent(_originalCameraParent, false);
-            _spectatorCameraRoot.localPosition = _originalCameraLocalPos;
-            _spectatorCameraRoot.localRotation = _originalCameraLocalRot;
-        }
-
-        PurrLogger.Log("[SpectatorController] Spectator mode ended — player revived.");
-    }
-
-    private void HandleInput()
-    {
-        if (Input.GetKeyDown(_nextPlayerKey))
-            CycleTarget(+1);
-        else if (Input.GetKeyDown(_prevPlayerKey))
-            CycleTarget(-1);
-    }
-
-    private void CycleTarget(int direction)
-    {
-        RefreshTargetList();
-        if (_targets.Count == 0)
-        {
-            LocalPlayerUI.Instance?.OnSpectatorTargetChanged(null);
-            return;
-        }
-
-        if (_spectatorCameraObject != null)
-            _spectatorCameraObject.SetActive(false);
-
-        _spectatorIndex = (_spectatorIndex + direction + _targets.Count) % _targets.Count;
-        AttachToTarget(_spectatorIndex);
-    }
-
-    private void RefreshTargetList()
-    {
-        if (PlayerRegistry.Instance == null) return;
-        _targets = PlayerRegistry.Instance.GetAlivePlayersExcept(_playerManager);
-    }
-
-    /// <summary>
-    /// Re-parents our spectator camera root to the target's PlayerCameraRoot.
-    /// Also subscribes to the target's isDead SyncVar so we auto-advance if they die.
-    /// </summary>
-    private void AttachToTarget(int index)
-    {
-        UnwatchCurrentTarget();
-
-        if (index < 0 || index >= _targets.Count) return;
-
-        PlayerManager target = _targets[index];
+        PlayerManager target = CurrentTarget;
         if (target == null) return;
 
-        // Watch this target's death state so we react the moment they die
-        PlayerDeathHandler targetDeathHandler = target.GetComponent<PlayerDeathHandler>();
-        if (targetDeathHandler != null)
-        {
-            targetDeathHandler.isDead.onChanged += OnSpectatedTargetDied;
-            _watchedTargetDeathHandler = targetDeathHandler;
-        }
+        Transform t = target.transform;
+        Vector3 focus = t.position + Vector3.up * _lookHeight;
+        Vector3 pos = focus - t.forward * _distance + Vector3.up * _height;
 
-        Transform targetCamRoot = FindCameraRoot(target.transform);
+        _cameraTarget.position = pos;
 
-        if (targetCamRoot == null)
-        {
-            PurrLogger.LogWarning($"[SpectatorController] Could not find PlayerCameraRoot on {target.name}. Skipping.");
-            // Try next available target rather than getting stuck
-            if (_targets.Count > 1)
-                CycleTarget(+1);
-            return;
-        }
+        Vector3 lookDir = focus - pos;
+        if (lookDir.sqrMagnitude > 0.0001f)
+            _cameraTarget.rotation = Quaternion.LookRotation(lookDir);
+    }
 
-        targetCamRoot.gameObject.SetActive(true);
+    // ── Target selection ───────────────────────────────────────────────────
 
-        if (_spectatorCameraRoot != null)
-        {
-            _spectatorCameraRoot.SetParent(targetCamRoot, false);
-            _spectatorCameraRoot.localPosition = _cameraOffset;
-            _spectatorCameraRoot.localRotation = Quaternion.identity;
-        }
-
-        if (_spectatorCameraObject != null)
-            _spectatorCameraObject.SetActive(true);
-
-        LocalPlayerUI.Instance?.OnSpectatorTargetChanged(target);
-        PurrLogger.Log($"[SpectatorController] Now spectating {target.name}");
+    private void Cycle(int dir)
+    {
+        RefreshTargets();
+        if (_targets.Count == 0) return;
+        _index = (_index + dir + _targets.Count) % _targets.Count;
     }
 
     /// <summary>
-    /// Called via SyncVar callback the instant the spectated target dies.
-    /// Automatically cycles to the next alive player.
+    /// Rebuilds the alive-player list, keeping the camera locked to whoever we
+    /// were already watching when possible.
+    ///
+    /// PurrNet tracks connected PlayerIDs but has no concept of which GameObject
+    /// is a player's avatar, so there's nothing to gain from its player list here
+    /// — we just grab the live PlayerManagers directly. This is only called on
+    /// death and on each arrow-key press, so the lookup cost is irrelevant. The
+    /// sort gives cycling a stable order (FindObjectsByType does not guarantee one).
     /// </summary>
-    private void OnSpectatedTargetDied(bool isDead)
+    private void RefreshTargets()
     {
-        if (!isDead || !_isSpectating) return;
+        PlayerManager keep = CurrentTarget;
 
-        PurrLogger.Log("[SpectatorController] Spectated player died — auto-advancing.");
-        CycleTarget(+1);
-    }
-
-    /// <summary>Unsubscribes from the currently watched target's death event.</summary>
-    private void UnwatchCurrentTarget()
-    {
-        if (_watchedTargetDeathHandler != null)
+        _targets.Clear();
+        foreach (PlayerManager p in FindObjectsByType<PlayerManager>(FindObjectsSortMode.None))
         {
-            _watchedTargetDeathHandler.isDead.onChanged -= OnSpectatedTargetDied;
-            _watchedTargetDeathHandler = null;
+            if (p == null || p == _self || p.IsDead) continue;
+            _targets.Add(p);
         }
-    }
+        _targets.Sort((a, b) => a.GetInstanceID().CompareTo(b.GetInstanceID()));
 
-    // ── Helpers ────────────────────────────────────────────────────────────
+        if (_targets.Count == 0) { _index = 0; return; }
 
-    /// <summary>Searches direct children for a transform named "PlayerCameraRoot".</summary>
-    private static Transform FindCameraRoot(Transform parent)
-    {
-        Transform direct = parent.Find("PlayerCameraRoot");
-        if (direct != null) return direct;
-
-        // Fallback: deep search
-        foreach (Transform child in parent.GetComponentsInChildren<Transform>(true))
-        {
-            if (child.name == "PlayerCameraRoot")
-                return child;
-        }
-
-        return null;
+        int found = keep != null ? _targets.IndexOf(keep) : -1;
+        _index = found >= 0 ? found : Mathf.Clamp(_index, 0, _targets.Count - 1);
     }
 }

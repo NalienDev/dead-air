@@ -1,112 +1,66 @@
-﻿using TMPro;
+using TMPro;
 using UnityEngine;
 
 /// <summary>
-/// Extends the original LocalPlayerUI with death and spectator states.
-/// 
-/// New required UI references (add these to your PlayerUI Canvas):
-///   • _spectatorPanel       — a panel shown only while spectating
-///   • _spectatorTargetText  — "Spectating: [PlayerName]" label
-///   • _spectatorHintText    — "← → to switch player" hint
-///   • _deadOverlay          — full-screen tint/overlay shown on death
-/// 
-/// Existing references (_healthText, _oxygenText) continue to work as before.
+/// Local player's vitals HUD (health + oxygen).
+/// Hides itself while the local player is dead and restores on revive.
 /// </summary>
 public class LocalPlayerUI : MonoBehaviour
 {
     public static LocalPlayerUI Instance { get; private set; }
 
-    // ── Existing refs ──────────────────────────────────────────────────────
     [Header("Vitals HUD")]
     [SerializeField] private TextMeshProUGUI _healthText;
     [SerializeField] private TextMeshProUGUI _oxygenText;
 
-    // ── New: death / spectator UI ──────────────────────────────────────────
-    [Header("Death Overlay")]
-    [Tooltip("Full-screen panel shown the instant the local player dies.")]
-    [SerializeField] private GameObject _deadOverlay;
+    [Tooltip("Optional container holding the vitals. If set, it is toggled as a " +
+             "whole on death; otherwise the health/oxygen labels are toggled individually.")]
+    [SerializeField] private GameObject _vitalsRoot;
 
-    [Header("Spectator HUD")]
-    [Tooltip("Panel that wraps all spectator-related elements.")]
-    [SerializeField] private GameObject _spectatorPanel;
+    private bool _hidden;
 
-    [Tooltip("Label showing who is being spectated.")]
-    [SerializeField] private TextMeshProUGUI _spectatorTargetText;
-
-    [Tooltip("Key-hint label e.g. '← → to switch player'.")]
-    [SerializeField] private TextMeshProUGUI _spectatorHintText;
-
-    // ── Private ────────────────────────────────────────────────────────────
-
-    private bool _isDead;
-
-    // ── Lifecycle ──────────────────────────────────────────────────────────
-
-    private void Start()
+    private void Awake()
     {
-        if (Instance != null) { Destroy(gameObject); return; }
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+    }
 
-        // Start with spectator / dead UI hidden
-        SetDeadOverlayVisible(false);
-        SetSpectatorPanelVisible(false);
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     private void Update()
     {
-        if (_isDead) return;                         // don't poll vitals while dead
+        bool dead = PlayerManager.Local != null && PlayerManager.Local.IsDead;
+
+        if (dead)
+        {
+            if (!_hidden) SetVitalsVisible(false);
+            return;
+        }
+
+        if (_hidden) SetVitalsVisible(true);
+
         if (PlayerManager.Local == null) return;
 
-        _healthText.text = $"Health: {PlayerManager.Local.GetCurrentHealth()} / {PlayerManager.Local.GetMaxHealth()}";
-        _oxygenText.text = $"Oxygen: {PlayerManager.Local.GetCurrentOxygen()} / {PlayerManager.Local.GetMaxOxygen()}";
+        if (_healthText != null)
+            _healthText.text = $"Health: {PlayerManager.Local.GetCurrentHealth()} / {PlayerManager.Local.GetMaxHealth()}";
+        if (_oxygenText != null)
+            _oxygenText.text = $"Oxygen: {PlayerManager.Local.GetCurrentOxygen()} / {PlayerManager.Local.GetMaxOxygen()}";
     }
 
-    // ── Called by PlayerDeathHandler ──────────────────────────────────────
-
-    /// <summary>Switches the HUD into dead / spectator mode.</summary>
-    public void OnPlayerDied()
+    private void SetVitalsVisible(bool visible)
     {
-        _isDead = true;
-        SetDeadOverlayVisible(true);
-        SetSpectatorPanelVisible(true);
+        _hidden = !visible;
 
-        if (_spectatorTargetText != null)
-            _spectatorTargetText.text = "Waiting for a player to spectate…";
+        if (_vitalsRoot != null)
+        {
+            _vitalsRoot.SetActive(visible);
+            return;
+        }
 
-        if (_spectatorHintText != null)
-            _spectatorHintText.text = "← → Switch player";
-    }
-
-    /// <summary>Restores the HUD to the normal alive state.</summary>
-    public void OnPlayerRevived()
-    {
-        _isDead = false;
-        SetDeadOverlayVisible(false);
-        SetSpectatorPanelVisible(false);
-    }
-
-    // ── Called by SpectatorController ─────────────────────────────────────
-
-    /// <summary>Updates the spectator label when the camera switches target.</summary>
-    public void OnSpectatorTargetChanged(PlayerManager target)
-    {
-        if (_spectatorTargetText == null) return;
-
-        string displayName = target != null ? target.name : "Nobody";
-        _spectatorTargetText.text = $"Spectating: {displayName}";
-    }
-
-    // ── Helpers ────────────────────────────────────────────────────────────
-
-    private void SetDeadOverlayVisible(bool visible)
-    {
-        if (_deadOverlay != null)
-            _deadOverlay.SetActive(visible);
-    }
-
-    private void SetSpectatorPanelVisible(bool visible)
-    {
-        if (_spectatorPanel != null)
-            _spectatorPanel.SetActive(visible);
+        if (_healthText != null) _healthText.gameObject.SetActive(visible);
+        if (_oxygenText != null) _oxygenText.gameObject.SetActive(visible);
     }
 }
