@@ -17097,6 +17097,8 @@ MonoBehaviour:
   - {fileID: 8385200692948620012, guid: 5d5d7ae817b04d346ab2520602473d21, type: 3}
   - {fileID: 8385200692948620012, guid: 93668cdb29ecf5b429e28ed0e999bfe6, type: 3}
   - {fileID: 8385200692948620012, guid: 713196dd01b5a08448bb2928103ada16, type: 3}
+  - {fileID: 8385200692948620012, guid: ac5c387eb39afed4dafc68a14241b36f, type: 3}
+  - {fileID: 8385200692948620012, guid: b2489c125a8d52b498f4586d9860e6fa, type: 3}
   _specialRooms: []
   _alternateEntrances: []
   _hallways:

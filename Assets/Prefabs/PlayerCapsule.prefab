@@ -336,7 +336,7 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 2
+  m_Height: 1.8
   m_Radius: 0.5
   m_SlopeLimit: 45
   m_StepOffset: 0.25
@@ -910,11 +910,6 @@ MonoBehaviour:
   _visitiblityRules: {fileID: 0}
   _animationDampTime: 0.1
   _spawnGraceTime: 0.3
-  _minAirtimeBeforeLand: 0.15
-  _landPredictionDistance: 1.5
-  _groundLayers:
-    serializedVersion: 2
-    m_Bits: 8
 --- !u!1001 &8073432638763156735
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1034,11 +1029,6 @@ MonoBehaviour:
   _visitiblityRules: {fileID: 0}
   _animationDampTime: 0.1
   _spawnGraceTime: 0.3
-  _minAirtimeBeforeLand: 0.15
-  _landPredictionDistance: 1.5
-  _groundLayers:
-    serializedVersion: 2
-    m_Bits: 8
 --- !u!114 &2819127521637903191
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1198,8 +1188,3 @@ MonoBehaviour:
   _visitiblityRules: {fileID: 0}
   _animationDampTime: 0.1
   _spawnGraceTime: 0.3
-  _minAirtimeBeforeLand: 0.15
-  _landPredictionDistance: 1.5
-  _groundLayers:
-    serializedVersion: 2
-    m_Bits: 8

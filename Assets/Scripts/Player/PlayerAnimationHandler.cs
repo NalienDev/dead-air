@@ -45,7 +45,8 @@ public class PlayerAnimationHandler : NetworkBehaviour
     private float _velocityX;
     private float _velocityY;
 
-    private bool _wasGrounded;
+    private bool _wasGrounded;       // owner: controller grounded, for take-off
+    private bool _wasGroundedAnim;   // any client: animator IsGrounded, for landing
     private float _spawnTimer;
 
     private void Awake()
