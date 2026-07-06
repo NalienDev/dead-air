@@ -130,6 +130,8 @@ public class DungeonGenerator : NetworkBehaviour
     {
         if (!isServer) return;
 
+        Debug.Log($"[DungeonGenerator] RegenerateDungeon called (frame {Time.frameCount}).");
+
         foreach (DungeonPart part in _generatedRooms)
         {
             if (part != null) Destroy(part.gameObject);

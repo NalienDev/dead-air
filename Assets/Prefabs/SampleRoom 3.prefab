@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2829450224844481792}
   - component: {fileID: 2710753760836015173}
   - component: {fileID: 6666523829716638123}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (9)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1199,7 +1199,7 @@ GameObject:
   - component: {fileID: 2108279827487935549}
   - component: {fileID: 614920849843144617}
   - component: {fileID: 5639863758999360612}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Closet.001 (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1806,7 +1806,7 @@ GameObject:
   - component: {fileID: 1944131075734168576}
   - component: {fileID: 4323324199936691350}
   - component: {fileID: 9197282297704839829}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (14)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1917,7 +1917,7 @@ GameObject:
   - component: {fileID: 5935639739308744438}
   - component: {fileID: 3526775506469151445}
   - component: {fileID: 2185288758030519966}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Closet.001 (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2007,7 +2007,7 @@ GameObject:
   - component: {fileID: 6353954191136657560}
   - component: {fileID: 7123259003901531346}
   - component: {fileID: 8971727418841268053}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Closet.001 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2098,7 +2098,7 @@ GameObject:
   - component: {fileID: 6036748468981489336}
   - component: {fileID: 26899433502463298}
   - component: {fileID: 1082136600132581703}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (16)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2412,7 +2412,7 @@ GameObject:
   - component: {fileID: 102228744365209659}
   - component: {fileID: 8004231101637059719}
   - component: {fileID: 72673394099058986}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (18)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2859,7 +2859,7 @@ GameObject:
   - component: {fileID: 1921288531976411601}
   - component: {fileID: 1043713435905759241}
   - component: {fileID: 5100291235501618179}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Closet.001 (6)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2963,13 +2963,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3043910869036405593}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.70710677, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 1.348, y: -0.011, z: -1.2640002}
+  m_LocalRotation: {x: -0, y: 0.000000014901161, z: -0, w: 1}
+  m_LocalPosition: {x: -1.3186668, y: -0.011, z: 1.4026664}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1006727255227799030}
-  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6303416343190641623
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2994,7 +2994,7 @@ GameObject:
   - component: {fileID: 382433621594684662}
   - component: {fileID: 1375732418949065710}
   - component: {fileID: 8186313467201454368}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3217,7 +3217,7 @@ GameObject:
   - component: {fileID: 4583217828704060689}
   - component: {fileID: 981475334063945305}
   - component: {fileID: 3107873168092128854}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Closet.001 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3420,7 +3420,7 @@ GameObject:
   - component: {fileID: 4606690411647253203}
   - component: {fileID: 3998393927228190933}
   - component: {fileID: 7324092318607339885}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (12)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3868,7 +3868,7 @@ GameObject:
   - component: {fileID: 5757226956734644615}
   - component: {fileID: 4087285350088276205}
   - component: {fileID: 6134075479537759400}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (11)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3980,7 +3980,7 @@ GameObject:
   - component: {fileID: 7479510516027174956}
   - component: {fileID: 3499178516640790343}
   - component: {fileID: 880556941455868987}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4204,7 +4204,7 @@ GameObject:
   - component: {fileID: 1799218567947757264}
   - component: {fileID: 1564558952323531629}
   - component: {fileID: 1470831747193490816}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4316,7 +4316,7 @@ GameObject:
   - component: {fileID: 1062561272686730181}
   - component: {fileID: 2990327797125095496}
   - component: {fileID: 770699001347319210}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4720,7 +4720,7 @@ GameObject:
   - component: {fileID: 643922597366828789}
   - component: {fileID: 5261923167817195414}
   - component: {fileID: 5995928846367829935}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4941,7 +4941,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7233973772889663357}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5080,7 +5080,7 @@ GameObject:
   - component: {fileID: 6087103987518327964}
   - component: {fileID: 1278710251658536287}
   - component: {fileID: 2477875688671064927}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5192,7 +5192,7 @@ GameObject:
   - component: {fileID: 596509718181058040}
   - component: {fileID: 1234251055185947885}
   - component: {fileID: 27804504668579704}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (6)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6355,7 +6355,7 @@ GameObject:
   - component: {fileID: 3733470856114785973}
   - component: {fileID: 8543676363571843005}
   - component: {fileID: 3064067168888240216}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Closet.001 (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6446,7 +6446,7 @@ GameObject:
   - component: {fileID: 8807971097051424707}
   - component: {fileID: 8888284530572515729}
   - component: {fileID: 2368912760021646394}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (19)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7232,7 +7232,7 @@ GameObject:
   - component: {fileID: 6134637231734379720}
   - component: {fileID: 7178300768335624028}
   - component: {fileID: 8794921793412629211}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (17)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7456,7 +7456,7 @@ GameObject:
   - component: {fileID: 6290589329385020100}
   - component: {fileID: 5516154676669054756}
   - component: {fileID: 7945507430464906911}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (13)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7724,7 +7724,7 @@ GameObject:
   - component: {fileID: 6347873771741925668}
   - component: {fileID: 6942051019269034915}
   - component: {fileID: 3368301736974792925}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (8)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7836,7 +7836,7 @@ GameObject:
   - component: {fileID: 6330114321513736803}
   - component: {fileID: 8620834921722740702}
   - component: {fileID: 7993803128578940103}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (10)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8396,7 +8396,7 @@ GameObject:
   - component: {fileID: 4886380595425777323}
   - component: {fileID: 798756624298035149}
   - component: {fileID: 70026924862644189}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9341,7 +9341,7 @@ GameObject:
   - component: {fileID: 3082775631722713362}
   - component: {fileID: 1896363886177509868}
   - component: {fileID: 6025400762263504369}
-  m_Layer: 3
+  m_Layer: 11
   m_Name: Floor (15)
   m_TagString: Untagged
   m_Icon: {fileID: 0}

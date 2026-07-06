@@ -47,11 +47,16 @@ public class StartExpeditionButton : Interactable
     private void TeleportPlayers()
     {
         Debug.Log("[StartExpeditionButton] Teleporting players to the expedition area.");
-        
+
         if (PlayerManager.Local != null)
         {
             PlayerManager.Local.RequestTeleportAllPlayers(_expeditionSpawnPoint.position, _expeditionSpawnPoint.rotation);
         }
+
+        // Everyone on the expedition counts as inside the dungeon — the Echo only
+        // hunts players with this flag set.
+        foreach (PlayerManager player in FindObjectsByType<PlayerManager>(FindObjectsSortMode.None))
+            player.SetInsideDungeon(true);
     }
 
     private void TeleportAndHide()

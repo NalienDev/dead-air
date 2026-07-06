@@ -80,6 +80,7 @@
     <Compile Include="Assets\Dissonance\Core\Jetbrains.cs" />
     <Compile Include="Assets\Packages\Kevin Iglesias\Human Animations\Scripts\SpineProxy.cs" />
     <Compile Include="Assets\Scripts\Interactable.cs" />
+    <Compile Include="Assets\Scripts\DungeonCreator\DungeonNavMeshBaker.cs" />
     <Compile Include="Assets\Samples\Shader Graph\17.3.0\UGUI Shaders\Scripts\Timer.cs" />
     <Compile Include="Assets\Scripts\EventManager.cs" />
     <Compile Include="Assets\Scripts\ISoundListener.cs" />

@@ -42,7 +42,10 @@ public class RoverManager : NetworkBehaviour
         }
 
         foreach (PlayerManager player in FindObjectsByType<PlayerManager>(FindObjectsSortMode.None))
+        {
             player.TeleportToPosition(teleportPos, teleportRot);
+            player.SetInsideDungeon(false); // back in the lobby — hide from the Echo
+        }
 
         // Stagger drops so they don't spawn on top of each other and explode.
         for (int i = 0; i < _energyCells; i++)
