@@ -1111,7 +1111,7 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: 305c00733825cc24cb81c718f5c5dc33, type: 2}
     - target: {fileID: -7840867231617242486, guid: 715ab51c2df26164d92b0a5551e9bd22, type: 3}
       propertyPath: m_CullingMode
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -3500460014136483016, guid: 715ab51c2df26164d92b0a5551e9bd22, type: 3}
       propertyPath: m_LocalPosition.x
