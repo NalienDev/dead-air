@@ -1,23 +1,25 @@
 using PurrNet;
 using UnityEngine;
 
-/// <summary>
-/// Place this button in the lobby rover. When interacted with, it starts the day
-/// and teleports all players to a designated spawn point inside the expedition map.
-/// If the dungeon hasn't finished generating yet, it shows a loading screen for
-/// everyone and waits until generation is complete before teleporting.
-/// </summary>
+
 public class StartExpeditionButton : Interactable
 {
-    [Tooltip("The Transform inside the actual map where players should be teleported when starting the expedition.")]
-    [SerializeField] private Transform _expeditionSpawnPoint;
+    private Transform _expeditionSpawnPoint;
 
+    private void Start()
+    {
+        _expeditionSpawnPoint = GameObject.FindGameObjectWithTag("ExpeditionSpawn").transform;
+    }
     public override InteractionType OnInteract(GameObject user)
     {
         if (_expeditionSpawnPoint == null)
         {
-            Debug.LogWarning("[StartExpeditionButton] Expedition spawn point is not assigned!");
-            return InteractionType.NONE;
+            _expeditionSpawnPoint = GameObject.FindGameObjectWithTag("ExpeditionSpawn").transform;
+            if (_expeditionSpawnPoint == null)
+            {
+                Debug.LogWarning("[StartExpeditionButton] Expedition spawn point is not assigned!");
+                return InteractionType.NONE;
+            }
         }
 
         // If the dungeon isn't ready yet, show a loading screen and wait for generation.

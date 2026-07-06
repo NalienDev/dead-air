@@ -304,7 +304,6 @@ MonoBehaviour:
   _directChildren: []
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
-  _lobbyTeleportPoint: {fileID: 0}
 --- !u!1 &1513024452946060287
 GameObject:
   m_ObjectHideFlags: 0
@@ -7818,7 +7817,7 @@ GameObject:
   - component: {fileID: 8012040450905752103}
   m_Layer: 0
   m_Name: RoverSpawnPoint
-  m_TagString: Untagged
+  m_TagString: ExpeditionSpawn
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

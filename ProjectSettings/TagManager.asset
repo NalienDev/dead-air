@@ -8,6 +8,7 @@ TagManager:
   - Rover
   - ReviveLocation
   - SpawnLocation
+  - ExpeditionSpawn
   layers:
   - Default
   - TransparentFX
