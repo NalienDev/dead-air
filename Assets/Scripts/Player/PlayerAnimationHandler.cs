@@ -68,15 +68,23 @@ public class PlayerAnimationHandler : NetworkBehaviour
 
         _spawnTimer = _spawnGraceTime;
         _wasGrounded = true;
+        _wasGroundedAnim = true;
     }
 
     private void Update()
     {
-        // Only the owner drives animation logic
-        if (!isOwner) return;
+        // Only the owner drives locomotion and take-off.
+        if (isOwner)
+        {
+            UpdateLocomotion();
+            UpdateGrounded();
+        }
 
-        UpdateLocomotion();
-        UpdateAirborne();
+        // Land is derived from the IsGrounded parameter on every client that shows
+        // this model. On remote bodies IsGrounded is network-synced, so Land fires
+        // in step with the grounded state instead of racing a separately-sent
+        // trigger — which was leaving remote players stuck falling.
+        UpdateLand();
     }
 
     // ── Locomotion ────────────────────────────────────────────────────────────
@@ -100,12 +108,12 @@ public class PlayerAnimationHandler : NetworkBehaviour
 
     // ── Airborne ──────────────────────────────────────────────────────────────
 
-    private void UpdateAirborne()
+    // Owner only: sets the synced IsGrounded bool and fires Jump on take-off.
+    private void UpdateGrounded()
     {
         if (_spawnTimer > 0f)
         {
             _spawnTimer -= Time.deltaTime;
-            _wasGrounded = _controller.Grounded;
             _animator.SetBool(AnimIsGrounded, true);
             return;
         }
@@ -113,22 +121,38 @@ public class PlayerAnimationHandler : NetworkBehaviour
         bool grounded = _controller.Grounded;
         _animator.SetBool(AnimIsGrounded, grounded);
 
-        // Jump on take-off, Land the instant we touch back down.
         if (_wasGrounded && !grounded && _characterController.velocity.y > 0.1f)
         {
             _controller.SetCanJump(false);
             TriggerOnAllClients(AnimJump);
-        }
-        else if (!_wasGrounded && grounded)
-        {
-            _controller.SetCanJump(false);
-            TriggerOnAllClients(AnimLand);
         }
 
         _wasGrounded = grounded;
 
         if (!_controller.CanJump && IsInBlendTree())
             _controller.SetCanJump(true);
+    }
+
+    // Every client: keeps Jump/Land in step with the (synced) IsGrounded bool.
+    // Each trigger is cleared when it enters the wrong phase, so one that arrived
+    // out of order with IsGrounded can't linger and mis-fire — which was kicking
+    // remote bodies from Land back into Jump and getting them stuck falling.
+    private void UpdateLand()
+    {
+        bool grounded = _animator.GetBool(AnimIsGrounded);
+
+        if (_wasGroundedAnim && !grounded)
+        {
+            _animator.ResetTrigger(AnimLand);
+        }
+        else if (!_wasGroundedAnim && grounded)
+        {
+            _animator.ResetTrigger(AnimJump);
+            if (isOwner) _controller.SetCanJump(false);
+            _animator.SetTrigger(AnimLand);
+        }
+
+        _wasGroundedAnim = grounded;
     }
 
     // ── Trigger Sync ──────────────────────────────────────────────────────────
