@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 860a66ca4259b384f9ec01b687f71c3c, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -5739,8 +5739,8 @@ MonoBehaviour:
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
   _lobbyDropPoint: {fileID: 123886153}
-  _expeditionSucker: {fileID: 1867298888}
-  _lobbySucker: {fileID: 123886149}
+  _energyCellPrefab: {fileID: 8220706766722938257, guid: 01dca756cf0528548aa590f2b139a242, type: 3}
+  _bandwidthPrefab: {fileID: 322975916374066887, guid: 2d159684411188342b9cda6040ac4767, type: 3}
 --- !u!4 &476071782
 Transform:
   m_ObjectHideFlags: 0

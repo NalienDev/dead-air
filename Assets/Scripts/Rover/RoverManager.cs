@@ -1,124 +1,54 @@
-using System.Collections;
-using System.Collections.Generic;
 using PurrNet;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class RoverManager : NetworkBehaviour
 {
     public static RoverManager Instance { get; private set; }
 
     [SerializeField] private Transform _lobbyDropPoint;
-    [SerializeField] private Sucker _expeditionSucker;
-    [SerializeField] private Sucker _lobbySucker;
+    [SerializeField] private GameObject _energyCellPrefab;
 
-    private readonly List<NetworkIdentity> _cargo = new();
+    private int _energyCells;
+    private int _bandwidth;
 
-    public int CargoCount => _cargo.Count;
-    public Sucker Sucker => _expeditionSucker;
-
-    protected override void OnSpawned(bool asServer)
-    {
-        base.OnSpawned(asServer);
-
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
-
-        if (_expeditionSucker != null)
-            _expeditionSucker.Initialise(this);
-
-        if (_lobbySucker != null)
-            _lobbySucker.Initialise(this);
-
-        if (_cargo.Count > 0)
-        {
-            Transform releasePoint = _lobbyDropPoint != null ? _lobbyDropPoint : transform;
-            ServerReleaseAllCargo(releasePoint.position, releasePoint.rotation);
-        }
-    }
+    protected override void OnSpawned(bool asServer) => Instance = this;
 
     protected override void OnDespawned(bool asServer)
     {
-        base.OnDespawned(asServer);
         if (Instance == this) Instance = null;
     }
 
-    public void AddCargo(NetworkIdentity identity)
+    // Server: called when the expedition sucker pulls something in. Bandwidth is
+    // tallied for the quota then discarded; energy cells are respawned in the lobby.
+    public void StoreCargo(NetworkIdentity identity)
     {
-        if (!_cargo.Contains(identity))
-            _cargo.Add(identity);
-    }
+        if (identity.TryGetComponent(out BandwidthObject bw))
+            _bandwidth += bw.BandwidthValue;
+        else if (identity.TryGetComponent(out EnergyCell _))
+            _energyCells++;
+        else
+            return;
 
-    public void RemoveCargo(NetworkIdentity identity) => _cargo.Remove(identity);
-
-    public void GetCargoValues(out int bandwidth, out int energyCells)
-    {
-        bandwidth = 0;
-        energyCells = 0;
-
-        foreach (NetworkIdentity identity in _cargo)
-        {
-            if (identity == null) continue;
-            if (identity.TryGetComponent(out EnergyCell _))
-                energyCells++;
-            else if (identity.TryGetComponent(out BandwidthObject bw))
-                bandwidth += bw.BandwidthValue;
-        }
-    }
-
-    [ServerRpc(requireOwnership: false)]
-    private void ServerReleaseAllCargo(Vector3 releasePos, Quaternion releaseRot)
-    {
-        for (int i = _cargo.Count - 1; i >= 0; i--)
-        {
-            NetworkIdentity identity = _cargo[i];
-            if (identity == null) continue;
-
-            if (identity.TryGetComponent(out SuckableObject suckable))
-                suckable.EndAttraction();
-
-            identity.transform.SetPositionAndRotation(releasePos, releaseRot);
-
-            if (identity.TryGetComponent(out Rigidbody rb))
-            {
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-            }
-
-            identity.gameObject.SetActive(true);
-            RpcReleaseCargo(identity, releasePos, releaseRot);
-        }
-
-        _cargo.Clear();
-    }
-
-    [ObserversRpc(runLocally: false)]
-    private void RpcReleaseCargo(NetworkIdentity identity, Vector3 releasePos, Quaternion releaseRot)
-    {
-        if (identity == null) return;
-        identity.transform.SetPositionAndRotation(releasePos, releaseRot);
-        identity.gameObject.SetActive(true);
+        Destroy(identity.gameObject);
     }
 
     [ServerRpc(requireOwnership: false)]
     public void ServerRequestReturnToBase(Vector3 teleportPos, Quaternion teleportRot)
     {
-        GetCargoValues(out int bandwidth, out int energyCells);
-        Debug.Log($"[RoverManager] Submitting cargo — bandwidth: {bandwidth}, energy cells: {energyCells}");
-
         if (QuotaManager.Instance != null)
         {
-            QuotaManager.Instance.ServerProcessItems(bandwidth, energyCells);
+            QuotaManager.Instance.ServerProcessItems(_bandwidth, _energyCells);
             QuotaManager.Instance.ServerCheckQuotaAndProceed();
         }
 
-        PlayerManager[] players = FindObjectsByType<PlayerManager>(FindObjectsSortMode.None);
-        foreach (var player in players)
-        {
+        foreach (PlayerManager player in FindObjectsByType<PlayerManager>(FindObjectsSortMode.None))
             player.TeleportToPosition(teleportPos, teleportRot);
-        }
 
-        Transform releasePoint = _lobbyDropPoint != null ? _lobbyDropPoint : transform;
-        ServerReleaseAllCargo(releasePoint.position, releasePoint.rotation);
+        // Stagger drops so they don't spawn on top of each other and explode.
+        for (int i = 0; i < _energyCells; i++)
+            Instantiate(_energyCellPrefab, _lobbyDropPoint.position + Vector3.up * (0.4f * i), _lobbyDropPoint.rotation);
+
+        _energyCells = 0;
+        _bandwidth = 0;
     }
 }

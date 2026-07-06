@@ -1,10 +1,6 @@
 using UnityEngine;
 
-/// <summary>
-/// Toggles the Sucker on/off via RoverManager.
-/// Uses RoverManager.Instance.Sucker instead of FindFirstObjectByType
-/// since the Sucker is recreated each scene.
-/// </summary>
+// Toggles its rover's Sucker on/off.
 public class ActivateVacuumButton : Interactable
 {
     [Tooltip("The Sucker this button controls. If left empty, it will try to find one on this Rover.")]
