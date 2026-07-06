@@ -24,11 +24,6 @@ public class PlayerAnimationHandler : NetworkBehaviour
 
     [Header("Jump / Fall")]
     [SerializeField] private float _spawnGraceTime = 0.3f;
-    [SerializeField] private float _minAirtimeBeforeLand = 0.15f;
-
-    [Header("Landing Prediction")]
-    [SerializeField] private float _landPredictionDistance = 0.6f;
-    [SerializeField] private LayerMask _groundLayers;
 
     private static readonly int AnimX = Animator.StringToHash("X");
     private static readonly int AnimY = Animator.StringToHash("Y");
@@ -51,9 +46,6 @@ public class PlayerAnimationHandler : NetworkBehaviour
     private float _velocityY;
 
     private bool _wasGrounded;
-    private bool _isAirborne;
-    private bool _landTriggered;
-    private float _airTimer;
     private float _spawnTimer;
 
     private void Awake()
@@ -120,38 +112,16 @@ public class PlayerAnimationHandler : NetworkBehaviour
         bool grounded = _controller.Grounded;
         _animator.SetBool(AnimIsGrounded, grounded);
 
-        // Lift-off
-        if (_wasGrounded && !grounded)
+        // Jump on take-off, Land the instant we touch back down.
+        if (_wasGrounded && !grounded && _characterController.velocity.y > 0.1f)
         {
-            _isAirborne = true;
-            _landTriggered = false;
-            _airTimer = 0f;
-
-            if (_characterController.velocity.y > 0.1f)
-            {
-                _controller.SetCanJump(false);
-                TriggerOnAllClients(AnimJump);
-            }
+            _controller.SetCanJump(false);
+            TriggerOnAllClients(AnimJump);
         }
-
-        // While airborne
-        if (_isAirborne)
+        else if (!_wasGrounded && grounded)
         {
-            _airTimer += Time.deltaTime;
-
-            bool canTriggerLand = _airTimer >= _minAirtimeBeforeLand && !_landTriggered;
-
-            if (canTriggerLand && _characterController.velocity.y < 0f && IsGroundClose())
-                TriggerLand();
-
-            if (grounded)
-            {
-                if (!_landTriggered)
-                    TriggerLand();
-
-                _controller.SetCanJump(false);
-                _isAirborne = false;
-            }
+            _controller.SetCanJump(false);
+            TriggerOnAllClients(AnimLand);
         }
 
         _wasGrounded = grounded;
@@ -199,12 +169,6 @@ public class PlayerAnimationHandler : NetworkBehaviour
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private void TriggerLand()
-    {
-        _landTriggered = true;
-        TriggerOnAllClients(AnimLand);
-    }
-
     private bool IsInBlendTree()
     {
         return _animator.GetCurrentAnimatorStateInfo(0).IsName(BlendTreeStateName);
@@ -213,15 +177,5 @@ public class PlayerAnimationHandler : NetworkBehaviour
     private float GetSprintMultiplier()
     {
         return (_input.move != Vector2.zero && _input.sprint) ? 2f : 1f;
-    }
-
-    private bool IsGroundClose()
-    {
-        return Physics.Raycast(
-            transform.position,
-            Vector3.down,
-            _landPredictionDistance,
-            _groundLayers,
-            QueryTriggerInteraction.Ignore);
     }
 }
