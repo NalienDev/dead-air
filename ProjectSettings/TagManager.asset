@@ -7,6 +7,7 @@ TagManager:
   - CinemachineTarget
   - Rover
   - ReviveLocation
+  - SpawnLocation
   layers:
   - Default
   - TransparentFX

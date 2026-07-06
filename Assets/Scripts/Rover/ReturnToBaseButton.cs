@@ -1,19 +1,17 @@
 using PurrNet;
+using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Place this on the rover prefab alongside NetworkedSceneButton.
-/// When the player interacts with it in the game scene:
-///   1. Tallies cargo from RoverManager.
-///   2. Submits items to QuotaManager.
-///   3. QuotaManager decides the destination (lobby = quota met, game over = quota failed)
-///      and triggers the scene change itself via ServerCheckQuotaAndProceed.
-///
-/// No scene name needed here — QuotaManager owns that decision.
-/// </summary>
 public class ReturnToBaseButton : Interactable
 {
-    [SerializeField] private Transform _lobbyTeleportPoint;
+    private Transform _lobbyTeleportPoint;
+
+    private void Start()
+    {
+        GameObject[] teleportOptions = GameObject.FindGameObjectsWithTag("SpawnLocation");
+        int rnd =  Random.Range(0, teleportOptions.Length);
+        _lobbyTeleportPoint = teleportOptions[rnd].transform;
+    }
 
     public override InteractionType OnInteract(GameObject user)
     {
