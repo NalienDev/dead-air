@@ -41,6 +41,14 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     private float _oxygenTimer = 0f;
     private PlayerDeathHandler _deathHandler;
 
+    // Server-side view of the player's current mic loudness (0..1). Updated by
+    // ServerReportVoiceLoudness and read by the blind Conductor. Decays to 0 on its
+    // own once the owner stops sending reports, so we never need an Update here
+    // (this component is disabled on the server's copy of remote clients).
+    private float _lastVoiceLoudness;
+    private float _lastVoiceTime = -999f;
+    private const float VoiceStaleSeconds = 0.3f;
+
     // ── Lifecycle ──────────────────────────────────────────────────────────
 
     protected override void OnSpawned(bool asServer)
@@ -192,5 +200,37 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     public void OnHearSound(Vector3 origin)
     {
         Debug.Log($"[{owner}] Ouvi um som em {origin}");
+    }
+
+    // ── Noise the Conductor can hear ────────────────────────────────────────
+
+    /// <summary>
+    /// Server-side estimate of how loud this player currently is (0..1). Reads back
+    /// to 0 automatically once the owner stops streaming voice reports. Used by
+    /// TheConductorAI both to pick a target and to detect a sustained scream.
+    /// </summary>
+    public float CurrentVoiceLoudness =>
+        (Time.time - _lastVoiceTime <= VoiceStaleSeconds) ? _lastVoiceLoudness : 0f;
+
+    /// <summary>Owner → server: the local mic's current normalised loudness.</summary>
+    public void ReportVoiceLoudness(float loudness01) => ServerReportVoiceLoudness(loudness01);
+
+    [ServerRpc]
+    private void ServerReportVoiceLoudness(float loudness01)
+    {
+        _lastVoiceLoudness = Mathf.Clamp01(loudness01);
+        _lastVoiceTime = Time.time;
+
+        // Voices are the loudest thing in the dungeon — feed the Conductor's ears.
+        NoiseEvents.Report(transform.position, _lastVoiceLoudness);
+    }
+
+    /// <summary>Owner → server: a momentary noise at the player's position (footstep, sprint).</summary>
+    public void ReportNoise(float loudness01) => ServerReportNoise(loudness01);
+
+    [ServerRpc]
+    private void ServerReportNoise(float loudness01)
+    {
+        NoiseEvents.Report(transform.position, Mathf.Clamp01(loudness01));
     }
 }
