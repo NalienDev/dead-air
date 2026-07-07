@@ -2677,7 +2677,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 884745466}
   m_Direction: 2
   m_Value: 1.0000036
-  m_Size: 0.46585196
+  m_Size: 0.465852
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -5869,7 +5869,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1710003464
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6195,6 +6195,10 @@ MonoBehaviour:
     m_Bits: 512
   _maxConsecutiveFailures: 5
   _maxRestartAttempts: 15
+  isGenerated:
+    _value: 0
+    _ownerAuth: 0
+    _sendIntervalInSeconds: 0
 --- !u!4 &1779305306
 Transform:
   m_ObjectHideFlags: 0
@@ -6581,10 +6585,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocalPlayerUI
   _healthText: {fileID: 531258022}
   _oxygenText: {fileID: 337844416}
-  _deadOverlay: {fileID: 442260254}
-  _spectatorPanel: {fileID: 1518072064}
-  _spectatorTargetText: {fileID: 913671116}
-  _spectatorHintText: {fileID: 794534760}
+  _vitalsRoot: {fileID: 0}
 --- !u!114 &1887584328
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7379,6 +7380,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: DissonanceSetup
       objectReference: {fileID: 0}
+    - target: {fileID: 4797390768097344555, guid: 7813daff2fc023c4fae278ccff2d355e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5073746008176047070, guid: 7813daff2fc023c4fae278ccff2d355e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.72758
@@ -7479,6 +7484,10 @@ PrefabInstance:
     - target: {fileID: 4002805103804383974, guid: f6824b0429e1ac545a64e562c7218b41, type: 3}
       propertyPath: m_Name
       value: LabModular
+      objectReference: {fileID: 0}
+    - target: {fileID: 4002805103804383974, guid: f6824b0429e1ac545a64e562c7218b41, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4379472066707052636, guid: f6824b0429e1ac545a64e562c7218b41, type: 3}
       propertyPath: m_LocalPosition.x
