@@ -82,6 +82,7 @@
     <Compile Include="Assets\Packages\Kevin Iglesias\Human Animations\Scripts\SpineProxy.cs" />
     <Compile Include="Assets\Scripts\Interactable.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonNavMeshBaker.cs" />
+    <Compile Include="Assets\Scripts\Audio\NoiseEvents.cs" />
     <Compile Include="Assets\Samples\Shader Graph\17.3.0\UGUI Shaders\Scripts\Timer.cs" />
     <Compile Include="Assets\Scripts\EventManager.cs" />
     <Compile Include="Assets\Scripts\ISoundListener.cs" />
@@ -102,6 +103,7 @@
     <Compile Include="Assets\Packages\StarterAssets\FirstPersonController\Scripts\FirstPersonController.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerMovement.cs" />
     <Compile Include="Assets\Scripts\TestNetwork.cs" />
+    <Compile Include="Assets\Scripts\Rendering\CameraShake.cs" />
     <Compile Include="Assets\Scripts\InventoryHud.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerFlashlight.cs" />
     <Compile Include="Assets\Scripts\RuntimeDebugConsole.cs" />
@@ -110,6 +112,7 @@
     <Compile Include="Assets\Scripts\DDOL.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\EntryPoint.cs" />
     <Compile Include="Assets\Dissonance\Integrations\Offline\OfflineCommsNetwork.cs" />
+    <Compile Include="Assets\Scripts\Player\PlayerVoiceNoise.cs" />
     <Compile Include="Assets\Scripts\GrabbableObject.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualButton.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonPart.cs" />
@@ -121,6 +124,7 @@
     <Compile Include="Assets\Scripts\Rover\SuctionZone.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualJoystick.cs" />
     <Compile Include="Assets\Scripts\Player\HideRenderersForOwner.cs" />
+    <Compile Include="Assets\Scripts\Enemies\TheConductorAI.cs" />
     <Compile Include="Assets\Scripts\BandwidthObject.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonEntrance.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerAnimationHandler.cs" />

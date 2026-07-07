@@ -6,6 +6,10 @@ public class SoundEmitter : NetworkBehaviour
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private float soundRadius = 10f;
 
+    [Tooltip("How loud this world sound is to the blind Conductor (0..1). " +
+             "0 = the Conductor cannot hear it.")]
+    [SerializeField, Range(0f, 1f)] private float _conductorLoudness = 0f;
+
     private bool _wasPlaying = false;
 
     private void Update()
@@ -32,6 +36,10 @@ public class SoundEmitter : NetworkBehaviour
             if (hit.TryGetComponent<ISoundListener>(out var listener))
                 listener.OnHearSound(transform.position);
         }
+
+        // Also feed the blind Conductor, if this emitter is meant to be audible to it.
+        if (_conductorLoudness > 0f)
+            NoiseEvents.Report(transform.position, _conductorLoudness);
     }
 
     private void OnDrawGizmosSelected()
