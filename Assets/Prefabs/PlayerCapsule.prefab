@@ -32,6 +32,54 @@ Transform:
   - {fileID: 4567008583562717127}
   m_Father: {fileID: 4087398922061090272}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3062591793300869805
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5802123032479549502}
+  - component: {fileID: 297532807435171242}
+  m_Layer: 6
+  m_Name: ShakeRig
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5802123032479549502
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3062591793300869805}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4654526816153689839}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &297532807435171242
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3062591793300869805}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ad3dd848ffa7374e886b2e62dddd33f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraShake
+  _maxOffset: 0.15
+  _maxRoll: 2.5
+  _frequency: 22
+  _recovery: 1.6
 --- !u!1 &3220955814239267695
 GameObject:
   m_ObjectHideFlags: 0
@@ -207,6 +255,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5102497996290863185}
+  - {fileID: 5802123032479549502}
   m_Father: {fileID: 7886141918219747147}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8319186154586590450
@@ -295,6 +344,7 @@ GameObject:
   - component: {fileID: -6105437416882813334}
   - component: {fileID: 130450329385311416}
   - component: {fileID: 7956520436423763241}
+  - component: {fileID: 1503026038489913737}
   m_Layer: 6
   m_Name: PlayerCapsule
   m_TagString: Player
@@ -683,7 +733,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoiceRecorder
   _silenceThreshold: 0.01
   _silenceGapSeconds: 0.6
-  _minUtteranceSeconds: 0.3
+  _minUtteranceSeconds: 0.9
   _maxUtteranceSeconds: 20
 --- !u!114 &-6105437416882813334
 MonoBehaviour:
@@ -765,6 +815,22 @@ MonoBehaviour:
   _beamSegments: 24
   _beamLengthScale: 0.9
   _toggleKey: 102
+--- !u!114 &1503026038489913737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9126679355787183082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80d911d7e6ea5e74f9550af8b7f5e01d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerVoiceNoise
+  _whisperRms: 0.02
+  _shoutRms: 0.18
+  _reportInterval: 0.1
+  _reportGate: 0.05
 --- !u!1001 &4563925786305766699
 PrefabInstance:
   m_ObjectHideFlags: 0
