@@ -72,8 +72,7 @@ public class PlayerManager : NetworkIdentity, ISoundListener
             DrainOxygen(1);
         }
 
-        // Debug bindings — remove before shipping
-        if (Input.GetKeyDown(KeyCode.F)) Damage(10);
+        // Debug bindings — remove before shipping (F is the flashlight now)
         if (Input.GetKeyDown(KeyCode.X)) GainOxygen(10);
     }
 

@@ -294,6 +294,7 @@ GameObject:
   - component: {fileID: 5991265490983206294}
   - component: {fileID: -6105437416882813334}
   - component: {fileID: 130450329385311416}
+  - component: {fileID: 7956520436423763241}
   m_Layer: 6
   m_Name: PlayerCapsule
   m_TagString: Player
@@ -732,6 +733,38 @@ MonoBehaviour:
   _lookHeight: 1.4
   _nextKey: 275
   _prevKey: 276
+--- !u!114 &7956520436423763241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9126679355787183082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f98aab984dfc7824f9e3ab4c07bbf504, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerFlashlight
+  _isSetup: 0
+  _prefabId: -2147483648
+  _componentIndex: -2147483648
+  _shouldBePooled: 0
+  _parent: {fileID: 0}
+  _invertedPathToNearestParent: 
+  _directChildren: []
+  _networkRules: {fileID: 0}
+  _visitiblityRules: {fileID: 0}
+  _cameraRoot: {fileID: 4654526816153689839}
+  _localPosition: {x: 0, y: 1.5, z: 0.15}
+  _color: {r: 1, g: 0.96, b: 0.85, a: 1}
+  _range: 40
+  _spotAngle: 50
+  _intensity: 60
+  _shadows: 1
+  _beamMaterial: {fileID: 2100000, guid: 366019a42f35981498b212383c939a2b, type: 2}
+  _beamSegments: 24
+  _beamLengthScale: 0.9
+  _toggleKey: 102
 --- !u!1001 &4563925786305766699
 PrefabInstance:
   m_ObjectHideFlags: 0
