@@ -94,4 +94,15 @@ public class Interactor : MonoBehaviour
 
     public Transform GetPickupPos() => _pickupPosTransform;
     public bool IsHolding => _slots[_activeSlot] != null;
+
+    /// <summary>
+    /// Clears a specific object from the inventory without dropping/throwing it.
+    /// Used when something consumes a held item (e.g. the dampener eats an energy
+    /// cell) so we never keep a reference to a destroyed object in a slot.
+    /// </summary>
+    public void RemoveFromInventory(GrabbableObject obj)
+    {
+        for (int i = 0; i < _slots.Length; i++)
+            if (_slots[i] == obj) _slots[i] = null;
+    }
 }
