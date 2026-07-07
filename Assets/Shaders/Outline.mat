@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: FlashlightMaterial
-  m_Shader: {fileID: 4800000, guid: 12021d5a5a3d8ae43a890e7eddba3f0b, type: 3}
+  m_Name: Outline
+  m_Shader: {fileID: 4800000, guid: b74524ee2f2ea7144a27ab5950a1f5e9, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -22,24 +22,14 @@ Material:
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs:
-    - _NoiseTex:
-        m_Texture: {fileID: 2800000, guid: 75f685b956fc7714bbc091822593ba19, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
+    m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _AxisSharpness: 2
-    - _ConeLength: 20
-    - _Intensity: 1.1
-    - _LengthFalloff: 3.33
-    - _NoiseStrength: 0.893
-    - _RimPower: 3.67
-    - _SideVisibility: 0.2
-    - _SoftDepth: 1.5
-    - _TipSoftness: 0.255
+    - _DepthThreshold: 0.203
+    - _GrazingBias: 0.094
+    - _NormalThreshold: 1.571
+    - _Thickness: 0.65
     m_Colors:
-    - _Color: {r: 1, g: 0.95, b: 0.8, a: 1}
-    - _NoiseScroll: {r: 0.15, g: 0.15, b: 0, a: 0}
+    - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
