@@ -5,6 +5,10 @@ using UnityEngine;
 [RequireComponent(typeof(NetworkTransform))]
 public class GrabbableObject : Interactable
 {
+    [Header("HUD")]
+    [SerializeField] private Sprite _icon;
+    public Sprite Icon => _icon;
+    
     [SerializeField] private string _heldLayerName = "Held";
     [SerializeField] private float _throwForce = 8f;
 
