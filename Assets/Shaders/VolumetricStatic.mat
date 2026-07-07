@@ -27,17 +27,32 @@ Material:
         m_Texture: {fileID: 11700000, guid: 28738b85e71369f438f99dd6a25e088c, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _StaticTex:
+        m_Texture: {fileID: 2800000, guid: 59e4cc889cc84de478d400ee6bc2c4e4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _DensityMultiplier: 0.24
+    - _DensityMultiplier: 0.62
     - _DensityThreshold: 1
     - _LightScattering: 0.194
     - _MaxDistance: 100
     - _NoiseOffset: 0
-    - _NoiseTiling: 8.07
+    - _NoiseTiling: 8.32
+    - _StaticFadeEnd: 0.99
+    - _StaticFadeStart: 0.813
+    - _StaticSpeed: 5.7
+    - _StaticStrength: 0.015
+    - _StaticTiling: 1.07
     - _StepSize: 0.31
+    - _VHSBandCount: 3.85
+    - _VHSChroma: 3.09
+    - _VHSJitter: 0.0391
+    - _VHSScanline: 0.443
+    - _VHSSpeed: 2.29
     m_Colors:
     - _Color: {r: 0, g: 0, b: 0, a: 1}
     - _LightContribution: {r: 0, g: 0, b: 0, a: 1}
+    - _StaticColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

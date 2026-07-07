@@ -865,6 +865,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -2663814992351609276, guid: 8949e8c47b6ca364597ff54ac5e38926, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 5d218a50e26b6294985d4ed8a3c08b4e, type: 2}
     - target: {fileID: 4357118449180629203, guid: 8949e8c47b6ca364597ff54ac5e38926, type: 3}
       propertyPath: m_Name
       value: FPHandDeadAirTeamMember
@@ -970,6 +974,10 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: -2663814992351609276, guid: e5d8ad1569039af478054920236752ad, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 5d218a50e26b6294985d4ed8a3c08b4e, type: 2}
     - target: {fileID: 4357118449180629203, guid: e5d8ad1569039af478054920236752ad, type: 3}
       propertyPath: m_Name
       value: DeadAirTeamMember (1)
@@ -1143,6 +1151,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -2663814992351609276, guid: 715ab51c2df26164d92b0a5551e9bd22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 5d218a50e26b6294985d4ed8a3c08b4e, type: 2}
     - target: {fileID: 4357118449180629203, guid: 715ab51c2df26164d92b0a5551e9bd22, type: 3}
       propertyPath: m_Name
       value: FPDeadAirTeamMember

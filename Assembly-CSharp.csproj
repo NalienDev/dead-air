@@ -68,6 +68,7 @@
     <Compile Include="Assets\Scripts\DestructibleObjects\Despawn.cs" />
     <Compile Include="Assets\Scripts\Rover\SuckableObject.cs" />
     <Compile Include="Assets\Scripts\Rover\RoverManager.cs" />
+    <Compile Include="Assets\Scripts\Rendering\FogClearingZone.cs" />
     <Compile Include="Assets\Scripts\EnergyCellTrigger.cs" />
     <Compile Include="Assets\Scripts\LocalPlayerUI.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\Utilities\MobileDisableAutoSwitchControls.cs" />
