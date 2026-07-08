@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 7477050722200428830}
   - component: {fileID: 1368825567169513877}
   - component: {fileID: 8361924888709395980}
+  - component: {fileID: 3837830611844825692}
   m_Layer: 7
   m_Name: Sphere
   m_TagString: Untagged
@@ -109,7 +110,7 @@ SphereCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
@@ -237,16 +238,16 @@ MonoBehaviour:
   _visitiblityRules: {fileID: 0}
   _heldLayerName: Held
   _throwForce: 8
-  _baseValue: 400
+  _baseValue: 1000
   _perfectMultiplier: 1
   _damagedMultiplier: 0.6
   _worthlessMultiplier: 0
-  _perfectChance: 0.45
+  _perfectChance: 0.733
   _damagedChance: 0.4
   _perfectVisual: {fileID: 0}
   _damagedVisual: {fileID: 0}
   _worthlessVisual: {fileID: 0}
-  _ambientSource: {fileID: 0}
+  _ambientSource: {fileID: 8361924888709395980}
   _playAmbientOnSpawn: 1
   _pickupSound: {fileID: 0}
   _pickupSoundChance: 0.35
@@ -349,3 +350,18 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &3837830611844825692
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322975916374066887}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c35cce5f1fc4e54f858d002c29bd993, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OutOfBoundsGuard
+  _killY: -20
+  _safeSampleInterval: 0.5
+  _restingSpeed: 0.2

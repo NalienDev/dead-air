@@ -94,6 +94,7 @@
     <Compile Include="Assets\Scripts\DestructibleObjects\Spawner.cs" />
     <Compile Include="Assets\Scripts\Spectator\ReviveDeadPlayersButton.cs" />
     <Compile Include="Assets\Scripts\DestructibleObjects\DestructibleObject.cs" />
+    <Compile Include="Assets\Scripts\OutOfBoundsGuard.cs" />
     <Compile Include="Assets\Scripts\SceneChanger.cs" />
     <Compile Include="Assets\Scripts\PauseMenu.cs" />
     <Compile Include="Assets\Scripts\TestGen.cs" />

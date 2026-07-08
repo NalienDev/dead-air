@@ -6337,6 +6337,7 @@ GameObject:
   - component: {fileID: 4826127189958000641}
   - component: {fileID: 4051898291298790921}
   - component: {fileID: 1007568240725148012}
+  - component: {fileID: -5287533057609236858}
   m_Layer: 7
   m_Name: Energy Cell
   m_TagString: Untagged
@@ -6381,7 +6382,7 @@ BoxCollider:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
@@ -6509,6 +6510,21 @@ MonoBehaviour:
   _visitiblityRules: {fileID: 0}
   _heldLayerName: Held
   _throwForce: 8
+--- !u!114 &-5287533057609236858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8220706766722938257}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c35cce5f1fc4e54f858d002c29bd993, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OutOfBoundsGuard
+  _killY: -20
+  _safeSampleInterval: 0.5
+  _restingSpeed: 0.2
 --- !u!1 &8270791431824411788
 GameObject:
   m_ObjectHideFlags: 0

@@ -297,6 +297,7 @@ GameObject:
   - component: {fileID: 7956520436423763241}
   - component: {fileID: 1503026038489913737}
   - component: {fileID: 1174776988409076660}
+  - component: {fileID: 4188053122039071316}
   m_Layer: 6
   m_Name: PlayerCapsule
   m_TagString: Player
@@ -334,7 +335,7 @@ CharacterController:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   m_LayerOverridePriority: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
@@ -816,6 +817,21 @@ MonoBehaviour:
   _sprintStepInterval: 0.3
   _walkNoise: 0.3
   _sprintNoise: 0.6
+--- !u!114 &4188053122039071316
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9126679355787183082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c35cce5f1fc4e54f858d002c29bd993, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OutOfBoundsGuard
+  _killY: -22
+  _safeSampleInterval: 0.5
+  _restingSpeed: 0.2
 --- !u!1001 &4563925786305766699
 PrefabInstance:
   m_ObjectHideFlags: 0
