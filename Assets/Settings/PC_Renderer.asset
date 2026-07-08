@@ -55,7 +55,7 @@ MonoBehaviour:
   m_Active: 1
   injectionPoint: 450
   fetchColorBuffer: 1
-  requirements: 2
+  requirements: 1
   passMaterial: {fileID: 2100000, guid: ea0bb726ca0fe5842b6c3ce704ba898e, type: 2}
   passIndex: 0
   bindDepthStencilAttachment: 0
@@ -86,9 +86,9 @@ MonoBehaviour:
     probeVolumeBlendStatesCS: {fileID: 7200000, guid: b9a23f869c4fd45f19c5ada54dd82176, type: 3}
   m_RendererFeatures:
   - {fileID: 7833122117494664109}
-  - {fileID: -5089417142724638527}
   - {fileID: -8936976634666932345}
   - {fileID: -6270086623206113742}
+  - {fileID: -5089417142724638527}
   m_RendererFeatureMap: ad6b866f10d7b46cc1481dd612c25eb98727b6d4197bf98332fedec06f2dfca8
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}

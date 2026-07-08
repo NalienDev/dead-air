@@ -30,14 +30,14 @@ Material:
     m_Ints: []
     m_Floats:
     - _BottomFade: 0.001
-    - _FresnelPower: 1.01
-    - _Intensity: 0.95
-    - _NoiseStrength: 0.402
+    - _FresnelPower: 1.24
+    - _Intensity: 0.49
+    - _NoiseStrength: 0.306
     - _Pulse: 0.376
     - _PulseSpeed: 2
-    - _ScrollSpeed: 1
-    - _SoftDepth: 0.05
-    - _TopFade: 0.35
+    - _ScrollSpeed: 0.46
+    - _SoftDepth: 1.94
+    - _TopFade: 0.6
     m_Colors:
     - _Color: {r: 0.38714847, g: 0.73724455, b: 0.9433962, a: 1}
   m_BuildTextureStacks: []
