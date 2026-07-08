@@ -814,8 +814,8 @@ MonoBehaviour:
   _visitiblityRules: {fileID: 0}
   _walkStepInterval: 0.5
   _sprintStepInterval: 0.3
-  _walkNoise: 0.25
-  _sprintNoise: 0.55
+  _walkNoise: 0.3
+  _sprintNoise: 0.6
 --- !u!1001 &4563925786305766699
 PrefabInstance:
   m_ObjectHideFlags: 0

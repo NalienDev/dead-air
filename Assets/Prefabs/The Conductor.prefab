@@ -127,11 +127,11 @@ MonoBehaviour:
   _spawnDelayAfterEntry: 20
   _entranceNoSpawnRadius: 15
   _stepDistance: 2
-  _hearingThreshold: 0.496
-  _chaseNoiseThreshold: 0.616
-  _hearingRange: 20
+  _hearingThreshold: 0.6
+  _chaseNoiseThreshold: 0.8
+  _hearingRange: 13
   _noiseMemory: 0.5
-  _closeChaseRadius: 5
+  _closeChaseRadius: 3
   _wallMuffle: 0.5
   _occluderMask:
     serializedVersion: 2

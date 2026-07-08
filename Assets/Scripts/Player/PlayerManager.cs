@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using PurrNet;
 using UnityEngine;
 
@@ -71,6 +72,11 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     private void Update()
     {
         if (!isOwner) return;
+
+        // Keep streaming any captured voice to the server even while dead, so an
+        // in-flight utterance finishes sending.
+        PumpVoiceStreaming();
+
         if (IsDead) return; // Stop draining oxygen / accepting debug input when dead
 
         _oxygenTimer += Time.deltaTime;
@@ -170,31 +176,149 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     }
 
     // ── Voice recording relay ──────────────────────────────────────────────
+    //
+    // A whole utterance can be hundreds of KB to several MB of raw float samples.
+    // Sent as one RPC it fragments and head-of-line-blocks the reliable channel that
+    // also carries movement sync, which makes remote players stutter/teleport. So we
+    // compress to 16-bit PCM (half the bytes) and stream it to the server in small
+    // per-frame chunks, and the server reassembles it.
 
+    // ≈0.1s of 48 kHz audio per frame (~9.6 KB as PCM16). Far more than realtime
+    // speech needs, but small enough that it never floods the channel in one frame.
+    private const int VoiceSamplesPerFrame = 4800;
+    // Backpressure: if utterances pile up faster than they send, drop the oldest.
+    private const int VoiceMaxQueuedClips = 8;
+
+    private sealed class PendingVoiceClip
+    {
+        public float[] Samples;
+        public int SampleRate;
+        public int Channels;
+        public int Id;
+    }
+
+    // Owner-side outgoing queue. Enqueue may be called from the audio capture thread,
+    // so it's guarded; everything else runs on the main thread in Update.
+    private readonly Queue<PendingVoiceClip> _voiceOutQueue = new();
+    private readonly object _voiceOutLock = new();
+    private PendingVoiceClip _voiceSending;   // clip currently being streamed
+    private int _voiceSendOffset;             // samples of _voiceSending already sent
+    private int _voiceClipCounter;            // client-side id generator
+
+    // Server-side reassembly state for the in-flight clip from this player.
+    private int _rxClipId = -1;
+    private int _rxSampleRate;
+    private int _rxChannels;
+    private List<float> _rxSamples;
+
+    /// <summary>Owner → server: queue a finished utterance to be streamed up.</summary>
     public void SubmitVoiceClipToServer(float[] samples, int sampleRate, int channels)
-        => ServerReceiveVoiceClip(samples, sampleRate, channels);
+    {
+        if (samples == null || samples.Length == 0) return;
+
+        var pending = new PendingVoiceClip
+        {
+            Samples = samples,
+            SampleRate = sampleRate,
+            Channels = channels
+        };
+
+        lock (_voiceOutLock)
+        {
+            _voiceOutQueue.Enqueue(pending);
+            while (_voiceOutQueue.Count > VoiceMaxQueuedClips)
+            {
+                _voiceOutQueue.Dequeue();
+                Debug.LogWarning("[PlayerManager] Voice send backlog — dropping oldest utterance.");
+            }
+        }
+    }
+
+    // Owner, every frame: stream at most one bounded chunk of the current utterance.
+    private void PumpVoiceStreaming()
+    {
+        if (_voiceSending == null)
+        {
+            lock (_voiceOutLock)
+            {
+                if (_voiceOutQueue.Count == 0) return;
+                _voiceSending = _voiceOutQueue.Dequeue();
+            }
+
+            _voiceSending.Id = ++_voiceClipCounter;
+            _voiceSendOffset = 0;
+            ServerVoiceBegin(_voiceSending.Id, _voiceSending.SampleRate,
+                             _voiceSending.Channels, _voiceSending.Samples.Length);
+        }
+
+        int remaining = _voiceSending.Samples.Length - _voiceSendOffset;
+        int count = Mathf.Min(VoiceSamplesPerFrame, remaining);
+        ServerVoiceChunk(_voiceSending.Id, EncodePcm16(_voiceSending.Samples, _voiceSendOffset, count));
+        _voiceSendOffset += count;
+
+        if (_voiceSendOffset >= _voiceSending.Samples.Length)
+        {
+            ServerVoiceEnd(_voiceSending.Id);
+            _voiceSending = null;
+        }
+    }
+
+    private static byte[] EncodePcm16(float[] samples, int offset, int count)
+    {
+        byte[] bytes = new byte[count * 2];
+        for (int i = 0; i < count; i++)
+        {
+            float f = Mathf.Clamp(samples[offset + i], -1f, 1f);
+            short s = (short)Mathf.RoundToInt(f * 32767f);
+            bytes[i * 2] = (byte)(s & 0xFF);
+            bytes[i * 2 + 1] = (byte)((s >> 8) & 0xFF);
+        }
+        return bytes;
+    }
 
     [ServerRpc]
-    private void ServerReceiveVoiceClip(float[] samples, int sampleRate, int channels)
+    private void ServerVoiceBegin(int clipId, int sampleRate, int channels, int totalSamples)
     {
+        _rxClipId = clipId;
+        _rxSampleRate = sampleRate;
+        _rxChannels = channels;
+        _rxSamples = new List<float>(Mathf.Max(0, totalSamples));
+    }
+
+    [ServerRpc]
+    private void ServerVoiceChunk(int clipId, byte[] pcm16)
+    {
+        if (_rxSamples == null || clipId != _rxClipId) return; // stray / out of order
+        for (int i = 0; i + 1 < pcm16.Length; i += 2)
+        {
+            short s = (short)(pcm16[i] | (pcm16[i + 1] << 8));
+            _rxSamples.Add(s / 32768f);
+        }
+    }
+
+    [ServerRpc]
+    private void ServerVoiceEnd(int clipId)
+    {
+        if (_rxSamples == null || clipId != _rxClipId) return;
+
+        List<float> assembled = _rxSamples;
+        _rxSamples = null;
+
         if (VoiceRecordingStore.Instance == null)
         {
             Debug.LogWarning("[PlayerManager] VoiceRecordingStore not found in scene.");
             return;
         }
 
+        int channels = Mathf.Max(1, _rxChannels);
+        float[] samples = assembled.ToArray();
+
         AudioClip clip = AudioClip.Create(
-            $"voice_{owner}",
-            samples.Length / channels,
-            channels,
-            sampleRate,
-            stream: false
-        );
+            $"voice_{owner}", samples.Length / channels, channels, _rxSampleRate, stream: false);
         clip.SetData(samples, offsetSamples: 0);
 
         string playerId = owner?.ToString() ?? "unknown";
-        var captured = new CapturedVoiceClip(playerId, clip, Time.time);
-        VoiceRecordingStore.Instance.Enqueue(captured);
+        VoiceRecordingStore.Instance.Enqueue(new CapturedVoiceClip(playerId, clip, Time.time));
     }
 
     public void OnHearSound(Vector3 origin)

@@ -152,18 +152,9 @@ public class VoiceRecorder : BaseMicrophoneSubscriber
         _silenceTimer = 0f;
         _isRecording = false;
 
-        AudioClip clip = BuildClip(samples, _sampleRate, _channels);
         _playerManager.SubmitVoiceClipToServer(samples, _sampleRate, _channels);
 
         Debug.Log($"[VoiceRecorder] Flushed utterance: {durationSecs:F2}s");
-    }
-
-    private static AudioClip BuildClip(float[] samples, int sampleRate, int channels)
-    {
-        AudioClip clip = AudioClip.Create("VoiceCapture", samples.Length / channels,
-                                          channels, sampleRate, stream: false);
-        clip.SetData(samples, offsetSamples: 0);
-        return clip;
     }
 
     private static float CalculateRms(ArraySegment<float> data)
