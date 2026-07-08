@@ -32,6 +32,19 @@ public class PlayerDeathHandler : NetworkBehaviour
     [Header("Visual roots to hide on death (e.g. Models). Add as many as you need.")]
     [SerializeField] private GameObject[] _playerVisualRoots;
 
+    [Header("Colliders to disable on death (auto-found if empty)")]
+    [Tooltip("Every collider on the player is turned off while dead so the corpse can't " +
+             "block or shove anyone, then turned back on when revived.")]
+    [SerializeField] private Collider[] _collidersToDisable;
+
+    [Header("Death FX (spawned as a SEPARATE object at the death spot)")]
+    [Tooltip("Prefab with an AudioSource + ParticleSystem (both set to play on awake). " +
+             "Spawned at the death location on every client — as its own object so it is " +
+             "still seen and heard even after the body is hidden or teleported away.")]
+    [SerializeField] private GameObject _deathEffectPrefab;
+    [Tooltip("Seconds before the spawned death-FX object destroys itself.")]
+    [SerializeField] private float _deathEffectLifetime = 5f;
+
     // ── Synced state ───────────────────────────────────────────────────────
 
     /// <summary>Replicated to all clients. True = this player is dead.</summary>
@@ -51,6 +64,9 @@ public class PlayerDeathHandler : NetworkBehaviour
         if (_fpc == null) _fpc = GetComponent<StarterAssets.FirstPersonController>();
         if (_voiceRecorder == null) _voiceRecorder = GetComponent<VoiceRecorder>();
         if (_characterController == null) _characterController = GetComponent<CharacterController>();
+
+        if (_collidersToDisable == null || _collidersToDisable.Length == 0)
+            _collidersToDisable = GetComponentsInChildren<Collider>(includeInactive: true);
     }
 
     protected override void OnSpawned(bool asServer)
@@ -59,8 +75,9 @@ public class PlayerDeathHandler : NetworkBehaviour
 
         // Late-join safety: if this player is already dead when we spawn in,
         // hide them right away instead of waiting for the next change event.
+        // No death FX here — they died before we joined, so there's nothing to replay.
         if (isDead.value)
-            ApplyDeadState();
+            ApplyDeadState(playEffects: false);
     }
 
     protected override void OnDespawned(bool asServer)
@@ -143,15 +160,22 @@ public class PlayerDeathHandler : NetworkBehaviour
     private void OnDeadStateChanged(bool newValue)
     {
         if (newValue)
-            ApplyDeadState();
+            ApplyDeadState(playEffects: true);
         else
             ApplyAliveState();
     }
 
-    private void ApplyDeadState()
+    private void ApplyDeadState(bool playEffects)
     {
         // Hidden for everyone — the corpse should not be visible to other players.
         SetVisualRootsActive(false);
+
+        // No collision while dead: the corpse can't block, trip, or shove anyone.
+        SetCollidersActive(false);
+
+        // A fresh death spawns its own FX object at the death spot so it survives the
+        // body being hidden/teleported. (Skipped for a late-join catch-up.)
+        if (playEffects) SpawnDeathEffect();
 
         if (!isOwner) return;
 
@@ -169,6 +193,7 @@ public class PlayerDeathHandler : NetworkBehaviour
     private void ApplyAliveState()
     {
         SetVisualRootsActive(true);
+        SetCollidersActive(true);
 
         if (!isOwner) return;
 
@@ -184,6 +209,23 @@ public class PlayerDeathHandler : NetworkBehaviour
         if (_playerVisualRoots == null) return;
         foreach (GameObject root in _playerVisualRoots)
             if (root != null) root.SetActive(active);
+    }
+
+    private void SetCollidersActive(bool active)
+    {
+        if (_collidersToDisable == null) return;
+        foreach (Collider c in _collidersToDisable)
+            if (c != null) c.enabled = active;
+    }
+
+    private void SpawnDeathEffect()
+    {
+        if (_deathEffectPrefab == null) return;
+
+        // Its own object at the death spot — not parented to the player, so hiding or
+        // teleporting the body doesn't cut off the sound or particles.
+        GameObject fx = Instantiate(_deathEffectPrefab, transform.position, transform.rotation);
+        if (_deathEffectLifetime > 0f) Destroy(fx, _deathEffectLifetime);
     }
 
     private SpectatorController EnsureSpectator()
