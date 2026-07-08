@@ -13,13 +13,13 @@ using UnityEngine.AI;
 /// Three states:
 /// <list type="bullet">
 /// <item><b>Wander</b> — roams the dungeon on the NavMesh, landing heavy footsteps.
-/// Every step plays a (randomised) stomp and rattles the camera of any nearby player,
-/// harder the closer it is.</item>
+/// Every step plays a (randomised) stomp.</item>
 /// <item><b>Inspect</b> — a noise it could hear pulls it to that spot, where it prowls
 /// the area for a few seconds. If it senses a player up close (it is blind, so this is
 /// proximity, not sight) it starts chasing; otherwise it gives up and wanders off.</item>
-/// <item><b>Chase</b> — runs the player down and lands ONE hit, then drops into
-/// Recover.</item>
+/// <item><b>Chase</b> — runs the player down. Once in range it swings.</item>
+/// <item><b>Attack</b> — plays the attack animation; the hit lands on the clip's
+/// "slicing" frame (an animation event calling OnAttackHit), then drops into Recover.</item>
 /// <item><b>Recover</b> — stands still for a couple of seconds, listening. Any noise it
 /// can hear in that window (a sprint, a shout, a noisy grab) re-triggers the chase;
 /// stay silent and it loses interest and wanders off.</item>
@@ -34,7 +34,7 @@ using UnityEngine.AI;
 /// </summary>
 public class TheConductorAI : NetworkBehaviour
 {
-    private enum State { Inactive, Wander, Inspect, Chase, Recover }
+    private enum State { Inactive, Wander, Inspect, Chase, Attack, Recover }
 
     // ── Inspector ──────────────────────────────────────────────────────────
 
@@ -46,7 +46,7 @@ public class TheConductorAI : NetworkBehaviour
     [Header("Sounds")]
     [Tooltip("Footstep stomps. One is picked at random per step — add several for variety.")]
     [SerializeField] private List<AudioClip> _stepSounds = new();
-    [Tooltip("Played once when it locks onto a player and starts a chase.")]
+    [Tooltip("Screech. Played from an animation event on the Shout (post-attack) clip.")]
     [SerializeField] private AudioClip _screechSound;
     [Tooltip("Played when it lands a hit.")]
     [SerializeField] private AudioClip _attackSound;
@@ -70,15 +70,9 @@ public class TheConductorAI : NetworkBehaviour
              "'ExpeditionSpawn') — it can walk there, it just won't spawn there.")]
     [SerializeField] private float _entranceNoSpawnRadius = 15f;
 
-    [Header("Footsteps & Camera Shake")]
+    [Header("Footsteps")]
     [Tooltip("Distance travelled between footstep stomps.")]
     [SerializeField] private float _stepDistance = 2f;
-    [Tooltip("Camera-shake trauma at the footstep's position (0..1).")]
-    [SerializeField, Range(0f, 1f)] private float _stepShakeIntensity = 0.6f;
-    [Tooltip("Beyond this distance a footstep no longer shakes the camera.")]
-    [SerializeField] private float _stepShakeRadius = 12f;
-    [Tooltip("Extra shake multiplier while chasing (steps hit harder).")]
-    [SerializeField] private float _chaseShakeMultiplier = 1.4f;
 
     [Header("Hearing")]
     [Tooltip("Loudness (0..1) a noise must reach for the Conductor to investigate it. " +
@@ -117,9 +111,14 @@ public class TheConductorAI : NetworkBehaviour
     [SerializeField] private float _postAttackPause = 2f;
     [Tooltip("Give up the chase if this long passes without landing a hit or hearing the target.")]
     [SerializeField] private float _chaseGiveUpTime = 8f;
+    [Tooltip("Safety net: if the attack animation's hit event never fires within this many " +
+             "seconds (e.g. the event wasn't added to the clip), give up the swing and recover.")]
+    [SerializeField] private float _attackTimeout = 2f;
 
     private static readonly int AnimIsChasing = Animator.StringToHash("IsChasing");
     private static readonly int AnimSpeed = Animator.StringToHash("Speed");
+    private static readonly int AnimAttack = Animator.StringToHash("Attack");
+    private static readonly int AnimRechase = Animator.StringToHash("Rechase");
 
     // ── Server state ───────────────────────────────────────────────────────
 
@@ -141,7 +140,11 @@ public class TheConductorAI : NetworkBehaviour
     private Vector3 _lastStepPos;
 
     private float _chaseGiveUpAt;
+    private float _attackTimeoutAt;
     private float _recoverEndTime;
+
+    private float _entryTime = -1f;   // when the first player entered the dungeon
+    private Transform _entrance;
 
     private float _nextLogTime;
 
@@ -203,6 +206,7 @@ public class TheConductorAI : NetworkBehaviour
             case State.Wander:   TickWander();   break;
             case State.Inspect:  TickInspect();  break;
             case State.Chase:    TickChase();    break;
+            case State.Attack:   TickAttack();   break;
             case State.Recover:  TickRecover();  break;
         }
 
@@ -214,17 +218,32 @@ public class TheConductorAI : NetworkBehaviour
     private void TickInactive()
     {
         if (DungeonGenerator.Instance == null || !DungeonGenerator.Instance.IsGenerated())
-            return;
-
-        // Anchor to the target of any player, or just the current position, so we
-        // land on a connected part of the NavMesh.
-        Vector3 anchor = transform.position;
-        List<PlayerManager> players = GetDungeonPlayers();
-        if (players.Count > 0) anchor = players[0].transform.position;
-
-        if (!TryRandomNavPoint(anchor, _wanderRadius, out Vector3 spawn))
         {
-            Status("waiting — no NavMesh point found to appear on.");
+            _entryTime = -1f;
+            return;
+        }
+
+        // Only count down once players are actually inside the dungeon.
+        List<PlayerManager> players = GetDungeonPlayers();
+        if (players.Count == 0)
+        {
+            _entryTime = -1f;
+            return;
+        }
+
+        if (_entryTime < 0f) _entryTime = Time.time;
+        float wait = _spawnDelayAfterEntry - (Time.time - _entryTime);
+        if (wait > 0f)
+        {
+            Status($"waiting — appears {wait:F0}s after entry.");
+            return;
+        }
+
+        // Appear near a random player but never on top of the entrance.
+        Vector3 anchor = players[Random.Range(0, players.Count)].transform.position;
+        if (!TryFindSpawnPoint(anchor, out Vector3 spawn))
+        {
+            Status("waiting — no valid spawn point away from the entrance.");
             return;
         }
 
@@ -273,7 +292,7 @@ public class TheConductorAI : NetworkBehaviour
 
     private void TickWander()
     {
-        TickSteps(chasing: false);
+        TickSteps();
 
         if (ConsumeHeardNoise(out Vector3 pos, out float loud, out bool urgent))
         {
@@ -308,7 +327,7 @@ public class TheConductorAI : NetworkBehaviour
 
     private void TickInspect()
     {
-        TickSteps(chasing: false);
+        TickSteps();
 
         // A blind "sense" of a body up close → lock on.
         PlayerManager near = NearestDungeonPlayer(transform.position, _detectRadius);
@@ -369,17 +388,16 @@ public class TheConductorAI : NetworkBehaviour
             return;
         }
 
-        TickSteps(chasing: true);
+        TickSteps();
         _agent.SetDestination(_chaseTarget.transform.position);
 
         float dist = Vector3.Distance(transform.position, _chaseTarget.transform.position);
 
-        // One hit ends the chase — then it stands still and listens.
+        // In range → wind up the swing. The hit itself lands on the animation's
+        // "slicing" frame (see OnAttackHit), not here.
         if (dist <= _attackRange)
         {
-            _chaseTarget.Damage(_attackDamage);
-            RpcAttack(transform.position);
-            EnterRecover();
+            EnterAttack();
             return;
         }
 
@@ -392,6 +410,73 @@ public class TheConductorAI : NetworkBehaviour
             Debug.Log("[TheConductorAI] Lost the target — back to wandering.");
             EnterWander();
         }
+    }
+
+    // ── Attack: play the swing, land the hit on the animation's slicing frame ──
+
+    private void EnterAttack()
+    {
+        _state = State.Attack;
+
+        // Plant it and face the target while it swings.
+        _agent.ResetPath();
+        _agent.isStopped = true;
+
+        Vector3 look = _chaseTarget.transform.position - transform.position;
+        look.y = 0f;
+        if (look.sqrMagnitude > 0.01f)
+            transform.rotation = Quaternion.LookRotation(look);
+
+        _attackTimeoutAt = Time.time + _attackTimeout;
+        // Leave IsChasing true — the Attack trigger drives Chase → Attack. Flipping
+        // IsChasing false here would race the Chase → Wander transition and send him
+        // back to wandering instead of attacking. It's cleared later in EnterRecover.
+        RpcTriggerAttack();
+        Debug.Log("[TheConductorAI] Swinging.");
+    }
+
+    private void TickAttack()
+    {
+        // OnAttackHit (an animation event on the slicing frame) does the real work:
+        // it applies the hit and drops into Recover. This is only a safety net in
+        // case that event never fires so the Conductor can't freeze mid-swing.
+        if (Time.time >= _attackTimeoutAt)
+        {
+            Debug.LogWarning("[TheConductorAI] Attack hit event never fired — recovering.");
+            EnterRecover();
+        }
+    }
+
+    /// <summary>
+    /// Animation event. Add this to the attack clip on the "slicing" pose frame —
+    /// select the frame, add an Animation Event, and set its Function to
+    /// <c>OnAttackHit</c> (no parameters). Fires on every client; only the server
+    /// applies damage, and only if the target is still within attack range.
+    /// </summary>
+    public void OnAttackHit()
+    {
+        if (_attackSound != null) _audioSource.PlayOneShot(_attackSound);
+
+        if (!isServer) return;
+        if (_state != State.Attack) return; // ignore a stray/late event
+
+        if (IsValidTarget(_chaseTarget) &&
+            Vector3.Distance(transform.position, _chaseTarget.transform.position) <= _attackRange)
+        {
+            _chaseTarget.Damage(_attackDamage);
+        }
+
+        EnterRecover();
+    }
+
+    /// <summary>
+    /// Animation event. Put this on the Shout (post-attack) clip to play the screech.
+    /// Routed through <see cref="ConductorAnimationRelay"/>; fires on every client, so
+    /// no RPC is needed — each client plays its own copy.
+    /// </summary>
+    public void OnShout()
+    {
+        if (_screechSound != null) _audioSource.PlayOneShot(_screechSound);
     }
 
     // ── Recover: stand still after a hit, listening for a reason to go again ──
@@ -413,17 +498,24 @@ public class TheConductorAI : NetworkBehaviour
 
     private void TickRecover()
     {
-        // Any noise it can hear during the pause — a sprint away, a cry for help —
-        // and it goes right back on the hunt.
+        // Interruptible: any noise it can hear during the recharge pause — a sprint
+        // away, a cry for help — and it goes right back on the hunt.
         if (ConsumeHeardNoise(out Vector3 pos, out float _, out bool _))
         {
             _agent.isStopped = false;
-            if (TryStartChaseNear(pos)) return;
+            if (TryStartChaseNear(pos))
+            {
+                // Kick the animator out of Shout and back into Chase. This trigger
+                // lingers until the attack clip finishes and the animator reaches
+                // Shout, so he only visibly resumes chasing once the swing is done.
+                RpcTriggerRechase();
+                return;
+            }
         }
 
         if (Time.time >= _recoverEndTime)
         {
-            Debug.Log("[TheConductorAI] Silence — losing interest.");
+            Debug.Log("[TheConductorAI] Pause over — back to wandering.");
             _agent.isStopped = false;
             EnterWander();
         }
@@ -431,7 +523,7 @@ public class TheConductorAI : NetworkBehaviour
 
     // ── Footsteps ─────────────────────────────────────────────────────────────
 
-    private void TickSteps(bool chasing)
+    private void TickSteps()
     {
         if (!_agent.enabled || !_agent.isOnNavMesh) return;
 
@@ -443,8 +535,7 @@ public class TheConductorAI : NetworkBehaviour
 
         if (_stepSounds.Count == 0) return;
         int index = Random.Range(0, _stepSounds.Count);
-        float intensity = _stepShakeIntensity * (chasing ? _chaseShakeMultiplier : 1f);
-        RpcStep(transform.position, index, intensity);
+        RpcStep(index);
     }
 
     // ── Noise intake (server) ─────────────────────────────────────────────────
@@ -515,6 +606,33 @@ public class TheConductorAI : NetworkBehaviour
         return best;
     }
 
+    // Like TryRandomNavPoint but rejects points near the dungeon entrance so the
+    // Conductor never appears where the players spawn in.
+    private bool TryFindSpawnPoint(Vector3 anchor, out Vector3 result)
+    {
+        if (_entrance == null)
+        {
+            GameObject go = GameObject.FindGameObjectWithTag("ExpeditionSpawn");
+            if (go != null) _entrance = go.transform;
+        }
+
+        float noSpawnSq = _entranceNoSpawnRadius * _entranceNoSpawnRadius;
+
+        for (int i = 0; i < 20; i++)
+        {
+            Vector3 candidate = anchor + Random.insideUnitSphere * _wanderRadius;
+            if (!NavMesh.SamplePosition(candidate, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+                continue;
+            if (_entrance != null && (hit.position - _entrance.position).sqrMagnitude < noSpawnSq)
+                continue;
+            result = hit.position;
+            return true;
+        }
+
+        result = anchor;
+        return false;
+    }
+
     private static bool TryRandomNavPoint(Vector3 center, float radius, out Vector3 result)
     {
         for (int i = 0; i < 12; i++)
@@ -540,28 +658,41 @@ public class TheConductorAI : NetworkBehaviour
     }
 
     [ObserversRpc(runLocally: true)]
-    private void RpcStep(Vector3 pos, int clipIndex, float shakeIntensity)
+    private void RpcStep(int clipIndex)
     {
         if (_stepSounds.Count > 0 && clipIndex >= 0 && clipIndex < _stepSounds.Count)
         {
             AudioClip clip = _stepSounds[clipIndex];
             if (clip != null) _audioSource.PlayOneShot(clip);
         }
-        CameraShake.ShakeFromWorld(pos, shakeIntensity, _stepShakeRadius);
     }
 
     [ObserversRpc(runLocally: true)]
     private void RpcSetChasing(bool chasing)
     {
-        if (_animator != null) _animator.SetBool(AnimIsChasing, chasing);
-        if (chasing && _screechSound != null) _audioSource.PlayOneShot(_screechSound);
+        if (_animator == null) return;
+        // Clear any pending Attack trigger left over from a previous swing so it can't
+        // fire the instant he (re-)enters Chase — he only attacks when EnterAttack sets
+        // it again once in range.
+        _animator.ResetTrigger(AnimAttack);
+        _animator.SetBool(AnimIsChasing, chasing);
     }
 
+    // Plays the attack animation on every client. The clip's "slicing" frame carries
+    // an animation event that calls OnAttackHit, which lands the hit and plays the sound.
     [ObserversRpc(runLocally: true)]
-    private void RpcAttack(Vector3 pos)
+    private void RpcTriggerAttack()
     {
-        if (_attackSound != null) _audioSource.PlayOneShot(_attackSound);
-        CameraShake.ShakeFromWorld(pos, 1f, _attackRange * 3f);
+        if (_animator != null) _animator.SetTrigger(AnimAttack);
+    }
+
+    // Drives the Shout (post-attack recharge) → Chase transition when it hears
+    // something during the pause. Set as a trigger; it waits for the attack clip to
+    // finish and the animator to enter Shout before the transition consumes it.
+    [ObserversRpc(runLocally: true)]
+    private void RpcTriggerRechase()
+    {
+        if (_animator != null) _animator.SetTrigger(AnimRechase);
     }
 
     // ── Loops / animator (server-side helpers call these locally too) ──────────

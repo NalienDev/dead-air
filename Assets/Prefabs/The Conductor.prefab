@@ -127,9 +127,6 @@ MonoBehaviour:
   _spawnDelayAfterEntry: 20
   _entranceNoSpawnRadius: 15
   _stepDistance: 2
-  _stepShakeIntensity: 0.6
-  _stepShakeRadius: 12
-  _chaseShakeMultiplier: 1.4
   _hearingThreshold: 0.496
   _chaseNoiseThreshold: 0.616
   _hearingRange: 20
@@ -141,10 +138,11 @@ MonoBehaviour:
     m_Bits: 7176
   _inspectDuration: 10
   _detectRadius: 13
-  _attackRange: 1.6
+  _attackRange: 1.8
   _attackDamage: 20
   _postAttackPause: 3
   _chaseGiveUpTime: 8
+  _attackTimeout: 2
 --- !u!54 &5063556548485739162
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -507,6 +505,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a835a5aeeee2674458ba83621d19cf66, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5552655962972164100}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a835a5aeeee2674458ba83621d19cf66, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3311839202191241632}
   m_SourcePrefab: {fileID: 100100000, guid: a835a5aeeee2674458ba83621d19cf66, type: 3}
 --- !u!4 &5936246734449333086 stripped
 Transform:
@@ -563,3 +564,15 @@ CapsuleCollider:
   m_Height: 145.16142
   m_Direction: 1
   m_Center: {x: 0, y: 72.08073, z: 0}
+--- !u!114 &3311839202191241632
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6424974586971720164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c528c53eef044614db271809d6ac215e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ConductorAnimationRelay
