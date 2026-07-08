@@ -140,6 +140,7 @@
     <Compile Include="Assets\Scripts\QuotaUI.cs" />
     <Compile Include="Assets\Scripts\GameOverHandler.cs" />
     <Compile Include="Assets\Scripts\Voice\VoiceRecordingStore.cs" />
+    <Compile Include="Assets\Scripts\Dampener.cs" />
     <Compile Include="Assets\Scripts\Voice\CapturedVoiceClip.cs" />
     <Compile Include="Assets\Scripts\SoundEmitter.cs" />
     <Compile Include="Assets\Samples\Shader Graph\17.3.0\UGUI Shaders\Scripts\BlurredHexagonController.cs" />
@@ -173,6 +174,7 @@
     <None Include="Assets\Shaders\VolumetricFog.shader" />
     <None Include="Assets\Packages\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />
     <None Include="Assets\Samples\Shader Graph\17.3.0\UGUI Shaders\Subgraphs\Helpers\SafeHDSceneColor.hlsl" />
+    <None Include="Assets\Shaders\SilenceBeam.shader" />
     <None Include="Assets\Packages\TextMesh Pro\Shaders\TMP_SDF-Mobile Masking.shader" />
     <None Include="Assets\Dissonance\Integrations\Offline\README.txt" />
     <None Include="Assets\Packages\TextMesh Pro\Shaders\TMP_SDF Overlay.shader" />
