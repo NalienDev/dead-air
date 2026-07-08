@@ -33,6 +33,13 @@ public class SpectatorController : MonoBehaviour
     [Tooltip("Point on the target the camera looks at, measured up from their feet.")]
     [SerializeField] private float _lookHeight = 1.4f;
 
+    [Header("Collision")]
+    [Tooltip("Layers the camera should not clip through (walls, dungeon geometry). " +
+             "Exclude the Player layer so it doesn't collide with players.")]
+    [SerializeField] private LayerMask _collisionMask = ~(1 << 6);
+    [Tooltip("Keeps the camera this far off surfaces it collides with.")]
+    [SerializeField] private float _collisionRadius = 0.3f;
+
     [Header("Input")]
     [SerializeField] private KeyCode _nextKey = KeyCode.RightArrow;
     [SerializeField] private KeyCode _prevKey = KeyCode.LeftArrow;
@@ -110,6 +117,17 @@ public class SpectatorController : MonoBehaviour
         Transform t = target.transform;
         Vector3 focus = t.position + Vector3.up * _lookHeight;
         Vector3 pos = focus - t.forward * _distance + Vector3.up * _height;
+
+        // Don't let the camera pass through walls — pull it in to the first hit
+        // between the target and the desired spot, so you can't see outside the dungeon.
+        Vector3 dir = pos - focus;
+        float dist = dir.magnitude;
+        if (dist > 0.001f &&
+            Physics.SphereCast(focus, _collisionRadius, dir / dist, out RaycastHit hit,
+                               dist, _collisionMask, QueryTriggerInteraction.Ignore))
+        {
+            pos = focus + dir / dist * Mathf.Max(0.1f, hit.distance - _collisionRadius);
+        }
 
         _cameraTarget.position = pos;
 

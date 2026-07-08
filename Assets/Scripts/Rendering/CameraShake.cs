@@ -1,94 +1,112 @@
+using System.Collections.Generic;
+using Cinemachine;
 using UnityEngine;
 
 /// <summary>
-/// Trauma-based camera shake. Attach to a dedicated "shake rig" node that sits
-/// BETWEEN the camera follow target and the Camera itself, and whose local pose is
-/// (0,0,0)/identity — this component drives that local pose, so it never fights the
-/// look/follow rig above it.
+/// Trauma-based camera shake driven through Cinemachine's Perlin noise.
 ///
-/// The blind Conductor calls <see cref="ShakeFromWorld"/> whenever it takes a heavy
-/// step; the closer its footstep lands to the local player, the harder the screen
-/// rattles. Trauma is squared before it becomes motion, so light taps stay subtle
-/// while a nearby stomp is violent, and it always decays smoothly back to still.
+/// It drives the Amplitude/Frequency gains on EVERY vcam's
+/// <see cref="CinemachineBasicMultiChannelPerlin"/> — only the live one actually
+/// moves the camera, so this sidesteps having to figure out which vcam is active
+/// (which is what made the previous versions silently do nothing).
+///
+/// SETUP (once, on the PlayerFollowCamera vcam in the player prefab):
+///   Inspector → Noise → "Basic Multi Channel Perlin" → Noise Profile → "6D Shake".
+///   Leave Amplitude/Frequency Gain at 0 — this script owns them.
+///
+/// No scene object required (it self-hosts a singleton). Put it on one persistent
+/// object only if you want to tune the fields in the Inspector.
 /// </summary>
-[DisallowMultipleComponent]
 public class CameraShake : MonoBehaviour
 {
-    [Header("Shake Shape")]
-    [Tooltip("Max positional offset (metres) at full trauma.")]
-    [SerializeField] private float _maxOffset = 0.15f;
-    [Tooltip("Max rotational kick (degrees) at full trauma.")]
-    [SerializeField] private float _maxRoll = 2.5f;
-    [Tooltip("How fast the Perlin noise scrolls — higher = jitterier.")]
-    [SerializeField] private float _frequency = 22f;
+    [Tooltip("Perlin amplitude gain at full trauma.")]
+    [SerializeField] private float _maxAmplitude = 2f;
+    [Tooltip("Perlin frequency gain at full trauma.")]
+    [SerializeField] private float _maxFrequency = 2f;
     [Tooltip("Trauma lost per second. Higher = shorter shakes.")]
-    [SerializeField, Range(0.1f, 5f)] private float _recovery = 1.6f;
+    [SerializeField] private float _recovery = 1.4f;
+
+    private static CameraShake _instance;
 
     private float _trauma;
-    private float _seed;
+    private readonly List<CinemachineBasicMultiChannelPerlin> _perlins = new();
+    private bool _warned;
 
-    // The local player's shake rig registers itself here so world-space callers can
-    // reach the one camera that actually belongs to this client.
-    private static CameraShake s_local;
+    private static CameraShake Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                var go = new GameObject("[CameraShake]");
+                _instance = go.AddComponent<CameraShake>();
+                DontDestroyOnLoad(go);
+            }
+            return _instance;
+        }
+    }
 
-    private Camera _camera;
+    /// <summary>Adds trauma (0..1) directly.</summary>
+    public static void Shake(float intensity01) => Instance.AddTrauma(intensity01);
+
+    /// <summary>
+    /// Adds trauma from a world-space event: full at the event's position, fading to
+    /// nothing at <paramref name="radius"/> from the local player's camera.
+    /// </summary>
+    public static void ShakeFromWorld(Vector3 worldPos, float intensity01, float radius)
+    {
+        Camera cam = Camera.main;
+        if (cam == null || radius <= 0f) return;
+
+        float dist = Vector3.Distance(cam.transform.position, worldPos);
+        if (dist >= radius) return;
+
+        Instance.AddTrauma(intensity01 * (1f - dist / radius));
+    }
 
     private void Awake()
     {
-        _seed = Random.value * 100f;
-        _camera = GetComponentInChildren<Camera>();
+        if (_instance != null && _instance != this) { Destroy(this); return; }
+        _instance = this;
     }
 
-    private void OnDisable()
+    private void AddTrauma(float amount)
     {
-        if (s_local == this) s_local = null;
+        _trauma = Mathf.Clamp01(_trauma + Mathf.Max(0f, amount));
+        if (_perlins.Count == 0) RefreshPerlins();
+    }
+
+    private void RefreshPerlins()
+    {
+        _perlins.Clear();
+        foreach (var p in FindObjectsByType<CinemachineBasicMultiChannelPerlin>(
+                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (p.m_NoiseProfile != null) _perlins.Add(p);
+        }
+
+        if (_perlins.Count == 0 && !_warned)
+        {
+            _warned = true;
+            Debug.LogWarning("[CameraShake] No Cinemachine vcam has a Basic Multi Channel Perlin " +
+                             "with a Noise Profile. On your PlayerFollowCamera vcam: Noise → " +
+                             "Basic Multi Channel Perlin → Noise Profile '6D Shake' (leave gains at 0).");
+        }
     }
 
     private void LateUpdate()
     {
-        // Only the client's active (main) camera counts as "local". Remote players'
-        // camera rigs exist in the scene but are not Camera.main.
-        if (_camera != null && _camera == Camera.main)
-            s_local = this;
-        else if (s_local == this)
-            s_local = null;
+        float shake = _trauma * _trauma;
 
-        if (_trauma <= 0f)
+        for (int i = _perlins.Count - 1; i >= 0; i--)
         {
-            transform.localPosition = Vector3.zero;
-            transform.localRotation = Quaternion.identity;
-            return;
+            var p = _perlins[i];
+            if (p == null) { _perlins.RemoveAt(i); continue; }
+            p.m_AmplitudeGain = shake * _maxAmplitude;
+            p.m_FrequencyGain = shake * _maxFrequency;
         }
 
-        float shake = _trauma * _trauma;
-        float t = Time.time * _frequency;
-
-        float offX = (Mathf.PerlinNoise(_seed, t) * 2f - 1f) * _maxOffset * shake;
-        float offY = (Mathf.PerlinNoise(_seed + 1f, t) * 2f - 1f) * _maxOffset * shake;
-        float roll = (Mathf.PerlinNoise(_seed + 2f, t) * 2f - 1f) * _maxRoll * shake;
-
-        transform.localPosition = new Vector3(offX, offY, 0f);
-        transform.localRotation = Quaternion.Euler(0f, 0f, roll);
-
-        _trauma = Mathf.Clamp01(_trauma - _recovery * Time.deltaTime);
-    }
-
-    /// <summary>Add trauma directly to this rig (0..1, accumulates and clamps).</summary>
-    public void AddTrauma(float amount) => _trauma = Mathf.Clamp01(_trauma + amount);
-
-    /// <summary>
-    /// Shake the local player's camera based on a world-space event. Intensity falls
-    /// off linearly to zero at <paramref name="radius"/>. Safe to call on every
-    /// client — only the client whose camera is nearby feels anything.
-    /// </summary>
-    public static void ShakeFromWorld(Vector3 worldPos, float intensity, float radius)
-    {
-        if (s_local == null || radius <= 0f) return;
-
-        float dist = Vector3.Distance(s_local.transform.position, worldPos);
-        float falloff = 1f - Mathf.Clamp01(dist / radius);
-        if (falloff <= 0f) return;
-
-        s_local.AddTrauma(intensity * falloff);
+        if (_trauma > 0f)
+            _trauma = Mathf.MoveTowards(_trauma, 0f, _recovery * Time.deltaTime);
     }
 }

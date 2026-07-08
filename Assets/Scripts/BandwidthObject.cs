@@ -163,7 +163,7 @@ public class BandwidthObject : GrabbableObject
     {
         InteractionType result = base.OnInteract(user);
 
-        // Only make pickup noise on a genuine grab, and only if a clip is set.
+        // A silent object (no clip) can't be heard, so it never alerts the Conductor.
         if (result == InteractionType.GRAB && _pickupSound != null)
             ServerTryPickupSound();
 
@@ -173,12 +173,13 @@ public class BandwidthObject : GrabbableObject
     [ServerRpc(requireOwnership: false)]
     private void ServerTryPickupSound()
     {
-        // Server-authoritative roll so the noise the Conductor hears matches the
-        // sound every client plays.
+        // Server-authoritative roll for whether this grab actually makes a sound.
+        // Sound and alert are one and the same event: if it makes a sound the blind
+        // Conductor hears it; if not, nothing happens.
         if (Random.value > _pickupSoundChance) return;
 
-        NoiseEvents.Report(transform.position, _pickupNoiseLoudness);
         RpcPlayPickupSound();
+        NoiseEvents.Report(transform.position, _pickupNoiseLoudness);
     }
 
     [ObserversRpc(runLocally: true)]

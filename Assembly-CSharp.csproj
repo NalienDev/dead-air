@@ -125,6 +125,7 @@
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualJoystick.cs" />
     <Compile Include="Assets\Scripts\Player\HideRenderersForOwner.cs" />
     <Compile Include="Assets\Scripts\Enemies\TheConductorAI.cs" />
+    <Compile Include="Assets\Scripts\Player\PlayerFootstepNoise.cs" />
     <Compile Include="Assets\Scripts\BandwidthObject.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonEntrance.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerAnimationHandler.cs" />
