@@ -23,8 +23,8 @@ TagManager:
   - Door
   - DungeonGround
   - Walls
-  - 
-  - 
+  - DungeonProps
+  - Enemy
   - 
   - 
   - 

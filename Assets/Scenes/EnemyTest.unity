@@ -2539,11 +2539,27 @@ MonoBehaviour:
   _directChildren: []
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
-  _echoDelaySeconds: 3
   _audioSource: {fileID: 1156144694}
-  _playerDetectionRadius: 15
-  _minPlayIntervalSeconds: 5
-  _maxPlayIntervalSeconds: 15
+  _modelRoot: {fileID: 0}
+  _animator: {fileID: 0}
+  _breathingSound: {fileID: 0}
+  _screechSound: {fileID: 0}
+  _runningSound: {fileID: 0}
+  _scratchSound: {fileID: 0}
+  _respawnCooldown: 60
+  _minSpawnDistance: 8
+  _maxSpawnDistance: 14
+  _aloneRadius: 20
+  _playerViewAngle: 110
+  _triggerRadius: 5
+  _lureTimeout: 10
+  _repeatTargetVoice: 0
+  _attackRange: 1.5
+  _attackDamage: 20
+  _chaseTimeout: 15
+  _visionBlockers:
+    serializedVersion: 2
+    m_Bits: 4294967291
 --- !u!54 &1156144689
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -4848,10 +4864,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocalPlayerUI
   _healthText: {fileID: 393226461}
   _oxygenText: {fileID: 874393395}
-  _deadOverlay: {fileID: 2138512907}
-  _spectatorPanel: {fileID: 1631504506}
-  _spectatorTargetText: {fileID: 839584531}
-  _spectatorHintText: {fileID: 75162505}
+  _vitalsRoot: {fileID: 0}
 --- !u!114 &2137932421
 MonoBehaviour:
   m_ObjectHideFlags: 0
