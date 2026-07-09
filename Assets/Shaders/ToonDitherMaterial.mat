@@ -26,8 +26,8 @@ Material:
     m_Ints: []
     m_Floats:
     - _DitherScale: 2.95
-    - _DitherStrength: 0.308
-    - _ToonLevels: 28.88
+    - _DitherStrength: 0.074
+    - _ToonLevels: 30.17
     m_Colors: []
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -31,6 +31,9 @@ public class QuotaManager : NetworkIdentity
     public SyncVar<int> sessionBandwidth = new SyncVar<int>(0);
     public SyncVar<int> currentEnergyCells = new SyncVar<int>(0);
 
+    /// <summary>Completed expeditions (returns to base). Gates certain upgrades.</summary>
+    public SyncVar<int> expeditionsCompleted = new SyncVar<int>(0);
+
     protected override void OnSpawned(bool asServer)
     {
         base.OnSpawned(asServer);
@@ -55,6 +58,30 @@ public class QuotaManager : NetworkIdentity
 
         Debug.Log($"[QuotaManager] +{bandwidth} bandwidth, +{energyCells} energy cells. " +
                   $"Session: {sessionBandwidth.value}/{currentQuota.value}");
+    }
+
+    /// <summary>
+    /// Server-side. Banks bandwidth the instant it's vacuumed up, so the quota UI ticks
+    /// live during the expedition. The end-of-run quota check reads the same
+    /// <see cref="sessionBandwidth"/>, so extraction is still calculated the same way.
+    /// </summary>
+    public void ServerAddBandwidth(int amount)
+    {
+        if (amount == 0) return;
+        sessionBandwidth.value += amount;
+    }
+
+    /// <summary>Server-side. Counts energy cells live as they're vacuumed up.</summary>
+    public void ServerAddEnergyCells(int amount)
+    {
+        if (amount == 0) return;
+        currentEnergyCells.value += amount;
+    }
+
+    /// <summary>Server-side. One more completed expedition (called on return to base).</summary>
+    public void ServerRegisterExpeditionReturn()
+    {
+        expeditionsCompleted.value++;
     }
 
     public void ServerCheckQuotaAndProceed()
@@ -98,6 +125,7 @@ public class QuotaManager : NetworkIdentity
         totalBandwidth.value = 0;
         sessionBandwidth.value = 0;
         currentEnergyCells.value = 0;
+        expeditionsCompleted.value = 0;
 
         Debug.Log("[QuotaManager] Game reset.");
         // Resetting game doesn't need to load the lobby scene, as we teleport back to the lobby point.

@@ -3,20 +3,49 @@ using UnityEngine;
 
 public class Interactor : MonoBehaviour
 {
-    private const int InventorySize = 2;
+    [SerializeField] private int _baseInventorySize = 2;
 
     [SerializeField] private Transform _pickupPosTransform;
     [SerializeField] private float _interactRange = 2f;
     [SerializeField] private LayerMask _interactableLayers = Physics.DefaultRaycastLayers;
 
-    private readonly GrabbableObject[] _slots = new GrabbableObject[InventorySize];
+    private GrabbableObject[] _slots;
+    private int _extraSlots = 0;
     private int _activeSlot = 0;
     private Camera _cam;
 
     public int ActiveSlot => _activeSlot;
     public GrabbableObject[] Slots => _slots;
 
-    private void Awake() => _cam = Camera.main;
+    private void Awake()
+    {
+        _cam = Camera.main;
+        // Guard against spawn-order races: if an upgrade already sized the inventory
+        // (SetExtraSlots ran first), don't clobber it.
+        if (_slots == null)
+            _slots = new GrabbableObject[Mathf.Max(1, _baseInventorySize)];
+    }
+
+    /// <summary>
+    /// Grows (or shrinks) the inventory to base + <paramref name="extra"/> slots,
+    /// preserving items already held. Driven by the +inventory-slot upgrade.
+    /// </summary>
+    public void SetExtraSlots(int extra)
+    {
+        extra = Mathf.Max(0, extra);
+        if (extra == _extraSlots && _slots != null) return;
+        _extraSlots = extra;
+
+        int newSize = Mathf.Max(1, _baseInventorySize + _extraSlots);
+        var resized = new GrabbableObject[newSize];
+
+        if (_slots != null)
+            for (int i = 0; i < _slots.Length && i < newSize; i++)
+                resized[i] = _slots[i];
+
+        _slots = resized;
+        if (_activeSlot >= _slots.Length) _activeSlot = 0;
+    }
 
     private void Update()
     {
@@ -32,7 +61,8 @@ public class Interactor : MonoBehaviour
         float scroll = Input.GetAxisRaw("Mouse ScrollWheel");
         if (scroll == 0f) return;
 
-        int newSlot = (_activeSlot + (scroll > 0f ? -1 : 1) + InventorySize) % InventorySize;
+        int size = _slots.Length;
+        int newSlot = (_activeSlot + (scroll > 0f ? -1 : 1) + size) % size;
         if (newSlot == _activeSlot) return;
 
         _slots[_activeSlot]?.SetVisible(false);

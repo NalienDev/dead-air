@@ -15,6 +15,9 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     public SyncVar<int> maxOxygen = new(360);
     public SyncVar<int> currentOxygen = new(360);
 
+    /// <summary>When true, oxygen never drains (from the infinite-oxygen upgrade).</summary>
+    public SyncVar<bool> hasInfiniteOxygen = new(false);
+
     /// <summary>True while this player is inside a dungeon.</summary>
     public SyncVar<bool> isInsideDungeon = new(false); 
 
@@ -135,8 +138,28 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     public void DrainOxygen(int amount)
     {
         if (IsDead) return;
+        if (hasInfiniteOxygen.value) return;
         currentOxygen.value = Mathf.Clamp(currentOxygen.value - amount, 0, maxOxygen.value);
         CheckServerDeath();
+    }
+
+    // ── Oxygen upgrades (server-side, called by PlayerUpgrades) ──────────────
+
+    /// <summary>Raises max oxygen by a fraction of its current value and tops up.</summary>
+    public void ServerAddMaxOxygenPercent(float pct)
+    {
+        if (!isServer) return;
+        int add = Mathf.Max(1, Mathf.RoundToInt(maxOxygen.value * pct));
+        maxOxygen.value += add;
+        currentOxygen.value = Mathf.Clamp(currentOxygen.value + add, 0, maxOxygen.value);
+    }
+
+    /// <summary>Enables/disables infinite oxygen and refills to full when enabling.</summary>
+    public void ServerSetInfiniteOxygen(bool value)
+    {
+        if (!isServer) return;
+        hasInfiniteOxygen.value = value;
+        if (value) currentOxygen.value = maxOxygen.value;
     }
 
     [ServerRpc]

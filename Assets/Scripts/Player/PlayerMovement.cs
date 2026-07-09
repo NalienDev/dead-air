@@ -23,6 +23,12 @@ public class PlayerMovement : NetworkIdentity
     private PlayerManager _playerManager;
     private float _stepTimer;
 
+    // Additive walk-speed bonus from upgrades. Set by PlayerUpgrades (server-synced).
+    private float _bonusSpeed;
+
+    /// <summary>Sets the additive walk-speed bonus applied on top of the base speed.</summary>
+    public void SetBonusSpeed(float bonus) => _bonusSpeed = Mathf.Max(0f, bonus);
+
     protected override void OnSpawned()
     {
         base.OnSpawned();
@@ -35,7 +41,8 @@ public class PlayerMovement : NetworkIdentity
         Vector3 moveVector = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
 
         bool sprinting = Input.GetKey(_sprintKey);
-        float speed = sprinting ? _speed * _sprintMultiplier : _speed;
+        float baseSpeed = _speed + _bonusSpeed;
+        float speed = sprinting ? baseSpeed * _sprintMultiplier : baseSpeed;
 
         transform.position += moveVector * (Time.deltaTime * speed);
 

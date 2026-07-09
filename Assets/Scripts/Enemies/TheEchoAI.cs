@@ -130,6 +130,12 @@ public class TheEchoAI : NetworkBehaviour
 
     private bool HasMorphForms => _lureModel != null && _chaseModel != null;
 
+    // The Echo-voice-pitch upgrade is a PERSONAL upgrade: only the client that owns it
+    // hears the pitched-up voice. Each client pitches its own playback by the local
+    // player's upgrade value, so nothing about this is networked here.
+    private float LocalVoicePitch =>
+        PlayerUpgrades.Local != null ? PlayerUpgrades.Local.EchoVoicePitch : 1f;
+
     // ── Lifecycle ──────────────────────────────────────────────────────────
 
     private void Awake()
@@ -603,6 +609,7 @@ public class TheEchoAI : NetworkBehaviour
 
         _audioSource.Stop();
         _audioSource.clip = clip;
+        _audioSource.pitch = LocalVoicePitch; // personal upgrade — only this client hears it
         _audioSource.Play();
     }
 

@@ -293,13 +293,14 @@ GameObject:
   - component: {fileID: 8614123747652448446}
   - component: {fileID: 5991265490983206294}
   - component: {fileID: -6105437416882813334}
+  - component: {fileID: 1503026038489913737}
   - component: {fileID: 130450329385311416}
   - component: {fileID: 7956520436423763241}
-  - component: {fileID: 1503026038489913737}
   - component: {fileID: 1174776988409076660}
   - component: {fileID: 4188053122039071316}
   - component: {fileID: -5136015778208907426}
   - component: {fileID: 353332715589107572}
+  - component: {fileID: 8402820434770916415}
   m_Layer: 6
   m_Name: PlayerCapsule
   m_TagString: Player
@@ -633,6 +634,10 @@ MonoBehaviour:
     _value: 360
     _ownerAuth: 0
     _sendIntervalInSeconds: 0
+  hasInfiniteOxygen:
+    _value: 0
+    _ownerAuth: 0
+    _sendIntervalInSeconds: 0
   isInsideDungeon:
     _value: 0
     _ownerAuth: 0
@@ -649,6 +654,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 601bdd1d33f5bd24aa707bc96195ef53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Interactor
+  _baseInventorySize: 2
   _pickupPosTransform: {fileID: 2309069007547316892}
   _interactRange: 2
   _interactableLayers:
@@ -728,6 +734,22 @@ MonoBehaviour:
     _value: 0
     _ownerAuth: 0
     _sendIntervalInSeconds: 0
+--- !u!114 &1503026038489913737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9126679355787183082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80d911d7e6ea5e74f9550af8b7f5e01d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerVoiceNoise
+  _whisperRms: 0.02
+  _shoutRms: 0.3
+  _reportInterval: 0.1
+  _reportGate: 0.05
 --- !u!114 &130450329385311416
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -781,22 +803,6 @@ MonoBehaviour:
   _beamSegments: 24
   _beamLengthScale: 0.9
   _toggleKey: 102
---- !u!114 &1503026038489913737
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9126679355787183082}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80d911d7e6ea5e74f9550af8b7f5e01d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerVoiceNoise
-  _whisperRms: 0.02
-  _shoutRms: 0.18
-  _reportInterval: 0.1
-  _reportGate: 0.05
 --- !u!114 &1174776988409076660
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -892,6 +898,27 @@ MonoBehaviour:
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
   _refreshInterval: 0.4
+--- !u!114 &8402820434770916415
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9126679355787183082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e4c93e1106ff01479e3677613d40a32, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerUpgrades
+  _isSetup: 0
+  _prefabId: -2147483648
+  _componentIndex: -2147483648
+  _shouldBePooled: 0
+  _parent: {fileID: 0}
+  _invertedPathToNearestParent: 
+  _directChildren: []
+  _networkRules: {fileID: 0}
+  _visitiblityRules: {fileID: 0}
 --- !u!1001 &4563925786305766699
 PrefabInstance:
   m_ObjectHideFlags: 0

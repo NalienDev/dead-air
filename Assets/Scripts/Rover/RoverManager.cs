@@ -9,7 +9,6 @@ public class RoverManager : NetworkBehaviour
     [SerializeField] private GameObject _energyCellPrefab;
 
     private int _energyCells;
-    private int _bandwidth;
 
     protected override void OnSpawned(bool asServer) => Instance = this;
 
@@ -18,16 +17,25 @@ public class RoverManager : NetworkBehaviour
         if (Instance == this) Instance = null;
     }
 
-    // Server: called when the expedition sucker pulls something in. Bandwidth is
-    // tallied for the quota then discarded; energy cells are respawned in the lobby.
+    // Server: called when the expedition sucker pulls something in. Bandwidth and energy
+    // are banked into the quota IMMEDIATELY so the HUD updates the moment an item is
+    // vacuumed up. Energy cells are also counted locally so they can be respawned in the
+    // lobby on return.
     public void StoreCargo(NetworkIdentity identity)
     {
         if (identity.TryGetComponent(out BandwidthObject bw))
-            _bandwidth += bw.BandwidthValue;
+        {
+            QuotaManager.Instance?.ServerAddBandwidth(bw.BandwidthValue);
+        }
         else if (identity.TryGetComponent(out EnergyCell _))
+        {
             _energyCells++;
+            QuotaManager.Instance?.ServerAddEnergyCells(1);
+        }
         else
+        {
             return;
+        }
 
         Destroy(identity.gameObject);
     }
@@ -37,7 +45,9 @@ public class RoverManager : NetworkBehaviour
     {
         if (QuotaManager.Instance != null)
         {
-            QuotaManager.Instance.ServerProcessItems(_bandwidth, _energyCells);
+            // Cargo was already banked live in StoreCargo — just count the expedition
+            // and evaluate the (already-accumulated) quota.
+            QuotaManager.Instance.ServerRegisterExpeditionReturn();
             QuotaManager.Instance.ServerCheckQuotaAndProceed();
         }
 
@@ -52,6 +62,5 @@ public class RoverManager : NetworkBehaviour
             Instantiate(_energyCellPrefab, _lobbyDropPoint.position + Vector3.up * (0.4f * i), _lobbyDropPoint.rotation);
 
         _energyCells = 0;
-        _bandwidth = 0;
     }
 }
