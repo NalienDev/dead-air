@@ -3253,11 +3253,18 @@ MonoBehaviour:
   _slotUIs:
   - background: {fileID: 1189116691}
     itemLabel: {fileID: 84306197}
+    icon: {fileID: 438216951}
+    root: {fileID: 1017783396}
   - background: {fileID: 726286171}
     itemLabel: {fileID: 803049223}
+    icon: {fileID: 1362277788}
+    root: {fileID: 1441431197}
   _activeColor: {r: 1, g: 1, b: 1, a: 0.9}
   _inactiveColor: {r: 0.4, g: 0.4, b: 0.4, a: 0.6}
   _occupiedTint: {r: 0.6, g: 1, b: 0.6, a: 1}
+  _activeScale: 1.2
+  _inactiveScale: 0.85
+  _scaleLerpSpeed: 8
 --- !u!114 &1461542306
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3272,6 +3279,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocalPlayerUI
   _healthText: {fileID: 1176400667}
   _oxygenText: {fileID: 1984649652}
+  _healthFillImage: {fileID: 699211671}
+  _oxygenFillImage: {fileID: 1078259862}
   _vitalsRoot: {fileID: 1515979210}
 --- !u!114 &1461542307
 MonoBehaviour:
