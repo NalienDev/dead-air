@@ -54,6 +54,7 @@
     <Compile Include="Assets\Scripts\EnergyCell.cs" />
     <Compile Include="Assets\Scripts\DestructibleObjects\Despawn.cs" />
     <Compile Include="Assets\Scripts\Rover\SuckableObject.cs" />
+    <Compile Include="Assets\Prefabs\Lobby\PC\PekdataCRTMonitor\Scripts\ExplodableMonitor.cs" />
     <Compile Include="Assets\Scripts\Rover\RoverManager.cs" />
     <Compile Include="Assets\Scripts\Rendering\FogClearingZone.cs" />
     <Compile Include="Assets\Scripts\EnergyCellTrigger.cs" />
@@ -67,6 +68,7 @@
     <Compile Include="Assets\Scripts\TeleportPlayersTestButton.cs" />
     <Compile Include="Assets\Dissonance\Core\Jetbrains.cs" />
     <Compile Include="Assets\Packages\Kevin Iglesias\Human Animations\Scripts\SpineProxy.cs" />
+    <Compile Include="Assets\Scripts\Lobby\LobbyIntroController.cs" />
     <Compile Include="Assets\Scripts\Interactable.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonNavMeshBaker.cs" />
     <Compile Include="Assets\Samples\Shader Graph\17.3.0\UGUI Shaders\Scripts\Timer.cs" />
@@ -97,6 +99,7 @@
     <Compile Include="Assets\Scripts\DDOL.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\EntryPoint.cs" />
     <Compile Include="Assets\Dissonance\Integrations\Offline\OfflineCommsNetwork.cs" />
+    <Compile Include="Assets\Prefabs\Lobby\PC\PekdataCRTMonitor\Scripts\ExampleBullet.cs" />
     <Compile Include="Assets\Scripts\GrabbableObject.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualButton.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonPart.cs" />
