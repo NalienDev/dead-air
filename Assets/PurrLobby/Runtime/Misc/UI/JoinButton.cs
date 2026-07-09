@@ -12,14 +12,21 @@ namespace PurrLobby
         
         public void JoinRoom()
         {
-            if (string.IsNullOrEmpty(roomIdInput.text))
+            string input = roomIdInput.text?.Trim();
+            if (string.IsNullOrEmpty(input))
             {
                 Debug.LogWarning($"Can't start join, room ID is empty.");
                 return;
             }
-            
+
             onStartJoin?.Invoke();
-            lobbyManager.JoinLobby(roomIdInput.text);
+
+            // Short inputs are 5-char join codes; long ones are raw lobby ids
+            // (kept for backwards compatibility / pasting a full Steam id).
+            if (input.Length <= 8)
+                lobbyManager.JoinLobbyByCode(input);
+            else
+                lobbyManager.JoinLobby(input);
         }
     }
 }

@@ -48,6 +48,11 @@ public class StartExpeditionButton : Interactable
     {
         Debug.Log("[StartExpeditionButton] Teleporting players to the expedition area.");
 
+        // Arm the early-return lock — the return-to-base button stays dead for the
+        // first minute of the expedition (RoverManager owns the timer).
+        if (RoverManager.Instance != null)
+            RoverManager.Instance.ServerMarkExpeditionStarted();
+
         if (PlayerManager.Local != null)
         {
             PlayerManager.Local.RequestTeleportAllPlayers(_expeditionSpawnPoint.position, _expeditionSpawnPoint.rotation);

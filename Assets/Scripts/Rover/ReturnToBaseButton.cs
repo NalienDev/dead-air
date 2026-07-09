@@ -21,6 +21,14 @@ public class ReturnToBaseButton : Interactable
             return InteractionType.NONE;
         }
 
+        // Locked for the first minute of the expedition (synced flag; the server
+        // re-validates too, this is just instant local feedback).
+        if (!RoverManager.Instance.CanReturnToBase)
+        {
+            Debug.Log("[ReturnToBaseButton] Locked — the expedition just started.");
+            return InteractionType.NONE;
+        }
+
         // Submit items, evaluate quota, and teleport players securely on the server.
         RoverManager.Instance.ServerRequestReturnToBase(_lobbyTeleportPoint.position, _lobbyTeleportPoint.rotation);
 

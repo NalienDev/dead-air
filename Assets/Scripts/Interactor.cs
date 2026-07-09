@@ -49,10 +49,39 @@ public class Interactor : MonoBehaviour
 
     private void Update()
     {
+        HandleHover();
         HandleSlotSwitch();
         HandleInteract();
         HandleDrop();
         HandleThrow();
+    }
+
+    // ── Hover outline ──────────────────────────────────────────────────────
+    // White silhouette on whatever interactable the camera is aimed at. Purely
+    // local — this component only runs for the owning player.
+
+    private Interactable _hovered;
+    private HoverOutline _hoveredOutline;
+
+    private void HandleHover()
+    {
+        Interactable current = null;
+        if (TryRaycast(out Interactable interactable, out _))
+            current = interactable;
+
+        if (current == _hovered) return;
+
+        if (_hoveredOutline != null) _hoveredOutline.SetHighlight(false);
+
+        _hovered = current;
+        _hoveredOutline = null;
+
+        if (current != null)
+        {
+            if (!current.TryGetComponent(out _hoveredOutline))
+                _hoveredOutline = current.gameObject.AddComponent<HoverOutline>();
+            _hoveredOutline.SetHighlight(true);
+        }
     }
 
     // ── Slot switching ─────────────────────────────────────────────────────

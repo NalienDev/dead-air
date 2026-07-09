@@ -118,7 +118,7 @@ MonoBehaviour:
   _screechSound: {fileID: 8300000, guid: 4902f21258d46ff47a852cc2ccc1e4e7, type: 3}
   _attackSound: {fileID: 0}
   _idleLoop: {fileID: 8300000, guid: fa97f2b0d656146449fd7c0c7bf41ce6, type: 3}
-  _chaseLoop: {fileID: 8300000, guid: c841025a7f778694cb8dccbfed6c8960, type: 3}
+  _chaseLoop: {fileID: 8300000, guid: 3a5d222e5b2f0ce45a1d6c5ba4315c18, type: 3}
   _wanderSpeed: 1.6
   _inspectSpeed: 2.2
   _chaseSpeed: 3.4

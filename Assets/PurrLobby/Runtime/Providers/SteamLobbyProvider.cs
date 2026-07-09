@@ -102,12 +102,17 @@ namespace PurrLobby.Providers
 
             _currentLobby = lobbyId;
 
-            if (lobbyProperties != null)
+            // Short, human-friendly join code (5 chars). Stored as lobby data so other
+            // clients can find this lobby by searching for the code (see
+            // LobbyManager.JoinLobbyByCode) instead of typing the 17-digit Steam id.
+            var shortCode = GenerateShortCode(5);
+            Steamworks.SteamMatchmaking.SetLobbyData(lobbyId, "ShortCode", shortCode);
+            lobbyProperties ??= new Dictionary<string, string>();
+            lobbyProperties["ShortCode"] = shortCode;
+
+            foreach (var prop in lobbyProperties)
             {
-                foreach (var prop in lobbyProperties)
-                {
-                    Steamworks.SteamMatchmaking.SetLobbyData(lobbyId, prop.Key, prop.Value);
-                }
+                Steamworks.SteamMatchmaking.SetLobbyData(lobbyId, prop.Key, prop.Value);
             }
 
             return LobbyFactory.Create(
@@ -118,6 +123,17 @@ namespace PurrLobby.Providers
                 GetLobbyUsers(lobbyId),
                 lobbyProperties
             );
+        }
+
+        // Unambiguous alphabet: no I/O/0/1, so codes read cleanly over voice.
+        private const string ShortCodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+        private static string GenerateShortCode(int length)
+        {
+            var chars = new char[length];
+            for (int i = 0; i < length; i++)
+                chars[i] = ShortCodeAlphabet[UnityEngine.Random.Range(0, ShortCodeAlphabet.Length)];
+            return new string(chars);
         }
 
         public Task<List<FriendUser>> GetFriendsAsync(LobbyManager.FriendFilter filter)

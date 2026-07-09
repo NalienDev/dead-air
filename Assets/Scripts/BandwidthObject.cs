@@ -100,12 +100,7 @@ public class BandwidthObject : GrabbableObject
 
         _conditionIndex.onChanged += OnConditionChanged;
         ApplyConditionVisuals(CurrentCondition);
-
-        if (_playAmbientOnSpawn && _ambientSource != null)
-        {
-            _ambientSource.loop = true;
-            if (!_ambientSource.isPlaying) _ambientSource.Play();
-        }
+        UpdateAmbientSound();
 
         // A dedicated, non-looping source for pickup one-shots so it never fights
         // the ambient loop.
@@ -148,7 +143,32 @@ public class BandwidthObject : GrabbableObject
         _ => _worthlessMultiplier,
     };
 
-    private void OnConditionChanged(int _) => ApplyConditionVisuals(CurrentCondition);
+    private void OnConditionChanged(int _)
+    {
+        ApplyConditionVisuals(CurrentCondition);
+        UpdateAmbientSound();
+    }
+
+    /// <summary>
+    /// Worthless junk is dead air — it doesn't hum. (Which doubles as an audio tell:
+    /// if you can hear it, it's worth something.) Runs on spawn and again when the
+    /// server-rolled condition replicates in.
+    /// </summary>
+    private void UpdateAmbientSound()
+    {
+        if (_ambientSource == null) return;
+
+        bool shouldPlay = _playAmbientOnSpawn && CurrentCondition != Condition.Worthless;
+        if (shouldPlay)
+        {
+            _ambientSource.loop = true;
+            if (!_ambientSource.isPlaying) _ambientSource.Play();
+        }
+        else if (_ambientSource.isPlaying)
+        {
+            _ambientSource.Stop();
+        }
+    }
 
     private void ApplyConditionVisuals(Condition c)
     {
@@ -163,8 +183,11 @@ public class BandwidthObject : GrabbableObject
     {
         InteractionType result = base.OnInteract(user);
 
-        // A silent object (no clip) can't be heard, so it never alerts the Conductor.
-        if (result == InteractionType.GRAB && _pickupSound != null)
+        // Only DAMAGED objects can make a pickup noise — grabbing a perfect (or
+        // worthless) object is always silent. Risk/reward: damaged loot is worth less
+        // AND might call the Conductor. A silent object (no clip) can't be heard either.
+        if (result == InteractionType.GRAB && _pickupSound != null
+            && CurrentCondition == Condition.Damaged)
             ServerTryPickupSound();
 
         return result;
@@ -176,6 +199,7 @@ public class BandwidthObject : GrabbableObject
         // Server-authoritative roll for whether this grab actually makes a sound.
         // Sound and alert are one and the same event: if it makes a sound the blind
         // Conductor hears it; if not, nothing happens.
+        if (CurrentCondition != Condition.Damaged) return; // re-validate client claim
         if (Random.value > _pickupSoundChance) return;
 
         RpcPlayPickupSound();

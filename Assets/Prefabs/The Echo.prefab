@@ -348,7 +348,7 @@ MonoBehaviour:
   _screechSound: {fileID: 0}
   _runningSound: {fileID: 8300000, guid: 19660649b9757994f9d04eb97cf11ec4, type: 3}
   _scratchSound: {fileID: 0}
-  _respawnCooldown: 10
+  _respawnCooldown: 60
   _minSpawnDistance: 10
   _maxSpawnDistance: 20
   _aloneRadius: 20
@@ -356,7 +356,7 @@ MonoBehaviour:
   _triggerRadius: 10
   _lureTimeout: 25
   _voiceRepeatDelay: 3
-  _repeatTargetVoice: 1
+  _repeatTargetVoice: 0
   _flashlightScareFlashes: 5
   _scaredSound: {fileID: 8300000, guid: 2fbd8dce08b65b045a09ad5328eece5d, type: 3}
   _reactToAllPlayers: 1
@@ -365,7 +365,7 @@ MonoBehaviour:
   _chaseTimeout: 15
   _visionBlockers:
     serializedVersion: 2
-    m_Bits: 14464
+    m_Bits: 14336
 --- !u!82 &9068832633002331536
 AudioSource:
   m_ObjectHideFlags: 0

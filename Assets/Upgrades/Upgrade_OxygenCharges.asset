@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c33ab2be80abe6a418c0bd1f9a2e9d38, type: 3}
   m_Name: Upgrade_OxygenCharges
   m_EditorClassIdentifier: Assembly-CSharp::OxygenChargesUpgrade
-  DisplayName: Upgrade
+  DisplayName: Oxygen Charges
   Description: 
   Icon: {fileID: 0}
   RarityColor: {r: 1, g: 1, b: 1, a: 1}

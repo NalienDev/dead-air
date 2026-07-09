@@ -1,3 +1,5 @@
+using Dissonance.Networking;
+using Dissonance.Integrations.PurrNet;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using PurrNet;
@@ -14,26 +16,28 @@ public static class DissonanceAutoStarter
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         // When a new scene loads (like transitioning from Bootstrap to City),
-        // the client might already be connected. If so, Dissonance misses the connection event.
-        // We find it and force it to start if we are currently connected.
-        
+        // the client might already be connected. If so, Dissonance misses the
+        // connection event. We find it and start it if we are currently connected.
         var nm = NetworkManager.main;
         if (nm == null) return;
-        
+
         bool isConnected = nm.isHost || nm.isClient || nm.isServer;
-        
-        if (isConnected)
+        if (!isConnected) return;
+
+        var commsNetwork = Object.FindFirstObjectByType<PurrNetCommsNetwork>();
+        if (commsNetwork == null) return;
+
+        // Only kick it when it's actually down. Restarting a live comms network forces
+        // a full re-handshake for this client on EVERY scene load — after enough
+        // GameOver→City round-trips one of those restarts can lose the race against
+        // the scene change and leave a player permanently without voice.
+        if (commsNetwork.Mode != NetworkMode.None)
         {
-            MonoBehaviour[] allBehaviours = Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
-            foreach (var b in allBehaviours)
-            {
-                if (b.GetType().Name == "PurrNetCommsNetwork")
-                {
-                    PurrLogger.Log("[DissonanceAutoStarter] Network is already active. Manually starting Dissonance client.");
-                    b.Invoke("TryRunManually", 0f);
-                    break;
-                }
-            }
+            PurrLogger.Log("[DissonanceAutoStarter] Dissonance already running — leaving it alone.");
+            return;
         }
+
+        PurrLogger.Log("[DissonanceAutoStarter] Network is active but Dissonance is stopped. Starting it.");
+        commsNetwork.TryRunManually();
     }
 }

@@ -45,6 +45,10 @@ public class PlayerDeathHandler : NetworkBehaviour
     [Tooltip("Seconds before the spawned death-FX object destroys itself.")]
     [SerializeField] private float _deathEffectLifetime = 5f;
 
+    [Header("Team Wipe")]
+    [Tooltip("Scene loaded for everyone when the LAST living player dies.")]
+    [SerializeField] private string _gameOverSceneName = "GameOver";
+
     // ── Synced state ───────────────────────────────────────────────────────
 
     /// <summary>Replicated to all clients. True = this player is dead.</summary>
@@ -125,6 +129,25 @@ public class PlayerDeathHandler : NetworkBehaviour
         _playerManager.currentOxygen.value = 0;
 
         isDead.value = true; // Replicates to all clients via SyncVar
+
+        CheckTeamWipe();
+    }
+
+    /// <summary>
+    /// Server-side. If this death left nobody alive, send everyone to the Game Over
+    /// scene (which resets the run and returns to the City after a short delay).
+    /// </summary>
+    private void CheckTeamWipe()
+    {
+        foreach (PlayerManager pm in FindObjectsByType<PlayerManager>(FindObjectsSortMode.None))
+            if (!pm.IsDead) return;
+
+        PurrLogger.Log("[PlayerDeathHandler] Every player is dead — Game Over.");
+
+        if (SceneChanger.Instance != null)
+            SceneChanger.Instance.LoadSceneForEveryone(_gameOverSceneName);
+        else
+            Debug.LogError("[PlayerDeathHandler] SceneChanger.Instance is null — cannot load Game Over.");
     }
 
     [ServerRpc(requireOwnership: false)]

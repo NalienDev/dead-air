@@ -132,14 +132,47 @@ public class DeadVoiceRouter : NetworkBehaviour
             return false;
         }
 
-        _deadBroadcast = comms.gameObject.AddComponent<VoiceBroadcastTrigger>();
-        _deadBroadcast.ChannelType = CommTriggerTarget.Room;
-        _deadBroadcast.RoomName = DeadRoomName;
+        // REUSE any Dead-room triggers already on the comms object. The player object
+        // is recreated on every scene load, so blindly AddComponent-ing here used to
+        // pile up one orphaned trigger pair per City reload — each stuck in whatever
+        // state the previous round left it (possibly broadcasting), which degraded
+        // voice chat over repeated GameOver→City cycles.
+        // (VoiceProximityBroadcastTrigger is its own type, not a VoiceBroadcastTrigger
+        // subclass, so the alive-chat trigger can never show up in this loop.)
+        foreach (VoiceBroadcastTrigger t in comms.GetComponents<VoiceBroadcastTrigger>())
+        {
+            if (t.ChannelType == CommTriggerTarget.Room && t.RoomName == DeadRoomName)
+            {
+                _deadBroadcast = t;
+                break;
+            }
+        }
+
+        if (_deadBroadcast == null)
+        {
+            _deadBroadcast = comms.gameObject.AddComponent<VoiceBroadcastTrigger>();
+            _deadBroadcast.ChannelType = CommTriggerTarget.Room;
+            _deadBroadcast.RoomName = DeadRoomName;
+        }
+
         _deadBroadcast.Mode = _proximityBroadcast.Mode; // same activation as normal chat
         _deadBroadcast.enabled = false;
 
-        _deadReceipt = comms.gameObject.AddComponent<VoiceReceiptTrigger>();
-        _deadReceipt.RoomName = DeadRoomName;
+        foreach (VoiceReceiptTrigger t in comms.GetComponents<VoiceReceiptTrigger>())
+        {
+            if (t.RoomName == DeadRoomName)
+            {
+                _deadReceipt = t;
+                break;
+            }
+        }
+
+        if (_deadReceipt == null)
+        {
+            _deadReceipt = comms.gameObject.AddComponent<VoiceReceiptTrigger>();
+            _deadReceipt.RoomName = DeadRoomName;
+        }
+
         _deadReceipt.enabled = false;
 
         return true;

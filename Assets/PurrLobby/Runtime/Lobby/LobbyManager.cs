@@ -297,6 +297,41 @@ namespace PurrLobby
         }
 
         /// <summary>
+        /// Join a lobby by its short (5-char) join code. The code is stored as lobby
+        /// data ("ShortCode") by the host, so we search for a lobby carrying it and
+        /// join the match by its real id.
+        /// </summary>
+        public void JoinLobbyByCode(string code)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                OnRoomJoinFailed?.Invoke("Null or empty lobby code.");
+                return;
+            }
+
+            string normalized = code.Trim().ToUpperInvariant();
+
+            RunTask(async () =>
+            {
+                EnsureProviderSet();
+                var rooms = await _currentProvider.SearchLobbiesAsync(1,
+                    new Dictionary<string, string> { { "ShortCode", normalized } });
+
+                if (rooms == null || rooms.Count == 0)
+                {
+                    InvokeDelayed(() => OnRoomJoinFailed?.Invoke($"No lobby found with code {normalized}."));
+                    return;
+                }
+
+                var room = await _currentProvider.JoinLobbyAsync(rooms[0].LobbyId);
+                if (room.IsValid)
+                    InvokeDelayed(() => OnRoomJoined?.Invoke(room));
+                else
+                    InvokeDelayed(() => OnRoomJoinFailed?.Invoke($"Failed to join lobby with code {normalized}."));
+            });
+        }
+
+        /// <summary>
         /// Prompts the provider to search lobbies with given filters
         /// </summary>
         /// <param name="maxRoomsToFind">Max amount of rooms to find</param>

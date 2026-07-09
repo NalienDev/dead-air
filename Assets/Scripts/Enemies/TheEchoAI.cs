@@ -179,13 +179,13 @@ public class TheEchoAI : NetworkBehaviour
 
         // Map changed mid-appearance — retreat and wait for the new layout.
         if (DungeonGenerator.Instance != null)
-            DungeonGenerator.Instance.OnGenerated += Despawn;
+            DungeonGenerator.Instance.OnGenerated += Retreat;
     }
 
     protected override void OnDespawned(bool asServer)
     {
         if (DungeonGenerator.Instance != null)
-            DungeonGenerator.Instance.OnGenerated -= Despawn;
+            DungeonGenerator.Instance.OnGenerated -= Retreat;
     }
 
     private void Update()
@@ -302,7 +302,7 @@ public class TheEchoAI : NetworkBehaviour
         }
 
         if (Time.time >= _lureDeadline)
-            Despawn();
+            Retreat();
     }
 
     /// <summary>
@@ -367,7 +367,7 @@ public class TheEchoAI : NetworkBehaviour
     {
         Debug.Log($"[TheEchoAI] Scared away by '{player.name}'s flashlight.");
         RpcPlayScared(transform.position);
-        Despawn();
+        Retreat();
     }
 
     private FlashProgress GetFlashProgress(PlayerManager player)
@@ -407,7 +407,7 @@ public class TheEchoAI : NetworkBehaviour
     {
         if (!IsValidTarget(_chaseTarget) || Time.time >= _chaseDeadline)
         {
-            Despawn();
+            Retreat();
             return;
         }
 
@@ -422,15 +422,17 @@ public class TheEchoAI : NetworkBehaviour
             Debug.Log($"[TheEchoAI] Hit '{_chaseTarget.name}' for {_attackDamage}.");
             _chaseTarget.Damage(_attackDamage);
             RpcPlayScratch();
-            Despawn();
+            Retreat();
         }
     }
 
-    private void Despawn()
+    // Named Retreat (not Despawn) to avoid shadowing NetworkIdentity.Despawn — the
+    // Echo only hides and parks itself; the network object stays alive.
+    private void Retreat()
     {
         if (_state == State.Hidden) return;
 
-        Debug.Log($"[TheEchoAI] Despawning ({_state}). Back in {_respawnCooldown:F0}s.");
+        Debug.Log($"[TheEchoAI] Retreating ({_state}). Back in {_respawnCooldown:F0}s.");
 
         _state = State.Hidden;
         _target = null;
