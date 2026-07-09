@@ -298,6 +298,8 @@ GameObject:
   - component: {fileID: 1503026038489913737}
   - component: {fileID: 1174776988409076660}
   - component: {fileID: 4188053122039071316}
+  - component: {fileID: -5136015778208907426}
+  - component: {fileID: 353332715589107572}
   m_Layer: 6
   m_Name: PlayerCapsule
   m_TagString: Player
@@ -719,6 +721,9 @@ MonoBehaviour:
   _playerVisualRoots:
   - {fileID: 3220955814239267695}
   - {fileID: 8663159261894153118}
+  _collidersToDisable: []
+  _deathEffectPrefab: {fileID: 4574148591930201658, guid: 04f41ab5171374342b10bf5a6990356c, type: 3}
+  _deathEffectLifetime: 2
   isDead:
     _value: 0
     _ownerAuth: 0
@@ -832,6 +837,61 @@ MonoBehaviour:
   _killY: -22
   _safeSampleInterval: 0.5
   _restingSpeed: 0.2
+--- !u!114 &-5136015778208907426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9126679355787183082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 187444e5e2bcaa54ea3544f8c84576a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerIdentity
+  _isSetup: 0
+  _prefabId: -2147483648
+  _componentIndex: -2147483648
+  _shouldBePooled: 0
+  _parent: {fileID: 0}
+  _invertedPathToNearestParent: 
+  _directChildren: []
+  _networkRules: {fileID: 0}
+  _visitiblityRules: {fileID: 0}
+  voiceName:
+    _value: 
+    _ownerAuth: 0
+    _sendIntervalInSeconds: 0
+  steamId:
+    _value: 
+    _ownerAuth: 0
+    _sendIntervalInSeconds: 0
+  displayName:
+    _value: 
+    _ownerAuth: 0
+    _sendIntervalInSeconds: 0
+--- !u!114 &353332715589107572
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9126679355787183082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb2a780cf1d63d44499e0b953fe798cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeadVoiceRouter
+  _isSetup: 0
+  _prefabId: -2147483648
+  _componentIndex: -2147483648
+  _shouldBePooled: 0
+  _parent: {fileID: 0}
+  _invertedPathToNearestParent: 
+  _directChildren: []
+  _networkRules: {fileID: 0}
+  _visitiblityRules: {fileID: 0}
+  _refreshInterval: 0.4
 --- !u!1001 &4563925786305766699
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -82,6 +82,7 @@
     <Compile Include="Assets\Scripts\TeleportPlayersTestButton.cs" />
     <Compile Include="Assets\Dissonance\Core\Jetbrains.cs" />
     <Compile Include="Assets\Packages\Kevin Iglesias\Human Animations\Scripts\SpineProxy.cs" />
+    <Compile Include="Assets\Scripts\LobbyLocalUser.cs" />
     <Compile Include="Assets\Scripts\Interactable.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonNavMeshBaker.cs" />
     <Compile Include="Assets\Scripts\Audio\NoiseEvents.cs" />
@@ -122,6 +123,7 @@
     <Compile Include="Assets\Scripts\NetworkedSceneButton.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\Scripts\Spectator\PlayerDeathHandler.cs" />
+    <Compile Include="Assets\Scripts\Voice\DeadVoiceRouter.cs" />
     <Compile Include="Assets\Scripts\Rover\SuctionZone.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualJoystick.cs" />
     <Compile Include="Assets\Scripts\Player\HideRenderersForOwner.cs" />
@@ -132,6 +134,7 @@
     <Compile Include="Assets\Scripts\Player\PlayerAnimationHandler.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\OutsideSpawnPoint.cs" />
     <Compile Include="Assets\Scripts\Enemies\TheEchoAI.cs" />
+    <Compile Include="Assets\Scripts\Player\PlayerIdentity.cs" />
     <Compile Include="Assets\Scripts\Bandwith.cs" />
     <Compile Include="Assets\Scripts\Rover\StartExpeditionButton.cs" />
     <Compile Include="Assets\Scripts\ConnectionIntent.cs" />
@@ -139,6 +142,8 @@
     <Compile Include="Assets\Scripts\DungeonCreator\MainEntrance.cs" />
     <Compile Include="Assets\Scripts\QuotaUI.cs" />
     <Compile Include="Assets\Scripts\GameOverHandler.cs" />
+    <Compile Include="Assets\Scripts\LobbyLocalUserCapture.cs" />
+    <Compile Include="Assets\Scripts\Spectator\SpectatorHud.cs" />
     <Compile Include="Assets\Scripts\Voice\VoiceRecordingStore.cs" />
     <Compile Include="Assets\Scripts\Dampener.cs" />
     <Compile Include="Assets\Scripts\Voice\CapturedVoiceClip.cs" />

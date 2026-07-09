@@ -60,6 +60,14 @@ public class SpectatorController : MonoBehaviour
     private PlayerManager CurrentTarget =>
         (_index >= 0 && _index < _targets.Count) ? _targets[_index] : null;
 
+    // ── Read by the spectator HUD ──────────────────────────────────────────
+
+    /// <summary>The player currently being watched, or null.</summary>
+    public PlayerManager CurrentlyWatching => CurrentTarget;
+
+    /// <summary>True while this (dead) player is in spectator mode.</summary>
+    public bool IsSpectating => _isSpectating;
+
     // ── Public API (called by PlayerDeathHandler, owner only) ──────────────
 
     public void BeginSpectating(PlayerManager self, Transform cameraTarget)
