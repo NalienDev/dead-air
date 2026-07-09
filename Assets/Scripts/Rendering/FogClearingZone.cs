@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -7,10 +8,15 @@ using UnityEngine;
 ///
 /// Drives the fog shader through global properties, so the fog material needs no
 /// wiring. Only one zone is active at a time (last one enabled wins).
+///
+/// Gameplay-wise the clear air is breathable: <see cref="ContainsPoint"/> lets other
+/// systems (oxygen drain) ask whether a world position sits inside any active zone.
 /// </summary>
 [ExecuteAlways]
 public class FogClearingZone : MonoBehaviour
 {
+    // Active zones, for the static containment query.
+    private static readonly List<FogClearingZone> s_active = new();
     public enum Shape { Sphere, Box }
 
     [SerializeField] private Shape _shape = Shape.Sphere;
@@ -32,8 +38,38 @@ public class FogClearingZone : MonoBehaviour
     private static readonly int EdgeColor = Shader.PropertyToID("_FogClearEdgeColor");
 
     private void LateUpdate() => Apply();
-    private void OnEnable() => Apply();
-    private void OnDisable() => Shader.SetGlobalFloat(Enabled, 0f);
+
+    private void OnEnable()
+    {
+        Apply();
+        if (!s_active.Contains(this)) s_active.Add(this);
+    }
+
+    private void OnDisable()
+    {
+        Shader.SetGlobalFloat(Enabled, 0f);
+        s_active.Remove(this);
+    }
+
+    /// <summary>True if <paramref name="worldPos"/> is inside this zone's volume.</summary>
+    public bool Contains(Vector3 worldPos)
+    {
+        // The transform IS the volume: unit sphere/box in local space, scaled by the
+        // transform. So containment is just a check in local coordinates.
+        Vector3 local = transform.InverseTransformPoint(worldPos);
+        return _shape == Shape.Sphere
+            ? local.sqrMagnitude <= 0.25f // radius 0.5 in local space
+            : Mathf.Abs(local.x) <= 0.5f && Mathf.Abs(local.y) <= 0.5f && Mathf.Abs(local.z) <= 0.5f;
+    }
+
+    /// <summary>True if <paramref name="worldPos"/> is inside ANY active zone.</summary>
+    public static bool ContainsPoint(Vector3 worldPos)
+    {
+        foreach (FogClearingZone zone in s_active)
+            if (zone != null && zone.isActiveAndEnabled && zone.Contains(worldPos))
+                return true;
+        return false;
+    }
 
     private void Apply()
     {

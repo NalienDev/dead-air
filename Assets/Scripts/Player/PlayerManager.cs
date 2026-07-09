@@ -18,6 +18,11 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     /// <summary>When true, oxygen never drains (from the infinite-oxygen upgrade).</summary>
     public SyncVar<bool> hasInfiniteOxygen = new(false);
 
+    /// <summary>Oxygen-station charges. Reset to max on expedition completion;
+    /// max grows with the +charge upgrade.</summary>
+    public SyncVar<int> maxOxygenCharges = new(3);
+    public SyncVar<int> currentOxygenCharges = new(3);
+
     /// <summary>True while this player is inside a dungeon.</summary>
     public SyncVar<bool> isInsideDungeon = new(false); 
 
@@ -139,19 +144,21 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     {
         if (IsDead) return;
         if (hasInfiniteOxygen.value) return;
+        // Inside a silence zone (FogClearingZone) the air is breathable — no drain.
+        if (FogClearingZone.ContainsPoint(transform.position)) return;
         currentOxygen.value = Mathf.Clamp(currentOxygen.value - amount, 0, maxOxygen.value);
         CheckServerDeath();
     }
 
     // ── Oxygen upgrades (server-side, called by PlayerUpgrades) ──────────────
 
-    /// <summary>Raises max oxygen by a fraction of its current value and tops up.</summary>
+    /// <summary>Raises max oxygen by a fraction of its current value and refills to full.</summary>
     public void ServerAddMaxOxygenPercent(float pct)
     {
         if (!isServer) return;
         int add = Mathf.Max(1, Mathf.RoundToInt(maxOxygen.value * pct));
         maxOxygen.value += add;
-        currentOxygen.value = Mathf.Clamp(currentOxygen.value + add, 0, maxOxygen.value);
+        currentOxygen.value = maxOxygen.value; // taking the upgrade maxes you out
     }
 
     /// <summary>Enables/disables infinite oxygen and refills to full when enabling.</summary>
@@ -160,6 +167,51 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         if (!isServer) return;
         hasInfiniteOxygen.value = value;
         if (value) currentOxygen.value = maxOxygen.value;
+    }
+
+    // ── Oxygen station (server-side, called by OxygenStation) ────────────────
+
+    /// <summary>
+    /// Spends one oxygen-station charge and refills oxygen to full. Returns false when
+    /// out of charges, dead, or already at full oxygen (no charge wasted).
+    /// </summary>
+    public bool ServerTryUseOxygenCharge()
+    {
+        if (!isServer || IsDead) return false;
+        if (currentOxygenCharges.value <= 0) return false;
+        if (currentOxygen.value >= maxOxygen.value) return false;
+
+        currentOxygenCharges.value--;
+        currentOxygen.value = maxOxygen.value;
+        return true;
+    }
+
+    /// <summary>Grants extra station charges (the +charge upgrade): raises the max and
+    /// hands the new charges over immediately.</summary>
+    public void ServerAddOxygenCharges(int amount)
+    {
+        if (!isServer || amount == 0) return;
+        maxOxygenCharges.value += amount;
+        currentOxygenCharges.value += amount;
+    }
+
+    // ── Expedition reset (server-side, called by RoverManager on return) ─────
+
+    /// <summary>
+    /// Completing an expedition wipes the slate: dead players are revived, and
+    /// health / oxygen / station charges all reset to max.
+    /// </summary>
+    public void ServerResetForNewExpedition()
+    {
+        if (!isServer) return;
+
+        if (_deathHandler == null) _deathHandler = GetComponent<PlayerDeathHandler>();
+        if (_deathHandler != null && _deathHandler.isDead.value)
+            _deathHandler.Revive(maxHealth.value, maxOxygen.value);
+
+        currentHealth.value = maxHealth.value;
+        currentOxygen.value = maxOxygen.value;
+        currentOxygenCharges.value = maxOxygenCharges.value;
     }
 
     [ServerRpc]
@@ -372,8 +424,16 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         NoiseEvents.Report(transform.position, _lastVoiceLoudness);
     }
 
-    /// <summary>Owner → server: a momentary noise at the player's position (footstep, sprint).</summary>
-    public void ReportNoise(float loudness01) => ServerReportNoise(loudness01);
+    private PlayerUpgrades _upgrades;
+
+    /// <summary>Owner → server: a momentary noise at the player's position (footstep, sprint).
+    /// The quiet-footsteps upgrade scales it down here, so every noise source benefits.</summary>
+    public void ReportNoise(float loudness01)
+    {
+        if (_upgrades == null) _upgrades = GetComponent<PlayerUpgrades>();
+        if (_upgrades != null) loudness01 *= _upgrades.FootstepNoiseMultiplier;
+        ServerReportNoise(loudness01);
+    }
 
     [ServerRpc]
     private void ServerReportNoise(float loudness01)

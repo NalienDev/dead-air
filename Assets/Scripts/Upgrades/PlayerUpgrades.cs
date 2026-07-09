@@ -34,12 +34,26 @@ public class PlayerUpgrades : NetworkIdentity
     /// <summary>Local Echo-voice pitch for this player (1 = unchanged).</summary>
     public float EchoVoicePitch => echoVoicePitch.value;
 
+    // Multiplier on this player's footstep/movement noise (1 = normal). Stacks
+    // multiplicatively per quiet-footsteps upgrade. Read owner-side in
+    // PlayerManager.ReportNoise, so every noise source is covered.
+    public readonly SyncVar<float> footstepNoiseMult = new(1f);
+
+    /// <summary>How loud this player's footsteps are relative to normal (0..1).</summary>
+    public float FootstepNoiseMultiplier => footstepNoiseMult.value;
+
     // Def indices of taken upgrades. Used to gate non-repeatable upgrades and for UI.
     public readonly SyncList<int> ownedUpgrades = new();
 
     private PlayerManager _playerManager;
     private PlayerMovement _movement;
     private Interactor _interactor;
+    private StarterAssets.FirstPersonController _fpc;
+
+    // FirstPersonController base speeds, cached before the first bonus is applied so
+    // re-applies (or a bonus shrinking) never compound.
+    private float _fpcBaseMoveSpeed = -1f;
+    private float _fpcBaseSprintSpeed = -1f;
 
     // Refs are resolved lazily so this component behaves correctly whether or not it's
     // enabled on a given copy (e.g. disabled by NetworkOwnershipToggle on the server's
@@ -50,6 +64,7 @@ public class PlayerUpgrades : NetworkIdentity
         if (_playerManager == null) _playerManager = GetComponentInChildren<PlayerManager>(true);
         if (_movement == null) _movement = GetComponentInChildren<PlayerMovement>(true);
         if (_interactor == null) _interactor = GetComponentInChildren<Interactor>(true);
+        if (_fpc == null) _fpc = GetComponentInChildren<StarterAssets.FirstPersonController>(true);
     }
 
     // ── Lifecycle ──────────────────────────────────────────────────────────
@@ -116,6 +131,23 @@ public class PlayerUpgrades : NetworkIdentity
         echoVoicePitch.value = Mathf.Max(0.1f, pitch);
     }
 
+    /// <summary>Cuts footstep noise by <paramref name="fraction"/> (0.3 = 30% quieter).
+    /// Stacks multiplicatively; floored so footsteps are never fully silent.</summary>
+    public void ServerReduceFootstepNoise(float fraction)
+    {
+        if (!isServer) return;
+        footstepNoiseMult.value =
+            Mathf.Clamp(footstepNoiseMult.value * (1f - Mathf.Clamp01(fraction)), 0.05f, 1f);
+    }
+
+    /// <summary>Grants extra oxygen-station charges (raises max + current).</summary>
+    public void ServerAddOxygenCharges(int amount)
+    {
+        if (!isServer) return;
+        EnsureRefs();
+        _playerManager?.ServerAddOxygenCharges(amount);
+    }
+
     /// <summary>Records a non-repeatable upgrade so it won't be offered again.</summary>
     public void ServerMarkOwned(int defIndex)
     {
@@ -128,7 +160,23 @@ public class PlayerUpgrades : NetworkIdentity
     private void ApplyWalkSpeed(float bonus)
     {
         EnsureRefs();
+
+        // Test prefab (simple mover).
         if (_movement != null) _movement.SetBonusSpeed(bonus);
+
+        // Real prefab (StarterAssets rig) — the controller's public speeds ARE the
+        // source of truth for movement, so the bonus goes straight onto them.
+        if (_fpc != null)
+        {
+            if (_fpcBaseMoveSpeed < 0f)
+            {
+                _fpcBaseMoveSpeed = _fpc.MoveSpeed;
+                _fpcBaseSprintSpeed = _fpc.SprintSpeed;
+            }
+
+            _fpc.MoveSpeed = _fpcBaseMoveSpeed + bonus;
+            _fpc.SprintSpeed = _fpcBaseSprintSpeed + bonus;
+        }
     }
 
     private void ApplyInventorySlots(int extra)

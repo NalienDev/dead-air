@@ -53,6 +53,11 @@ public class RoverManager : NetworkBehaviour
 
         foreach (PlayerManager player in FindObjectsByType<PlayerManager>(FindObjectsSortMode.None))
         {
+            // Completing an expedition wipes the slate: dead players come back, and
+            // health / oxygen / station charges reset to max. Runs BEFORE the teleport
+            // so the revived player is moved to the lobby with everyone else.
+            player.ServerResetForNewExpedition();
+
             player.TeleportToPosition(teleportPos, teleportRot);
             player.SetInsideDungeon(false); // back in the lobby — hide from the Echo
         }

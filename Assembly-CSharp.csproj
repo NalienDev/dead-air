@@ -68,6 +68,7 @@
     <Compile Include="Assets\Scripts\EnergyCell.cs" />
     <Compile Include="Assets\Scripts\DestructibleObjects\Despawn.cs" />
     <Compile Include="Assets\Scripts\Rover\SuckableObject.cs" />
+    <Compile Include="Assets\Scripts\Upgrades\Effects\QuietFootstepsUpgrade.cs" />
     <Compile Include="Assets\Scripts\Rover\RoverManager.cs" />
     <Compile Include="Assets\Scripts\Rendering\FogClearingZone.cs" />
     <Compile Include="Assets\Scripts\Enemies\ConductorAnimationRelay.cs" />
@@ -101,7 +102,8 @@
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualTouchZone.cs" />
     <Compile Include="Assets\Scripts\Upgrades\Effects\WalkSpeedUpgrade.cs" />
     <Compile Include="Assets\Scripts\DestructibleObjects\Spawner.cs" />
-    <Compile Include="Assets\Scripts\Spectator\ReviveDeadPlayersButton.cs" />
+    <Compile Include="Assets\Scripts\Upgrades\Effects\OxygenChargesUpgrade.cs" />
+    <Compile Include="Assets\Scripts\OxygenStation.cs" />
     <Compile Include="Assets\Scripts\DestructibleObjects\DestructibleObject.cs" />
     <Compile Include="Assets\Scripts\OutOfBoundsGuard.cs" />
     <Compile Include="Assets\Scripts\SceneChanger.cs" />
