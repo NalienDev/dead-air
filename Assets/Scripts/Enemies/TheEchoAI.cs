@@ -12,8 +12,17 @@ using UnityEngine.AI;
 /// line of sight) it screeches and chases them, hits for damage and vanishes.
 /// If nobody takes the bait it despawns and returns later for another target.
 ///
-/// Needs on this GameObject: NavMeshAgent, NetworkTransform, a child model root.
-/// The dungeon NavMesh is baked at runtime by DungeonNavMeshBaker.
+/// Once it's chasing, a player can scare it away by flashing the flashlight on any
+/// visible part of it _flashlightScareFlashes times. _reactToAllPlayers decides
+/// whether non-targets can trigger the chase / scare.
+///
+/// If a lure and a chase model are assigned (overlapping children, each with its
+/// own Animator), the chase start dissolve-morphs one into the other (ModelMorpher
+/// + Custom/EchoDissolve shader).
+///
+/// Needs on this GameObject: NavMeshAgent, NetworkTransform, and either a model root
+/// or the two morph forms as child visuals. The dungeon NavMesh is baked at runtime
+/// by DungeonNavMeshBaker.
 /// </summary>
 public class TheEchoAI : NetworkBehaviour
 {
@@ -23,8 +32,20 @@ public class TheEchoAI : NetworkBehaviour
 
     [Header("References")]
     [SerializeField] private AudioSource _audioSource;   // voice playback
-    [SerializeField] private GameObject _modelRoot;      // visuals + colliders, toggled on spawn/despawn
+    [Tooltip("Optional. Whole-model parent toggled on spawn/despawn. Leave empty if " +
+             "you use the morph forms below — hiding those hides the Echo.")]
+    [SerializeField] private GameObject _modelRoot;
     [SerializeField] private Animator _animator;         // optional; gets bool "IsChasing"
+
+    [Header("Morph Forms (optional)")]
+    [Tooltip("Form shown while luring. Child of the model root, with its own Animator.")]
+    [SerializeField] private GameObject _lureModel;
+    [Tooltip("Form it morphs into when the chase starts. Child of the model root, " +
+             "overlapping the lure form, with its own Animator.")]
+    [SerializeField] private GameObject _chaseModel;
+    [Tooltip("Drives the dissolve crossfade between the two forms. Auto-found on " +
+             "this GameObject if left empty.")]
+    [SerializeField] private ModelMorpher _morpher;
 
     [Header("Sounds")]
     [SerializeField] private AudioClip _breathingSound;  // loop while lurking
@@ -44,10 +65,22 @@ public class TheEchoAI : NetworkBehaviour
     [Header("Luring")]
     [Tooltip("A player this close, with line of sight, triggers the chase.")]
     [SerializeField] private float _triggerRadius = 5f;
-    [Tooltip("Seconds after the voice finishes before giving up and despawning.")]
+    [Tooltip("Seconds after the last voice finishes before giving up and despawning.")]
     [SerializeField] private float _lureTimeout = 10f;
+    [Tooltip("Gap between one stolen voice ending and the next one playing.")]
+    [SerializeField] private float _voiceRepeatDelay = 3f;
     [Tooltip("Repeat the target's own voice instead of another player's.")]
     [SerializeField] private bool _repeatTargetVoice = false;
+
+    [Header("Flashlight Scare (chase only)")]
+    [Tooltip("Number of flashes (beam re-entering any visible part of the Echo) " +
+             "needed to scare it away while it's chasing. Flick the light on/off.")]
+    [SerializeField] private int _flashlightScareFlashes = 5;
+    [Tooltip("One-shot when the flashlight drives it away.")]
+    [SerializeField] private AudioClip _scaredSound;
+    [Tooltip("When false, only the lured target can trigger the chase, and only the " +
+             "chase target can scare it with the flashlight; others are ignored.")]
+    [SerializeField] private bool _reactToAllPlayers = true;
 
     [Header("Chasing")]
     [SerializeField] private float _attackRange = 1.5f;
@@ -62,6 +95,11 @@ public class TheEchoAI : NetworkBehaviour
     private static readonly int AnimIsChasing = Animator.StringToHash("IsChasing");
     private const float HeadHeight = 1.6f;
 
+    // Points sampled up the Echo's body when testing flashlight exposure, so the
+    // scare still registers when only part of it (feet, torso, head) is lit/visible.
+    private static readonly float[] ScareSampleHeights = { 0.2f, 0.7f, 1.2f, 1.6f };
+    private const float ScareSampleRadius = 0.35f;
+
     // ── State (server) ─────────────────────────────────────────────────────
 
     private NavMeshAgent _agent;
@@ -72,9 +110,25 @@ public class TheEchoAI : NetworkBehaviour
     private PlayerManager _chaseTarget;  // player who took the bait
     private float _nextSpawnTime;
     private float _lureDeadline;
+    private float _nextVoiceTime;   // when the next stolen voice should play while luring
     private float _chaseDeadline;
     private float _nextLogTime;
     private Vector3 _restPosition;
+
+    // Per-player flashlight-flash bookkeeping, reset on every appearance.
+    private class FlashProgress
+    {
+        public int flashes;      // times the beam has re-entered the Echo
+        public bool wasLit;      // beam state last tick, for flash edge detection
+    }
+
+    private readonly Dictionary<PlayerManager, FlashProgress> _flashProgress = new();
+    private readonly Dictionary<PlayerManager, PlayerFlashlight> _flashlights = new();
+
+    private Animator _lureAnimator;
+    private Animator _chaseAnimator;
+
+    private bool HasMorphForms => _lureModel != null && _chaseModel != null;
 
     // ── Lifecycle ──────────────────────────────────────────────────────────
 
@@ -97,8 +151,17 @@ public class TheEchoAI : NetworkBehaviour
         _loopSource.loop = true;
         _loopSource.spatialBlend = 1f;
 
-        if (_modelRoot != null)
-            _modelRoot.SetActive(false);
+        if (_morpher == null)
+            _morpher = GetComponent<ModelMorpher>();
+
+        if (_lureModel != null) _lureAnimator = _lureModel.GetComponentInChildren<Animator>(true);
+        if (_chaseModel != null) _chaseAnimator = _chaseModel.GetComponentInChildren<Animator>(true);
+
+        // Start hidden. With morph forms the two models ARE the visuals, so hiding
+        // them is enough even when no separate model root is assigned.
+        if (_modelRoot != null) _modelRoot.SetActive(false);
+        if (_lureModel != null) _lureModel.SetActive(false);
+        if (_chaseModel != null) _chaseModel.SetActive(false);
     }
 
     protected override void OnSpawned(bool asServer)
@@ -181,16 +244,23 @@ public class TheEchoAI : NetworkBehaviour
 
         _agent.Warp(spawnPos);
 
+        // While luring it stands still and turns by hand — let the agent steer
+        // rotation only during the chase, or it overrides our manual facing.
+        _agent.updateRotation = false;
+
         // Face the target so the model isn't staring into its corner.
         Vector3 look = _target.transform.position - spawnPos;
         look.y = 0f;
         if (look != Vector3.zero) transform.rotation = Quaternion.LookRotation(look);
 
         _state = State.Lure;
+        _flashProgress.Clear();
+
         RpcSetVisible(true);
 
         float voiceLength = PlayStolenVoice();
         _lureDeadline = Time.time + voiceLength + _lureTimeout;
+        _nextVoiceTime = Time.time + voiceLength + _voiceRepeatDelay;
     }
 
     // ── Lure: wait for someone to take the bait ────────────────────────────
@@ -199,17 +269,120 @@ public class TheEchoAI : NetworkBehaviour
     {
         foreach (PlayerManager player in GetDungeonPlayers())
         {
-            bool close = (player.transform.position - transform.position).sqrMagnitude
-                         <= _triggerRadius * _triggerRadius;
-            if (close && HasLineOfSight(player))
+            bool canReact = _reactToAllPlayers || player == _target;
+            float distSq = (player.transform.position - transform.position).sqrMagnitude;
+
+            if (distSq <= _triggerRadius * _triggerRadius && canReact && HasLineOfSight(player))
             {
                 StartChase(player);
                 return;
             }
         }
 
+        // Keep repeating a (different) stolen voice a few seconds after each ends.
+        if (Time.time >= _nextVoiceTime)
+        {
+            float voiceLength = PlayStolenVoice();
+            if (voiceLength > 0f)
+            {
+                _nextVoiceTime = Time.time + voiceLength + _voiceRepeatDelay;
+                _lureDeadline = Time.time + voiceLength + _lureTimeout; // keep luring while it talks
+            }
+            else
+            {
+                // Nothing left to steal — retry soon, but let the lure time out.
+                _nextVoiceTime = Time.time + _voiceRepeatDelay;
+            }
+        }
+
         if (Time.time >= _lureDeadline)
             Despawn();
+    }
+
+    /// <summary>
+    /// Counts flashes (the beam re-entering the Echo) for every player allowed to
+    /// scare it. Chase-only, so the beam reaches at any distance. Returns true
+    /// (after fleeing) once someone has flashed it enough.
+    /// </summary>
+    private bool UpdateFlashlightScare()
+    {
+        foreach (PlayerManager player in GetDungeonPlayers())
+        {
+            bool canReact = _reactToAllPlayers || player == _chaseTarget;
+            FlashProgress progress = GetFlashProgress(player);
+
+            bool lit = canReact && IsLitBy(player);
+            if (lit && !progress.wasLit) progress.flashes++; // beam just (re)entered — one flash
+            progress.wasLit = lit;
+
+            if (canReact && _flashlightScareFlashes > 0
+                && progress.flashes >= _flashlightScareFlashes)
+            {
+                ScareAway(player);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// True if the player's flashlight is aimed at any visible part of the Echo.
+    /// Samples several points up the body so partial cover (only the legs, only
+    /// the head...) still counts, and ignores beam range so distance is no limit.
+    /// </summary>
+    private bool IsLitBy(PlayerManager player)
+    {
+        PlayerFlashlight flashlight = GetFlashlight(player);
+        if (flashlight == null || !flashlight.IsOn) return false;
+
+        Vector3 playerHead = player.transform.position + Vector3.up * HeadHeight;
+
+        // Offset perpendicular to the line of approach so peeking round a corner
+        // (only one side exposed) still lands a sample on the exposed side.
+        Vector3 toEcho = transform.position - player.transform.position;
+        toEcho.y = 0f;
+        Vector3 right = Vector3.Cross(Vector3.up, toEcho).normalized * ScareSampleRadius;
+
+        foreach (float h in ScareSampleHeights)
+        {
+            Vector3 mid = transform.position + Vector3.up * h;
+            for (int side = -1; side <= 1; side++)
+            {
+                Vector3 sample = mid + right * side;
+                if (!flashlight.IsIlluminating(sample, ignoreRange: true)) continue;
+                if (!Physics.Linecast(playerHead, sample, _visionBlockers))
+                    return true; // this part is both lit and visible
+            }
+        }
+        return false;
+    }
+
+    private void ScareAway(PlayerManager player)
+    {
+        Debug.Log($"[TheEchoAI] Scared away by '{player.name}'s flashlight.");
+        RpcPlayScared(transform.position);
+        Despawn();
+    }
+
+    private FlashProgress GetFlashProgress(PlayerManager player)
+    {
+        if (!_flashProgress.TryGetValue(player, out FlashProgress progress))
+        {
+            progress = new FlashProgress();
+            _flashProgress[player] = progress;
+        }
+        return progress;
+    }
+
+    private PlayerFlashlight GetFlashlight(PlayerManager player)
+    {
+        if (!_flashlights.TryGetValue(player, out PlayerFlashlight flashlight) || flashlight == null)
+        {
+            flashlight = player.GetComponentInChildren<PlayerFlashlight>();
+            if (flashlight == null) flashlight = player.GetComponentInParent<PlayerFlashlight>();
+            _flashlights[player] = flashlight;
+        }
+        return flashlight;
     }
 
     private void StartChase(PlayerManager player)
@@ -218,6 +391,7 @@ public class TheEchoAI : NetworkBehaviour
         _chaseTarget = player;
         _state = State.Chase;
         _chaseDeadline = Time.time + _chaseTimeout;
+        _agent.updateRotation = true; // hand rotation back to the agent for the chase
         RpcSetChasing(true);
     }
 
@@ -230,6 +404,9 @@ public class TheEchoAI : NetworkBehaviour
             Despawn();
             return;
         }
+
+        // Mid-hunt the flashlight scares it off from any distance.
+        if (UpdateFlashlightScare()) return;
 
         _agent.SetDestination(_chaseTarget.transform.position);
 
@@ -252,6 +429,7 @@ public class TheEchoAI : NetworkBehaviour
         _state = State.Hidden;
         _target = null;
         _chaseTarget = null;
+        _flashProgress.Clear();
         _nextSpawnTime = Time.time + _respawnCooldown;
 
         if (_agent.enabled) _agent.ResetPath();
@@ -281,6 +459,18 @@ public class TheEchoAI : NetworkBehaviour
     {
         List<PlayerManager> players = GetDungeonPlayers();
         return players.Count > 0 ? players[Random.Range(0, players.Count)] : null;
+    }
+
+    private PlayerManager GetClosestPlayer(List<PlayerManager> players)
+    {
+        PlayerManager closest = null;
+        float best = float.MaxValue;
+        foreach (PlayerManager p in players)
+        {
+            float d = (p.transform.position - transform.position).sqrMagnitude;
+            if (d < best) { best = d; closest = p; }
+        }
+        return closest;
     }
 
     private bool IsAlone(PlayerManager target)
@@ -374,6 +564,13 @@ public class TheEchoAI : NetworkBehaviour
         {
             List<PlayerManager> others = GetDungeonPlayers();
             others.Remove(_target);
+
+            // Don't mimic whoever's closest — a voice coming from right next to a
+            // player gives the trick away. Only drop them if someone else is left.
+            PlayerManager closest = GetClosestPlayer(others);
+            if (others.Count > 1 && closest != null)
+                others.Remove(closest);
+
             Shuffle(others);
 
             foreach (PlayerManager other in others)
@@ -414,8 +611,20 @@ public class TheEchoAI : NetworkBehaviour
     [ObserversRpc(runLocally: true, bufferLast: true)]
     private void RpcSetVisible(bool visible)
     {
+        if (_morpher != null)
+            _morpher.CancelMorph();
+
         if (_modelRoot != null)
             _modelRoot.SetActive(visible);
+
+        // Come back in the lure form; the chase form only appears mid-hunt. When
+        // hiding, both forms switch off — this is what hides the Echo when there's
+        // no separate model root assigned.
+        if (HasMorphForms)
+        {
+            _lureModel.SetActive(visible);
+            _chaseModel.SetActive(false);
+        }
 
         if (visible) PlayLoop(_breathingSound);
         else _loopSource.Stop();
@@ -424,8 +633,14 @@ public class TheEchoAI : NetworkBehaviour
     [ObserversRpc(runLocally: true)]
     private void RpcSetChasing(bool chasing)
     {
-        if (_animator != null)
-            _animator.SetBool(AnimIsChasing, chasing);
+        // Morph first so the chase model (and its Animator) is active before we
+        // try to set parameters on it.
+        if (chasing && HasMorphForms && _morpher != null)
+            _morpher.Morph(_lureModel, _chaseModel);
+
+        SetChaseAnim(_animator, chasing);
+        SetChaseAnim(_lureAnimator, chasing);
+        SetChaseAnim(_chaseAnimator, chasing);
 
         if (chasing)
         {
@@ -434,10 +649,38 @@ public class TheEchoAI : NetworkBehaviour
         }
     }
 
+    // Sets IsChasing only where the controller actually has that bool — the two
+    // forms have different animators and not all of them need the parameter.
+    private static void SetChaseAnim(Animator animator, bool chasing)
+    {
+        if (animator == null || !animator.isActiveAndEnabled
+            || animator.runtimeAnimatorController == null)
+            return;
+
+        foreach (AnimatorControllerParameter parameter in animator.parameters)
+        {
+            if (parameter.type == AnimatorControllerParameterType.Bool
+                && parameter.nameHash == AnimIsChasing)
+            {
+                animator.SetBool(AnimIsChasing, chasing);
+                return;
+            }
+        }
+    }
+
     [ObserversRpc(runLocally: true)]
     private void RpcPlayScratch()
     {
         if (_scratchSound != null) _audioSource.PlayOneShot(_scratchSound);
+    }
+
+    // Played at the spot it fled from — by the time the RPC lands, the Echo's own
+    // transform has already been parked back at the rest position.
+    [ObserversRpc(runLocally: true)]
+    private void RpcPlayScared(Vector3 position)
+    {
+        if (_scaredSound != null)
+            AudioSource.PlayClipAtPoint(_scaredSound, position);
     }
 
     private void PlayLoop(AudioClip clip)

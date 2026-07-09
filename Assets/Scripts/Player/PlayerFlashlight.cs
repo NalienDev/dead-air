@@ -40,6 +40,26 @@ public class PlayerFlashlight : NetworkBehaviour
     private Transform _mount;
     private GameObject _rig;
 
+    /// <summary>True while this player's flashlight is switched on (synced).</summary>
+    public bool IsOn => _isOn.value;
+
+    /// <summary>
+    /// True if the flashlight is on and <paramref name="worldPoint"/> falls inside
+    /// the beam cone. Range is checked unless <paramref name="ignoreRange"/> is set
+    /// — the beam is angular, so it can still "hit" a distant point it's aimed at.
+    /// Works on the server too — the mount follows the synced pitch there.
+    /// Occlusion is the caller's problem.
+    /// </summary>
+    public bool IsIlluminating(Vector3 worldPoint, bool ignoreRange = false)
+    {
+        if (!_isOn.value || _mount == null) return false;
+
+        Vector3 toPoint = worldPoint - _mount.position;
+        if (!ignoreRange && toPoint.sqrMagnitude > _range * _range) return false;
+
+        return Vector3.Angle(_mount.forward, toPoint) <= _spotAngle * 0.5f;
+    }
+
     private void Awake() => BuildRig();
 
     protected override void OnSpawned(bool asServer)
