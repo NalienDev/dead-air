@@ -33,9 +33,9 @@ public class LoadingScreenManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Don't hide the loading screen automatically for Bootstrap or City.
-        // For City, it will be hidden when the player actually spawns.
-        if (scene.name != "City" && scene.name != "Bootstrap")
+        // Don't hide the loading screen automatically for Bootstrap or Main.
+        // For Main, it will be hidden when the player actually spawns.
+        if (scene.name != "Main" && scene.name != "Bootstrap")
         {
             HideLoadingScreen();
         }

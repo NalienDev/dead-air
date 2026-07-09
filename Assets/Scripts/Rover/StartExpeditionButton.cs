@@ -1,86 +1,25 @@
 using PurrNet;
 using UnityEngine;
 
-
+/// <summary>
+/// Rover button that starts the expedition. All the real work (generating the dungeon,
+/// the loading screen, teleporting everyone, arming the return lock) happens on the
+/// SERVER inside <see cref="RoverManager.ServerStartExpedition"/> — generation is
+/// server-only and its OnGenerated event never fires on clients, so a client-side flow
+/// here silently hangs when a non-host presses the button (loading screen forever, no
+/// teleport). This just forwards the press.
+/// </summary>
 public class StartExpeditionButton : Interactable
 {
-    private Transform _expeditionSpawnPoint;
-
-    private void Start()
-    {
-        _expeditionSpawnPoint = GameObject.FindGameObjectWithTag("ExpeditionSpawn").transform;
-    }
     public override InteractionType OnInteract(GameObject user)
     {
-        if (_expeditionSpawnPoint == null)
+        if (RoverManager.Instance == null)
         {
-            _expeditionSpawnPoint = GameObject.FindGameObjectWithTag("ExpeditionSpawn").transform;
-            if (_expeditionSpawnPoint == null)
-            {
-                Debug.LogWarning("[StartExpeditionButton] Expedition spawn point is not assigned!");
-                return InteractionType.NONE;
-            }
+            Debug.LogWarning("[StartExpeditionButton] RoverManager.Instance is null.");
+            return InteractionType.NONE;
         }
 
-        // If the dungeon isn't ready yet, show a loading screen and wait for generation.
-        if (DungeonGenerator.Instance != null && !DungeonGenerator.Instance.IsGenerated())
-        {
-            Debug.Log("[StartExpeditionButton] Dungeon not generated yet — showing loading screen and waiting.");
-
-            // Show the loading screen on all clients.
-            if (SceneChanger.Instance != null)
-                SceneChanger.Instance.RpcShowLoadingScreen();
-
-            // Kick off generation if it hasn't started.
-            DungeonGenerator.Instance.StartGeneration();
-
-            // Subscribe — teleport happens once generation fires the event.
-            DungeonGenerator.Instance.OnGenerated += OnDungeonGenerated;
-
-            return InteractionType.PRESS;
-        }
-
-        // Dungeon already generated — teleport everyone immediately.
-        TeleportAndHide();
+        RoverManager.Instance.ServerStartExpedition();
         return InteractionType.PRESS;
-    }
-    private void TeleportPlayers()
-    {
-        Debug.Log("[StartExpeditionButton] Teleporting players to the expedition area.");
-
-        // Arm the early-return lock — the return-to-base button stays dead for the
-        // first minute of the expedition (RoverManager owns the timer).
-        if (RoverManager.Instance != null)
-            RoverManager.Instance.ServerMarkExpeditionStarted();
-
-        if (PlayerManager.Local != null)
-        {
-            PlayerManager.Local.RequestTeleportAllPlayers(_expeditionSpawnPoint.position, _expeditionSpawnPoint.rotation);
-        }
-
-        // Everyone on the expedition counts as inside the dungeon — the Echo only
-        // hunts players with this flag set.
-        foreach (PlayerManager player in FindObjectsByType<PlayerManager>(FindObjectsSortMode.None))
-            player.SetInsideDungeon(true);
-    }
-
-    private void TeleportAndHide()
-    {
-        TeleportPlayers();
-
-        // Hide the loading screen for all clients.
-        if (SceneChanger.Instance != null)
-            SceneChanger.Instance.RpcHideLoadingScreen();
-    }
-
-    private void OnDungeonGenerated()
-    {
-        Debug.Log("[StartExpeditionButton] Dungeon generation finished! Teleporting players.");
-
-        // Unsubscribe first to prevent duplicate calls.
-        if (DungeonGenerator.Instance != null)
-            DungeonGenerator.Instance.OnGenerated -= OnDungeonGenerated;
-
-        TeleportAndHide();
     }
 }

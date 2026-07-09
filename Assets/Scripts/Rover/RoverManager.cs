@@ -53,12 +53,75 @@ public class RoverManager : NetworkBehaviour
         Destroy(identity.gameObject);
     }
 
+    // ── Expedition start (server-driven) ─────────────────────────────────────
+    //
+    // The WHOLE start flow must run on the server: StartGeneration() is a no-op on
+    // clients and OnGenerated only ever fires server-side. The old client-side flow
+    // (in StartExpeditionButton) silently did nothing when a non-host pressed the
+    // button — the loading screen appeared locally and never went away because no
+    // generation was actually started.
+
+    private Transform _expeditionSpawnPoint;
+
     /// <summary>
-    /// Called (by any client) when an expedition begins: locks the return-to-base
-    /// button for <see cref="_returnLockSeconds"/> so nobody bails out instantly.
+    /// Any client presses the rover button → the server runs the expedition start:
+    /// generate the dungeon if needed (loading screen up for everyone while it runs),
+    /// then teleport all players in and arm the early-return lock.
     /// </summary>
     [ServerRpc(requireOwnership: false)]
-    public void ServerMarkExpeditionStarted()
+    public void ServerStartExpedition()
+    {
+        if (_expeditionSpawnPoint == null)
+        {
+            GameObject spawnGo = GameObject.FindGameObjectWithTag("ExpeditionSpawn");
+            if (spawnGo == null)
+            {
+                Debug.LogWarning("[RoverManager] No object tagged 'ExpeditionSpawn' found.");
+                return;
+            }
+            _expeditionSpawnPoint = spawnGo.transform;
+        }
+
+        DungeonGenerator gen = DungeonGenerator.Instance;
+        if (gen != null && !gen.IsGenerated())
+        {
+            Debug.Log("[RoverManager] Dungeon not generated — showing loading screen and waiting.");
+            SceneChanger.Instance?.RpcShowLoadingScreen();
+
+            // -= before += so a double press never stacks a second teleport.
+            gen.OnGenerated -= OnDungeonGeneratedTeleport;
+            gen.OnGenerated += OnDungeonGeneratedTeleport;
+            gen.StartGeneration();
+            return;
+        }
+
+        TeleportPlayersToExpedition();
+    }
+
+    private void OnDungeonGeneratedTeleport()
+    {
+        if (DungeonGenerator.Instance != null)
+            DungeonGenerator.Instance.OnGenerated -= OnDungeonGeneratedTeleport;
+
+        TeleportPlayersToExpedition();
+    }
+
+    // Server only. Sends everyone in and closes the loading screen on all clients.
+    private void TeleportPlayersToExpedition()
+    {
+        ArmReturnLock();
+
+        foreach (PlayerManager player in FindObjectsByType<PlayerManager>(FindObjectsSortMode.None))
+        {
+            player.TeleportToPosition(_expeditionSpawnPoint.position, _expeditionSpawnPoint.rotation);
+            player.SetInsideDungeon(true); // the Echo only hunts flagged players
+        }
+
+        SceneChanger.Instance?.RpcHideLoadingScreen();
+    }
+
+    // Server only. Locks return-to-base for _returnLockSeconds.
+    private void ArmReturnLock()
     {
         _canReturnToBase.value = false;
 

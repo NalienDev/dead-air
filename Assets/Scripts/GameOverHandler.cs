@@ -15,7 +15,7 @@ using System.Collections;
 public class GameOverHandler : MonoBehaviour
 {
     [SerializeField] private float _delayBeforeReset = 5f;
-    [SerializeField] private string _mainSceneName = "City";
+    [SerializeField] private string _mainSceneName = "Main";
 
     private void Start()
     {

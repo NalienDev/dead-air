@@ -2059,6 +2059,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7b7486b9034806409385372e1d79179, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EntryPoint
+  _primary: 0
 --- !u!1 &4362443839379954275
 GameObject:
   m_ObjectHideFlags: 0
@@ -5142,7 +5143,7 @@ MonoBehaviour:
   _monsterSpawnLocation: {fileID: 5906660158958719708}
   _roomsLayerMask:
     serializedVersion: 2
-    m_Bits: 512
+    m_Bits: 6656
   _fillerWallYOffset: 0
   _fillerWallYRotation: 90
   entrypoints:
@@ -5336,6 +5337,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7b7486b9034806409385372e1d79179, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EntryPoint
+  _primary: 0
 --- !u!1 &9211354603711744612
 GameObject:
   m_ObjectHideFlags: 0
