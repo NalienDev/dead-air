@@ -17,6 +17,12 @@ public class GameOverHandler : MonoBehaviour
     [SerializeField] private float _delayBeforeReset = 5f;
     [SerializeField] private string _mainSceneName = "Main";
 
+#if UNITY_EDITOR
+    [Header("Editor Testing")]
+    [Tooltip("When you Play this scene alone in the Editor, there's no host/NetworkManager running, so the isServer check below would silently skip the scene change. With this on, that check is bypassed in the Editor only - never compiled into an actual build.")]
+    [SerializeField] private bool forceResetWithoutServer = true;
+#endif
+
     private void Start()
     {
         StartCoroutine(ResetSequence());
@@ -32,7 +38,17 @@ public class GameOverHandler : MonoBehaviour
         // Only the server drives the reset — clients just show their loading screen
         // and wait for the networked scene change to arrive.
         NetworkManager nm = NetworkManager.main;
-        if (nm == null || !nm.isServer) yield break;
+        bool proceed = nm != null && nm.isServer;
+
+#if UNITY_EDITOR
+        if (!proceed && forceResetWithoutServer)
+        {
+            Debug.LogWarning("[GameOverHandler] No active host/NetworkManager found - forcing the scene change anyway (Editor-only test bypass, won't happen in a build).");
+            proceed = true;
+        }
+#endif
+
+        if (!proceed) yield break;
 
         if (QuotaManager.Instance != null)
             QuotaManager.Instance.ServerResetGame(); // back to day 1

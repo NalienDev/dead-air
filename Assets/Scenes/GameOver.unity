@@ -23784,8 +23784,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6788dbe9db143f428516f82429ca353, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameOverHandler
-  _delayBeforeReset: 20
+  _delayBeforeReset: 27
   _mainSceneName: Main
+  forceResetWithoutServer: 1
 --- !u!4 &1749363779
 Transform:
   m_ObjectHideFlags: 0
