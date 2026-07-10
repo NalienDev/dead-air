@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: cee9aad5bf1d1c04f954a68942f4fb0b
+guid: e7cedf65d820a5a42ac0cf37a44b48b2
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Master Victory Italic
+  - Stereohead
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

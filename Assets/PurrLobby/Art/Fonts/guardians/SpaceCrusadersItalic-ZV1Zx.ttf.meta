@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 6804fddea626a9645a602dbb03978704
+guid: b03a9deb37aa2d448a4418ea54a972bd
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Master Victory Demo
+  - Space Crusaders
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

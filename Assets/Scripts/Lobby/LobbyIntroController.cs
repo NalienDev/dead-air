@@ -1,4 +1,5 @@
 using System.Collections;
+using PurrLobby;
 using UnityEngine;
 
 /// <summary>
@@ -13,14 +14,29 @@ using UnityEngine;
 ///      at point 1 (the previous instance, if any, is destroyed first), and
 ///      the camera waits waitAfterSpawn seconds before continuing on to the
 ///      target.
-///        - Start   -> playPosition/playRotation, then the PurrNet canvas is enabled
-///                     and screenOn is turned off.
-///        - Options -> optionsPosition/optionsRotation, then OnOptionsSelected() runs
-///                     and screenOn is turned off.
+///        - Start   -> playPosition/playRotation, then lobbyCanvasRoot + mainScreenCanvas
+///                     are activated and screenOn is turned off.
+///        - Options -> optionsPosition/optionsRotation, then lobbyCanvasRoot + optionsScreenCanvas
+///                     are activated and screenOn is turned off.
 ///        - Quit    -> quitPosition/quitRotation, then Application.Quit().
 ///   5) Escape while resting at the Start/Options target reverses the same
-///      trip: screenOn is turned back on, and the camera moves target ->
-///      point 1 -> PC, landing back at the menu.
+///      trip: the canvas is deactivated, screenOn is turned back on, and the
+///      camera moves target -> point 1 -> PC, landing back at the menu.
+///   6) From the MainScreen (after Start), Browse moves the camera straight
+///      away (OnBrowseClicked -> playPosition -> browsePosition), since it
+///      doesn't depend on any network call.
+///      Create Lobby / Join are different: PurrLobby's own buttons already
+///      show the CreatingRoomOverlay/LoadingRoomOverlay and kick off the
+///      network call directly. Instead of moving the camera on click, this
+///      script waits for LobbyManager's "On Room Joined (Lobby)" event
+///      (wire it to OnRoomJoinedFromLobby, NOT to ViewManager.OnRoomJoined
+///      directly) - only once the lobby actually exists does the camera move
+///      playPosition -> createJoinPosition, and only then is lobbyScreenCanvas
+///      shown (via viewManager.OnRoomJoined()).
+///   7) Leaving mirrors this: wire LobbyManager's "On Room Left ()" event to
+///      OnRoomLeftFromLobby (NOT to ViewManager.OnRoomLeft directly). The
+///      camera moves createJoinPosition -> playPosition first, and only then
+///      is mainScreenCanvas shown (via viewManager.OnRoomLeft()).
 ///
 /// All positions/images/objects are wired up in the Inspector - nothing is
 /// found by name at runtime, so it doesn't matter how the scene hierarchy
@@ -28,7 +44,7 @@ using UnityEngine;
 /// </summary>
 public class LobbyIntroController : MonoBehaviour
 {
-    private enum State { Waiting, MovingToPc, AtMenu, Busy, AtTarget }
+    private enum State { Waiting, MovingToPc, AtMenu, Busy, AtTarget, AtMainScreen, AtSubScreen }
 
     [Header("Camera")]
     [Tooltip("Camera that gets moved. Defaults to Camera.main if left empty.")]
@@ -46,8 +62,8 @@ public class LobbyIntroController : MonoBehaviour
     [SerializeField] private Vector3 point1Position = new Vector3(856.422f, -2.174f, -447.862f);
     [SerializeField] private Vector3 point1Rotation = new Vector3(6.985f, -181.619f, 0.858f);
 
-    [Header("Camera - Start/Play target")]
-    [SerializeField] private Vector3 playPosition = new Vector3(856.472f, -0.676f, -449.417f);
+    [Header("Camera - Start/Play target (also the MainScreen hub)")]
+    [SerializeField] private Vector3 playPosition = new Vector3(856.418f, -1.74f, -448.167f);
     [SerializeField] private Vector3 playRotation = new Vector3(-40.382f, -182.448f, 1.118f);
 
     [Header("Camera - Options target")]
@@ -57,6 +73,14 @@ public class LobbyIntroController : MonoBehaviour
     [Header("Camera - Quit target")]
     [SerializeField] private Vector3 quitPosition = new Vector3(860.97f, -2.41f, -448.87f);
     [SerializeField] private Vector3 quitRotation = new Vector3(1.506f, -266.344f, -6.875f);
+
+    [Header("Camera - Create Lobby / Join target")]
+    [SerializeField] private Vector3 createJoinPosition = new Vector3(855.23f, -1.34f, -448.93f);
+    [SerializeField] private Vector3 createJoinRotation = new Vector3(-25.265f, -150.633f, -1.073f);
+
+    [Header("Camera - Browse target")]
+    [SerializeField] private Vector3 browsePosition = new Vector3(857.109f, -1.384f, -449.157f);
+    [SerializeField] private Vector3 browseRotation = new Vector3(-40.705f, -201.044f, 1.655f);
 
     [Header("Camera - Timing")]
     [SerializeField] private float approachDuration = 2f;
@@ -70,7 +94,24 @@ public class LobbyIntroController : MonoBehaviour
     [SerializeField] private float returnToPcDuration = 1f;
     [Tooltip("Time to wait after the prefab spawns (first selection only), before moving on to the target.")]
     [SerializeField] private float waitAfterSpawn = 2f;
+    [Tooltip("Current camera position -> playPosition, when Create Lobby/Join/Browse is clicked from the MainScreen.")]
+    [SerializeField] private float toMainScreenHubDuration = 0.5f;
+    [Tooltip("playPosition -> the Create Lobby/Join/Browse target.")]
+    [SerializeField] private float toSubScreenDuration = 1f;
     [SerializeField] private AnimationCurve moveCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
+
+    [Header("Camera - Sub-screen transition waypoints")]
+    [Tooltip("Lobby -> MainMenu: camera passes through this point first.")]
+    [SerializeField] private Vector3 lobbyToMainWaypointPosition = new Vector3(855.736f, -1.827f, -448.031f);
+    [SerializeField] private Vector3 lobbyToMainWaypointRotation = new Vector3(-25.265f, -150.633f, -1.073f);
+    [Tooltip("MainMenu -> Lobby (Create/Join) or Browse: camera passes through this point first.")]
+    [SerializeField] private Vector3 mainToSubWaypointPosition = new Vector3(856.42f, -1.65f, -448.27f);
+    [SerializeField] private Vector3 mainToSubWaypointRotation = new Vector3(-40.382f, -182.448f, 1.118f);
+    [Tooltip("Browse -> MainMenu: camera passes through this point first.")]
+    [SerializeField] private Vector3 browseToMainWaypointPosition = new Vector3(856.95f, -1.77f, -448.73f);
+    [SerializeField] private Vector3 browseToMainWaypointRotation = new Vector3(-40.705f, -201.044f, 1.655f);
+    [Tooltip("Duration for the leg into the waypoint above, before continuing on to the real target.")]
+    [SerializeField] private float toWaypointDuration = 0.4f;
 
     [Header("Screen (screenOn renderer)")]
     [SerializeField] private Renderer screenRenderer;
@@ -91,14 +132,33 @@ public class LobbyIntroController : MonoBehaviour
     [SerializeField] private KeyCode confirmKey = KeyCode.Return;
     [SerializeField] private KeyCode confirmKeyAlt = KeyCode.KeypadEnter;
 
+    [Header("PurrNet Lobby Canvas")]
+    [Tooltip("The LobbyCanvas root. Activated whenever Start or Options is confirmed.")]
+    [SerializeField] private GameObject lobbyCanvasRoot;
+    [Tooltip("Child panel shown after Start is confirmed.")]
+    [SerializeField] private GameObject mainScreenCanvas;
+    [Tooltip("Child panel shown after Options is confirmed.")]
+    [SerializeField] private GameObject optionsScreenCanvas;
+    [Tooltip("Child panel shown after Create Lobby or Join is clicked.")]
+    [SerializeField] private GameObject lobbyScreenCanvas;
+    [Tooltip("Child panel shown after Browse is clicked.")]
+    [SerializeField] private GameObject browseScreenCanvas;
+    [Tooltip("PurrLobby's CreatingRoomOverlay (CreatingRoomView). Must be active for ViewManager to show it without erroring.")]
+    [SerializeField] private GameObject creatingRoomOverlay;
+    [Tooltip("PurrLobby's LoadingRoomOverlay (LoadingRoomView). Must be active for ViewManager to show it without erroring.")]
+    [SerializeField] private GameObject loadingRoomOverlay;
+
     [Header("Start Sequence (first selection only)")]
-    [SerializeField] private GameObject purrNetCanvas;
     [Tooltip("Prefab instantiated every time an option is confirmed. The previous instance is destroyed first.")]
     [SerializeField] private GameObject prefabToSpawn;
     [Tooltip("Empty GameObject marking where/how the prefab should spawn (position + rotation).")]
     [SerializeField] private Transform spawnPoint;
     [Tooltip("The monitor the spawned bullet hits. Repaired right before each spawn so it can shatter again every time.")]
     [SerializeField] private ExplodableMonitor explodableMonitor;
+
+    [Header("PurrLobby ViewManager")]
+    [Tooltip("PurrLobby's ViewManager component (same GameObject the panels live under). Used to show LobbyScreen/MainScreen ourselves, only once the matching camera move has finished.")]
+    [SerializeField] private ViewManager viewManager;
 
     private State _state = State.Waiting;
     private int _selectedIndex;
@@ -136,6 +196,7 @@ public class LobbyIntroController : MonoBehaviour
                 break;
 
             case State.AtTarget:
+            case State.AtMainScreen:
                 if (Input.GetKeyDown(KeyCode.Escape))
                     StartCoroutine(ReturnToMenu());
                 break;
@@ -167,9 +228,246 @@ public class LobbyIntroController : MonoBehaviour
         StartCoroutine(MoveToTargetSequence(_selectedIndex));
     }
 
-    private void OnOptionsSelected()
+    // mainScreenCanvas/lobbyScreenCanvas/browseScreenCanvas/creatingRoomOverlay/
+    // loadingRoomOverlay are all PurrLobby "View" components managed by
+    // ViewManager through a CanvasGroup (alpha/interactable/blocksRaycasts).
+    // If we SetActive(false) their GameObject, their Awake() never runs and
+    // ViewManager.ShowView<T>() throws a NullReferenceException the first
+    // time it tries to show one (view.canvasGroup is still null). So we only
+    // ever SetActive(true) them once and never touch them again - ViewManager
+    // (already wired to these same buttons) owns showing/hiding from here on.
+    //
+    // Order matters here: the children are activated BEFORE the parent.
+    // ViewManager.Start() only runs once (the first time its GameObject
+    // becomes active) and hides every non-default view via CanvasGroup - but
+    // it can only hide a view whose Awake() has already run. If the parent
+    // were activated first, ViewManager.Start() would fire before the other
+    // panels were active, so they'd never get hidden and would all show up
+    // stacked on top of each other. Activating every child first means they
+    // all become active in the same batch as the parent, so every view's
+    // Awake() has already run by the time ViewManager.Start() hides them.
+    private void ActivateLobbyCanvas()
     {
-        Debug.Log("[LobbyIntroController] Options selected - hook up the options panel here.");
+        if (mainScreenCanvas != null) mainScreenCanvas.SetActive(true);
+        if (lobbyScreenCanvas != null) lobbyScreenCanvas.SetActive(true);
+        if (browseScreenCanvas != null) browseScreenCanvas.SetActive(true);
+        if (creatingRoomOverlay != null) creatingRoomOverlay.SetActive(true);
+        if (loadingRoomOverlay != null) loadingRoomOverlay.SetActive(true);
+        if (lobbyCanvasRoot != null) lobbyCanvasRoot.SetActive(true);
+    }
+
+    // optionsScreenCanvas is a plain panel (no PurrLobby View component), so
+    // it's safe to toggle directly.
+    private void ShowOptionsPanel()
+    {
+        ActivateLobbyCanvas();
+
+        // ActivateLobbyCanvas() is the first time lobbyCanvasRoot (and
+        // therefore ViewManager) ever becomes active - regardless of
+        // whether Start or Options was picked from the PC menu. ViewManager
+        // reacts to that by showing its Default View (MainScreen) once,
+        // automatically. That's correct for Start, but wrong here: without
+        // hiding it, MainScreen sits on top of/behind optionsScreenCanvas
+        // and is what actually ends up visible instead of Options.
+        HideView(mainScreenCanvas);
+
+        if (optionsScreenCanvas != null) optionsScreenCanvas.SetActive(true);
+    }
+
+    // ── MainScreen buttons (Create Lobby / Join / Browse) ────────────────
+
+    // Browse doesn't depend on any network call, but the panel must still
+    // wait for the camera - it's shown ourselves, at the end of the
+    // coroutine, once the camera has actually arrived. In the Inspector,
+    // the Browse button's OnClick() should call ONLY
+    // LobbyIntroController.OnBrowseClicked() - remove ViewManager.OnBrowseClicked()
+    // from that button, otherwise BrowseScreen shows immediately on click
+    // instead of waiting for the camera.
+    public void OnBrowseClicked() => TryStartSubScreenNav(browsePosition, browseRotation);
+
+    private void TryStartSubScreenNav(Vector3 targetPos, Vector3 targetRot)
+    {
+        if (_state != State.AtMainScreen) return;
+
+        _state = State.Busy;
+        StartCoroutine(MainScreenSubNav(targetPos, targetRot));
+    }
+
+    private IEnumerator MainScreenSubNav(Vector3 targetPos, Vector3 targetRot)
+    {
+        // MainScreen is a full-screen UI (Screen Space Overlay) - it covers
+        // the whole viewport, so the camera move behind it is completely
+        // invisible until we hide it ourselves first. SetActive(false) - not
+        // just alpha - so it's guaranteed to stop rendering/blocking no
+        // matter what else is going on in the canvas.
+        HideView(mainScreenCanvas);
+
+        // Make sure we're at the hub first (usually a no-op, we should
+        // already be sitting at playPosition).
+        Vector3 fromPos = cameraTransform.position;
+        Vector3 fromRot = cameraTransform.rotation.eulerAngles;
+        yield return MoveCamera(fromPos, fromRot, playPosition, playRotation, toMainScreenHubDuration);
+
+        yield return MoveCameraViaWaypoint(playPosition, playRotation, mainToSubWaypointPosition, mainToSubWaypointRotation, targetPos, targetRot, toWaypointDuration, toSubScreenDuration);
+
+        // Only now, with the camera in place, show BrowseScreen ourselves.
+        ShowView(browseScreenCanvas);
+        if (viewManager != null) viewManager.OnBrowseClicked();
+
+        _state = State.AtSubScreen;
+    }
+
+    // BrowseScreen's Back/Leave button should call this instead of
+    // ViewManager.OnLeaveBrowseClicked() directly, same reasoning as Leave
+    // Lobby below: move the camera back to playPosition first, then show
+    // MainScreen.
+    public void OnLeaveBrowseClicked()
+    {
+        if (_state != State.AtSubScreen) return;
+
+        _state = State.Busy;
+        StartCoroutine(ExitBrowseScreen());
+    }
+
+    private IEnumerator ExitBrowseScreen()
+    {
+        HideView(browseScreenCanvas);
+
+        Vector3 fromPos = cameraTransform.position;
+        Vector3 fromRot = cameraTransform.rotation.eulerAngles;
+        yield return MoveCameraViaWaypoint(fromPos, fromRot, browseToMainWaypointPosition, browseToMainWaypointRotation, playPosition, playRotation, toWaypointDuration, toSubScreenDuration);
+
+        ShowView(mainScreenCanvas);
+        if (viewManager != null) viewManager.OnLeaveBrowseClicked();
+
+        _state = State.AtMainScreen;
+    }
+
+    // ── Create Lobby / Join (gated by the actual network call) ───────────
+    // Do NOT wire the Create Lobby/Join buttons to anything here - leave
+    // them exactly as they are (PurrLobby's own click handling shows the
+    // CreatingRoomOverlay/LoadingRoomOverlay and starts the network call).
+    // Instead, in the Inspector, rewire LobbyManager's "On Room Joined
+    // (Lobby)" event: remove ViewManager.OnRoomJoined() from it and add
+    // LobbyIntroController.OnRoomJoinedFromLobby(Lobby) instead. That event
+    // only fires once the lobby genuinely exists, so this is what lets the
+    // camera move happen at the right time instead of racing the network call.
+    public void OnRoomJoinedFromLobby(Lobby lobby)
+    {
+        // Already sitting in the lobby - this is just a later data update
+        // (a player joined/left, etc.), the panel's already showing.
+        if (_state == State.AtSubScreen)
+        {
+            if (viewManager != null) viewManager.OnRoomJoined();
+            return;
+        }
+
+        // Anything other than AtMainScreen here means we're already mid
+        // transition (e.g. a second OnRoomJoined for this same creation
+        // arrived a frame later, while EnterLobbyScreen is still running) -
+        // ignore it instead of prematurely revealing LobbyScreen. The
+        // coroutine already in flight will show it itself once it's done.
+        if (_state != State.AtMainScreen) return;
+
+        _state = State.Busy;
+        StartCoroutine(EnterLobbyScreen());
+    }
+
+    private IEnumerator EnterLobbyScreen()
+    {
+        // Hide everything - MainScreen and the CreatingRoomOverlay/
+        // LoadingRoomOverlay (shown separately by ViewManager with
+        // hideOthers:false) - so the camera move is fully visible with no
+        // UI on screen at all while it travels.
+        HideView(mainScreenCanvas);
+        HideView(creatingRoomOverlay);
+        HideView(loadingRoomOverlay);
+
+        Vector3 fromPos = cameraTransform.position;
+        Vector3 fromRot = cameraTransform.rotation.eulerAngles;
+        yield return MoveCamera(fromPos, fromRot, playPosition, playRotation, toMainScreenHubDuration);
+        yield return MoveCameraViaWaypoint(playPosition, playRotation, mainToSubWaypointPosition, mainToSubWaypointRotation, createJoinPosition, createJoinRotation, toWaypointDuration, toSubScreenDuration);
+
+        // Only now, with the camera in place, actually show LobbyScreen.
+        ShowView(lobbyScreenCanvas);
+        if (viewManager != null) viewManager.OnRoomJoined();
+
+        _state = State.AtSubScreen;
+    }
+
+    // ── Leave (gated by the camera returning first) ───────────────────────
+    // In the Inspector, rewire LobbyManager's "On Room Left ()" event:
+    // remove ViewManager.OnRoomLeft() from it and add
+    // LobbyIntroController.OnRoomLeftFromLobby() instead.
+    public void OnRoomLeftFromLobby()
+    {
+        // Already back on MainScreen - nothing to animate, just relay.
+        if (_state == State.AtMainScreen)
+        {
+            if (viewManager != null) viewManager.OnRoomLeft();
+            return;
+        }
+
+        // Anything other than AtSubScreen means we're mid-transition
+        // already - ignore duplicate/late firings the same way as above.
+        if (_state != State.AtSubScreen) return;
+
+        _state = State.Busy;
+        StartCoroutine(ExitLobbyScreen());
+    }
+
+    private IEnumerator ExitLobbyScreen()
+    {
+        // Hide LobbyScreen so the camera move back is actually visible.
+        HideView(lobbyScreenCanvas);
+
+        Vector3 fromPos = cameraTransform.position;
+        Vector3 fromRot = cameraTransform.rotation.eulerAngles;
+        yield return MoveCameraViaWaypoint(fromPos, fromRot, lobbyToMainWaypointPosition, lobbyToMainWaypointRotation, playPosition, playRotation, toWaypointDuration, toSubScreenDuration);
+
+        // Only now, back at the hub, switch the panel back to MainScreen.
+        // Also reactivate the Creating/Loading overlays - EnterLobbyScreen
+        // deactivated them via HideView, and ViewManager only ever touches
+        // their CanvasGroup, never their GameObject, so without this they'd
+        // stay inactive (and therefore invisible) the next time Create/Join
+        // is clicked.
+        ShowView(mainScreenCanvas);
+        ShowView(creatingRoomOverlay);
+        ShowView(loadingRoomOverlay);
+        if (viewManager != null) viewManager.OnRoomLeft();
+
+        _state = State.AtMainScreen;
+    }
+
+    // Views are PurrLobby "View" components. SetActive(false) fully removes
+    // one from rendering/raycasting - more reliable than only zeroing its
+    // CanvasGroup alpha, since it doesn't depend on nothing else in the
+    // canvas ignoring that CanvasGroup. Safe to toggle post-startup: Awake()
+    // (which caches the CanvasGroup reference ViewManager uses) already ran
+    // the first time these objects were activated, and only runs once.
+    private void HideView(GameObject viewObject)
+    {
+        if (viewObject == null) return;
+        viewObject.SetActive(false);
+    }
+
+    // Reactivate a view right before telling ViewManager to show it - if we
+    // hid it earlier with HideView, ViewManager's ShowView<T>() only sets
+    // CanvasGroup alpha/interactable and does nothing for an inactive
+    // GameObject, so it must be made active again first.
+    private void ShowView(GameObject viewObject)
+    {
+        if (viewObject == null) return;
+        viewObject.SetActive(true);
+    }
+
+    // Passes through a fixed waypoint first, then eases into the real
+    // target - used for every MainScreen <-> sub-screen swing (Browse,
+    // Create/Join, Leave), each with its own waypoint set in the Inspector.
+    private IEnumerator MoveCameraViaWaypoint(Vector3 fromPos, Vector3 fromRot, Vector3 waypointPos, Vector3 waypointRot, Vector3 toPos, Vector3 toRot, float waypointDuration, float mainDuration)
+    {
+        yield return MoveCamera(fromPos, fromRot, waypointPos, waypointRot, waypointDuration);
+        yield return MoveCamera(waypointPos, waypointRot, toPos, toRot, mainDuration);
     }
 
     private IEnumerator ApproachPc()
@@ -234,19 +532,16 @@ public class LobbyIntroController : MonoBehaviour
         switch (optionIndex)
         {
             case 0:
-                if (purrNetCanvas != null)
-                    purrNetCanvas.SetActive(true);
-                else
-                    Debug.LogWarning("[LobbyIntroController] purrNetCanvas is not assigned in the Inspector.");
+                ActivateLobbyCanvas();
 
                 if (screenRenderer != null)
                     screenRenderer.gameObject.SetActive(false);
 
-                _state = State.AtTarget;
+                _state = State.AtMainScreen;
                 break;
 
             case 1:
-                OnOptionsSelected();
+                ShowOptionsPanel();
 
                 if (screenRenderer != null)
                     screenRenderer.gameObject.SetActive(false);
@@ -255,17 +550,30 @@ public class LobbyIntroController : MonoBehaviour
                 break;
 
             case 2:
-                Application.Quit();
+                QuitGame();
                 break;
         }
+    }
+
+    // Application.Quit() is a no-op while running inside the Editor (Play
+    // mode just keeps going) - it only actually closes anything in a real
+    // build. Stopping Play mode directly gives the same "the game ended"
+    // result when testing.
+    private void QuitGame()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
     private IEnumerator ReturnToMenu()
     {
         _state = State.Busy;
 
-        if (purrNetCanvas != null)
-            purrNetCanvas.SetActive(false);
+        if (lobbyCanvasRoot != null)
+            lobbyCanvasRoot.SetActive(false);
 
         // Repair puts screenOn back on AND hides/resets the shards - a plain
         // SetActive(true) on the renderer would leave the broken glass showing.

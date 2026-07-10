@@ -110,7 +110,7 @@ namespace PurrLobby.Providers
                 }
             }
 
-            return LobbyFactory.Create(
+            var lobby = LobbyFactory.Create(
                 lobbyName,
                 lobbyId.m_SteamID.ToString(),
                 maxPlayers,
@@ -118,6 +118,14 @@ namespace PurrLobby.Providers
                 GetLobbyUsers(lobbyId),
                 lobbyProperties
             );
+
+            // Unlike JoinLobbyAsync, this never fired OnLobbyUpdated - so
+            // LobbyManager's OnRoomJoined (and therefore ViewManager showing
+            // LobbyView) never triggered after creating a room, leaving the
+            // UI stuck on "Creating room..." even though the lobby existed.
+            OnLobbyUpdated?.Invoke(lobby);
+
+            return lobby;
         }
 
         public Task<List<FriendUser>> GetFriendsAsync(LobbyManager.FriendFilter filter)
