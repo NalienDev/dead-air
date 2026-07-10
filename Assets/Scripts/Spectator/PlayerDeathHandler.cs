@@ -144,6 +144,9 @@ public class PlayerDeathHandler : NetworkBehaviour
 
         PurrLogger.Log("[PlayerDeathHandler] Every player is dead — Game Over.");
 
+        if (QuotaManager.Instance != null)
+            QuotaManager.Instance.lastGameOverReason.value = GameOverReason.TeamWiped;
+
         if (SceneChanger.Instance != null)
             SceneChanger.Instance.LoadSceneForEveryone(_gameOverSceneName);
         else

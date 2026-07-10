@@ -34,6 +34,14 @@ public class QuotaManager : NetworkIdentity
     /// <summary>Completed expeditions (returns to base). Gates certain upgrades.</summary>
     public SyncVar<int> expeditionsCompleted = new SyncVar<int>(0);
 
+    /// <summary>
+    /// Why the run last ended in a Game Over - see GameOverReason.cs. A
+    /// SyncVar (not a plain static field) so every client, not just the
+    /// server, sees the correct reason once the GameOver scene loads and
+    /// reads it via GameOverStatsDisplay.
+    /// </summary>
+    public SyncVar<int> lastGameOverReason = new SyncVar<int>(GameOverReason.None);
+
     protected override void OnSpawned(bool asServer)
     {
         base.OnSpawned(asServer);
@@ -102,6 +110,7 @@ public class QuotaManager : NetworkIdentity
         else
         {
             Debug.Log("[QuotaManager] Quota NOT met — Game Over.");
+            lastGameOverReason.value = GameOverReason.QuotaNotMet;
             SceneChanger.Instance.LoadSceneForEveryone(_gameOverSceneName);
         }
     }
@@ -126,6 +135,7 @@ public class QuotaManager : NetworkIdentity
         sessionBandwidth.value = 0;
         currentEnergyCells.value = 0;
         expeditionsCompleted.value = 0;
+        lastGameOverReason.value = GameOverReason.None;
 
         Debug.Log("[QuotaManager] Game reset.");
         // Resetting game doesn't need to load the lobby scene, as we teleport back to the lobby point.
