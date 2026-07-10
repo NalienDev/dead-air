@@ -85,6 +85,7 @@
     <Compile Include="Assets\Scripts\PauseMenu.cs" />
     <Compile Include="Assets\Scripts\TestGen.cs" />
     <Compile Include="Assets\Scripts\Spectator\SpectatorController.cs" />
+    <Compile Include="Assets\Scripts\Voice\AudioVisualizer.cs" />
     <Compile Include="Assets\Packages\StarterAssets\FirstPersonController\Scripts\BasicRigidBodyPush.cs" />
     <Compile Include="Assets\Scripts\Voice\DissonanceAutoStarter.cs" />
     <Compile Include="Assets\Scripts\Rover\ActivateVacuumButton.cs" />
