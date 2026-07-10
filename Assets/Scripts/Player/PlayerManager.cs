@@ -65,7 +65,7 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         if (isOwner)
         {
             Local = this;
-            
+
             // Hide the loading screen once the local player is fully spawned in Main
             if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Main")
             {

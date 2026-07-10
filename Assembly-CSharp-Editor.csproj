@@ -1531,10 +1531,6 @@
       <Project>{5D054896-9A4C-8438-830D-36D75EC286CF}</Project>
       <Name>DissonanceVoipEditor</Name>
     </ProjectReference>
-    <ProjectReference Include="PurrNetLobbySetup.csproj">
-      <Project>{3D45EBEE-C4BC-E0F0-017C-550BAFD0D9B1}</Project>
-      <Name>PurrNetLobbySetup</Name>
-    </ProjectReference>
     <ProjectReference Include="PurrNetLobby_Editor.csproj">
       <Project>{4B347AA2-37E4-0C42-2CCC-AA13CB67309D}</Project>
       <Name>PurrNetLobby_Editor</Name>
@@ -1542,6 +1538,10 @@
     <ProjectReference Include="DissonanceVoip.csproj">
       <Project>{EF49A1C5-46BA-3F8B-B3B1-79A55A0CBFEF}</Project>
       <Name>DissonanceVoip</Name>
+    </ProjectReference>
+    <ProjectReference Include="PurrNetLobbySetup.csproj">
+      <Project>{3D45EBEE-C4BC-E0F0-017C-550BAFD0D9B1}</Project>
+      <Name>PurrNetLobbySetup</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.UI.Shaders.Sample.Editor.csproj">
       <Project>{E0C55340-CAC6-3D4D-BFE2-C9CCEF93D44F}</Project>

@@ -545,10 +545,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MoveSpeed: 2.2
-  SprintSpeed: 5
+  SprintSpeed: 3.5
   RotationSpeed: 1
   SpeedChangeRate: 10
-  JumpHeight: 1.2
+  JumpHeight: 0.7
   Gravity: -30
   JumpTimeout: 0.1
   FallTimeout: 0.15
@@ -636,6 +636,14 @@ MonoBehaviour:
     _sendIntervalInSeconds: 0
   hasInfiniteOxygen:
     _value: 0
+    _ownerAuth: 0
+    _sendIntervalInSeconds: 0
+  maxOxygenCharges:
+    _value: 3
+    _ownerAuth: 0
+    _sendIntervalInSeconds: 0
+  currentOxygenCharges:
+    _value: 3
     _ownerAuth: 0
     _sendIntervalInSeconds: 0
   isInsideDungeon:
@@ -730,6 +738,7 @@ MonoBehaviour:
   _collidersToDisable: []
   _deathEffectPrefab: {fileID: 4574148591930201658, guid: 04f41ab5171374342b10bf5a6990356c, type: 3}
   _deathEffectLifetime: 2
+  _gameOverSceneName: GameOver
   isDead:
     _value: 0
     _ownerAuth: 0
