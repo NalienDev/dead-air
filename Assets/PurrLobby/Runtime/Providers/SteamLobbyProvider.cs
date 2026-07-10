@@ -115,7 +115,7 @@ namespace PurrLobby.Providers
                 Steamworks.SteamMatchmaking.SetLobbyData(lobbyId, prop.Key, prop.Value);
             }
 
-            return LobbyFactory.Create(
+            var lobby = LobbyFactory.Create(
                 lobbyName,
                 lobbyId.m_SteamID.ToString(),
                 maxPlayers,
@@ -123,6 +123,14 @@ namespace PurrLobby.Providers
                 GetLobbyUsers(lobbyId),
                 lobbyProperties
             );
+
+            // Unlike JoinLobbyAsync, this never fired OnLobbyUpdated - so
+            // LobbyManager's OnRoomJoined (and therefore ViewManager showing
+            // LobbyView) never triggered after creating a room, leaving the
+            // UI stuck on "Creating room..." even though the lobby existed.
+            OnLobbyUpdated?.Invoke(lobby);
+
+            return lobby;
         }
 
         // Unambiguous alphabet: no I/O/0/1, so codes read cleanly over voice.

@@ -14,12 +14,17 @@ public class InventoryHUD : MonoBehaviour
     {
         public Image background;      // panel background
         public TMP_Text itemLabel;    // optional label showing item name
+        public Image icon;
+        public RectTransform root;
     }
 
     [SerializeField] private SlotUI[] _slotUIs = new SlotUI[2];
     [SerializeField] private Color _activeColor = new Color(1f, 1f, 1f, 0.9f);
     [SerializeField] private Color _inactiveColor = new Color(0.4f, 0.4f, 0.4f, 0.6f);
     [SerializeField] private Color _occupiedTint = new Color(0.6f, 1f, 0.6f, 1f);
+    [SerializeField] private float _activeScale = 1.2f;
+    [SerializeField] private float _inactiveScale = 0.85f;
+    [SerializeField] private float _scaleLerpSpeed = 8f; // velocidade da transição
 
     private Interactor _interactor;
     private bool _hidden;
@@ -68,6 +73,22 @@ public class InventoryHUD : MonoBehaviour
 
                 if (hasItem)
                     _slotUIs[i].background.color *= _occupiedTint;
+            }
+
+            if (_slotUIs[i].icon != null)
+            {
+                bool hasIcon = hasItem && _interactor.Slots[i].Icon != null;
+                _slotUIs[i].icon.enabled = hasIcon;
+                if (hasIcon) _slotUIs[i].icon.sprite = _interactor.Slots[i].Icon;
+            }
+
+            if (_slotUIs[i].root != null)
+            {
+                float targetScale = isActive ? _activeScale : _inactiveScale;
+                _slotUIs[i].root.localScale = Vector3.Lerp(
+                    _slotUIs[i].root.localScale,
+                    Vector3.one * targetScale,
+                    Time.deltaTime * _scaleLerpSpeed);
             }
 
             if (_slotUIs[i].itemLabel != null)

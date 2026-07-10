@@ -19,7 +19,7 @@ public class QuotaUI : MonoBehaviour
         
         if (_quotaText)
         {
-            _quotaText.text = $"QUOTA: {qm.sessionBandwidth.value} / {qm.currentQuota.value}";
+            _quotaText.text = $"{qm.sessionBandwidth.value} / {qm.currentQuota.value}";
             _quotaText.color = qm.sessionBandwidth.value >= qm.currentQuota.value ? Color.green : Color.white;
         }
 
