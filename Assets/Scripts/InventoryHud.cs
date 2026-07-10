@@ -54,16 +54,36 @@ public class InventoryHUD : MonoBehaviour
     {
         _hidden = !visible;
         foreach (SlotUI slot in _slotUIs)
+            SetSlotObjectActive(slot, visible);
+    }
+
+    // Toggles a whole slot UI on/off. Prefers the slot's root object so the extra
+    // slot(s) show/hide as one unit; falls back to the individual widgets.
+    private static void SetSlotObjectActive(SlotUI slot, bool active)
+    {
+        if (slot.root != null)
         {
-            if (slot.background != null) slot.background.gameObject.SetActive(visible);
-            if (slot.itemLabel != null) slot.itemLabel.gameObject.SetActive(visible);
+            if (slot.root.gameObject.activeSelf != active)
+                slot.root.gameObject.SetActive(active);
+            return;
         }
+        if (slot.background != null) slot.background.gameObject.SetActive(active);
+        if (slot.itemLabel != null) slot.itemLabel.gameObject.SetActive(active);
     }
 
     private void Refresh()
     {
+        // The inventory grows with the +inventory-slot upgrade, so it may have fewer
+        // slots than there are slot UIs. Only drive (and show) the slots that exist;
+        // keep the rest hidden until unlocked — and never index past Slots.Length.
+        int slotCount = _interactor.Slots != null ? _interactor.Slots.Length : 0;
+
         for (int i = 0; i < _slotUIs.Length; i++)
         {
+            bool unlocked = i < slotCount;
+            SetSlotObjectActive(_slotUIs[i], unlocked);
+            if (!unlocked) continue;
+
             bool isActive = i == _interactor.ActiveSlot;
             bool hasItem = _interactor.Slots[i] != null;
 

@@ -69,6 +69,7 @@
     <Compile Include="Assets\Scripts\DestructibleObjects\Despawn.cs" />
     <Compile Include="Assets\Scripts\Rover\SuckableObject.cs" />
     <Compile Include="Assets\Scripts\Upgrades\Effects\QuietFootstepsUpgrade.cs" />
+    <Compile Include="Assets\Scripts\Voice\VoiceSettingsStore.cs" />
     <Compile Include="Assets\Scripts\Rover\RoverManager.cs" />
     <Compile Include="Assets\Scripts\Rendering\FogClearingZone.cs" />
     <Compile Include="Assets\Scripts\Enemies\ConductorAnimationRelay.cs" />
@@ -90,6 +91,7 @@
     <Compile Include="Assets\Scripts\Lobby\LobbyIntroController.cs" />
     <Compile Include="Assets\Scripts\Interactable.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonNavMeshBaker.cs" />
+    <Compile Include="Assets\Scripts\Voice\VoiceSettingsApplier.cs" />
     <Compile Include="Assets\Scripts\Upgrades\Effects\InfiniteOxygenUpgrade.cs" />
     <Compile Include="Assets\Scripts\Upgrades\Effects\EchoVoicePitchUpgrade.cs" />
     <Compile Include="Assets\Scripts\Audio\NoiseEvents.cs" />

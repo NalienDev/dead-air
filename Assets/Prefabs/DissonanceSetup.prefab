@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1411642117694297577}
   - component: {fileID: 7651972395600964930}
   - component: {fileID: 4365722524218092199}
+  - component: {fileID: 4137713029700263639}
   m_Layer: 0
   m_Name: DissonanceSetup
   m_TagString: Untagged
@@ -115,3 +116,15 @@ MonoBehaviour:
   _roomExpanded: 1
   _tokensExpanded: 0
   _colliderExpanded: 0
+--- !u!114 &4137713029700263639
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4797390768097344555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a10f45f8144036f478d29dc498d956d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VoiceSettingsApplier
