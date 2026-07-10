@@ -30,6 +30,9 @@ public class PlayerManager : NetworkIdentity, ISoundListener
 
     public static PlayerManager Local { get; private set; }
 
+
+    public bool IsHiding { get; private set; }
+
     // ── Convenience ────────────────────────────────────────────────────────
 
     /// <summary>
@@ -439,5 +442,12 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     private void ServerReportNoise(float loudness01)
     {
         NoiseEvents.Report(transform.position, Mathf.Clamp01(loudness01));
+    }
+
+    public void SetHiding(bool hiding)
+    {
+        IsHiding = hiding;
+        // aqui desligas movement input / mete o jogador invisível se quiseres,
+        // ex: _firstPersonController.enabled = !hiding;
     }
 }

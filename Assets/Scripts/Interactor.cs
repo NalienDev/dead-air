@@ -1,4 +1,4 @@
-﻿using PurrNet;
+using PurrNet;
 using UnityEngine;
 
 public class Interactor : MonoBehaviour

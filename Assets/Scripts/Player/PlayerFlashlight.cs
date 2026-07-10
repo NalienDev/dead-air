@@ -25,6 +25,7 @@ public class PlayerFlashlight : NetworkBehaviour
     [SerializeField] private float _spotAngle = 50f;
     [SerializeField] private float _intensity = 60f;
     [SerializeField] private bool _shadows = true;
+    [SerializeField] private Texture _cookie;
 
     [Header("Beam")]
     [SerializeField] private Material _beamMaterial;         // Custom/FlashlightBeam
@@ -120,6 +121,7 @@ public class PlayerFlashlight : NetworkBehaviour
         light.innerSpotAngle = _spotAngle * 0.6f;
         light.intensity = _intensity;
         light.shadows = _shadows ? LightShadows.Soft : LightShadows.None;
+        light.cookie = _cookie;
 
         if (_beamMaterial != null)
             BuildBeam();
