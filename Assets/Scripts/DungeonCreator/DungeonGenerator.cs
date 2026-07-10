@@ -386,6 +386,11 @@ public class DungeonGenerator : NetworkBehaviour
                                         + Vector3.up * _doorYOffset
                                         + hostEntry.forward * _doorZOffset;
             doorGo.transform.rotation = hostEntry.rotation * Quaternion.Euler(0f, _doorYRotation, 0f);
+
+            // Door is networked and being MOVED after spawn — snap its NetworkTransform
+            // to the new pose (same spawn-snapshot race as the rooms).
+            if (doorGo.TryGetComponent(out NetworkTransform doorNt))
+                doorNt.ClearInterpolation(doorGo.transform.position, doorGo.transform.rotation, null);
         }
 
         if (HasIntersection(part, hostRoom))
@@ -473,6 +478,15 @@ public class DungeonGenerator : NetworkBehaviour
         newRoom.position += offset;
 
         Physics.SyncTransforms();
+
+        // Each part carries a NetworkTransform. A freshly-spawned one snapshots its
+        // SPAWN pose (the generator's transform) and that buffered snapshot can win the
+        // race against this manual move — leaving the part sitting at the generator
+        // origin instead of snapped to the entry point (the intermittent "2nd part
+        // doesn't snap" bug). Clearing interpolation makes the aligned pose the
+        // authoritative one the NetworkTransform replicates.
+        if (newRoom.TryGetComponent(out NetworkTransform nt))
+            nt.ClearInterpolation(newRoom.position, newRoom.rotation, null);
     }
 
     private GameObject PickRoomPrefab()

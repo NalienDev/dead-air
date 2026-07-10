@@ -67,9 +67,34 @@ public class RoverManager : NetworkBehaviour
     /// Any client presses the rover button → the server runs the expedition start:
     /// generate the dungeon if needed (loading screen up for everyone while it runs),
     /// then teleport all players in and arm the early-return lock.
+    ///
+    /// The body just forwards to a plain method. PurrNet IL-rewrites [ServerRpc] bodies,
+    /// and a method-group delegate subscription (gen.OnGenerated += ...) inside a rewritten
+    /// RPC produces invalid IL (InvalidProgramException at the ldftn). Keeping the RPC
+    /// body trivial and doing the real work off-RPC avoids that.
     /// </summary>
     [ServerRpc(requireOwnership: false)]
-    public void ServerStartExpedition()
+    public void ServerStartExpedition() => StartExpeditionServer();
+
+    // Set on the server while we're waiting for a just-started dungeon to finish
+    // generating. Polled in Update instead of subscribing to DungeonGenerator.OnGenerated:
+    // PurrNet's weaver traces methods reachable from [ServerRpc] and cannot emit the
+    // method-group delegate (ldftn) that `OnGenerated += ...` compiles to, which threw
+    // InvalidProgramException. Polling a bool sidesteps delegates entirely.
+    private bool _awaitingGeneration;
+
+    private void Update()
+    {
+        if (!_awaitingGeneration || !isServer) return;
+
+        DungeonGenerator gen = DungeonGenerator.Instance;
+        if (gen == null || !gen.IsGenerated()) return;
+
+        _awaitingGeneration = false;
+        TeleportPlayersToExpedition();
+    }
+
+    private void StartExpeditionServer()
     {
         if (_expeditionSpawnPoint == null)
         {
@@ -86,22 +111,13 @@ public class RoverManager : NetworkBehaviour
         if (gen != null && !gen.IsGenerated())
         {
             Debug.Log("[RoverManager] Dungeon not generated — showing loading screen and waiting.");
-            SceneChanger.Instance?.RpcShowLoadingScreen();
+            if (SceneChanger.Instance != null)
+                SceneChanger.Instance.RpcShowLoadingScreen();
 
-            // -= before += so a double press never stacks a second teleport.
-            gen.OnGenerated -= OnDungeonGeneratedTeleport;
-            gen.OnGenerated += OnDungeonGeneratedTeleport;
+            _awaitingGeneration = true; // Update() teleports once generation completes
             gen.StartGeneration();
             return;
         }
-
-        TeleportPlayersToExpedition();
-    }
-
-    private void OnDungeonGeneratedTeleport()
-    {
-        if (DungeonGenerator.Instance != null)
-            DungeonGenerator.Instance.OnGenerated -= OnDungeonGeneratedTeleport;
 
         TeleportPlayersToExpedition();
     }
