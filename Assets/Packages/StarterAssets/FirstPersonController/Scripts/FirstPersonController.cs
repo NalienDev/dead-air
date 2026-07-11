@@ -1,4 +1,4 @@
-﻿using PurrNet;
+using PurrNet;
 using System.Globalization;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
@@ -131,6 +131,36 @@ namespace StarterAssets
         public void SetCanJump(bool value)
         {
             _canJump = value;
+        }
+
+        // ── Hit stun ────────────────────────────────────────────────────
+
+        private Coroutine _stunCoroutine;
+
+        /// <summary>
+        /// Reduces MoveSpeed and SprintSpeed to <paramref name="multiplier"/> of their
+        /// current values for <paramref name="duration"/> seconds, then restores them.
+        /// Safe to call while already stunned — resets the timer.
+        /// </summary>
+        public void ApplyHitStun(float multiplier = 0.3f, float duration = 2f)
+        {
+            if (_stunCoroutine != null) StopCoroutine(_stunCoroutine);
+            _stunCoroutine = StartCoroutine(StunRoutine(multiplier, duration));
+        }
+
+        private System.Collections.IEnumerator StunRoutine(float multiplier, float duration)
+        {
+            float originalMove   = MoveSpeed;
+            float originalSprint = SprintSpeed;
+
+            MoveSpeed   = originalMove   * multiplier;
+            SprintSpeed = originalSprint * multiplier;
+
+            yield return new WaitForSeconds(duration);
+
+            MoveSpeed   = originalMove;
+            SprintSpeed = originalSprint;
+            _stunCoroutine = null;
         }
 
         private void LateUpdate()

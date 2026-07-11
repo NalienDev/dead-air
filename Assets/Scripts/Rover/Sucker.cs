@@ -5,6 +5,8 @@ using UnityEngine;
 public class Sucker : NetworkBehaviour
 {
     [SerializeField] private SuctionZone _suctionZone;
+    [SerializeField] private Animator _leverAnimator;
+    [SerializeField] private string _animatorParameterName = "isPulled";
     private SyncVar<bool> _canSuck = new SyncVar<bool>(false);
 
     protected override void OnSpawned(bool asServer)
@@ -29,6 +31,10 @@ public class Sucker : NetworkBehaviour
     private void SetZoneActive(bool value)
     {
         if (_suctionZone != null) _suctionZone.gameObject.SetActive(value);
+        if (_leverAnimator != null)
+        {
+            _leverAnimator.SetBool(_animatorParameterName, value);
+        }
     }
 
     private void OnTriggerEnter(Collider other)

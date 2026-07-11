@@ -26,6 +26,10 @@ public class PlayerMovement : NetworkIdentity
     // Additive walk-speed bonus from upgrades. Set by PlayerUpgrades (server-synced).
     private float _bonusSpeed;
 
+    // Hit-stun: multiplier applied on top of everything else (1 = normal, 0.3 = stunned).
+    private float _stunMultiplier = 1f;
+    private Coroutine _stunCoroutine;
+
     /// <summary>Sets the additive walk-speed bonus applied on top of the base speed.</summary>
     public void SetBonusSpeed(float bonus) => _bonusSpeed = Mathf.Max(0f, bonus);
 
@@ -41,7 +45,7 @@ public class PlayerMovement : NetworkIdentity
         Vector3 moveVector = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
 
         bool sprinting = Input.GetKey(_sprintKey);
-        float baseSpeed = _speed + _bonusSpeed;
+        float baseSpeed = (_speed + _bonusSpeed) * _stunMultiplier;
         float speed = sprinting ? baseSpeed * _sprintMultiplier : baseSpeed;
 
         transform.position += moveVector * (Time.deltaTime * speed);
@@ -62,5 +66,26 @@ public class PlayerMovement : NetworkIdentity
 
         _stepTimer = sprinting ? _sprintStepInterval : _walkStepInterval;
         _playerManager?.ReportNoise(sprinting ? _sprintNoise : _walkNoise);
+    }
+
+    // ── Hit stun ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Applies a movement speed stun for <paramref name="duration"/> seconds,
+    /// reducing speed to <paramref name="multiplier"/> of normal (e.g. 0.3 = 30%).
+    /// Safe to call while already stunned — resets the timer.
+    /// </summary>
+    public void ApplyHitStun(float multiplier = 0.3f, float duration = 2f)
+    {
+        if (_stunCoroutine != null) StopCoroutine(_stunCoroutine);
+        _stunCoroutine = StartCoroutine(StunRoutine(multiplier, duration));
+    }
+
+    private System.Collections.IEnumerator StunRoutine(float multiplier, float duration)
+    {
+        _stunMultiplier = multiplier;
+        yield return new WaitForSeconds(duration);
+        _stunMultiplier = 1f;
+        _stunCoroutine = null;
     }
 }

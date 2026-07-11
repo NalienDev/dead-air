@@ -294,12 +294,32 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         currentOxygenCharges.value = maxOxygenCharges.value;
     }
 
+    [Header("Hit Stun Settings")]
+    [Tooltip("Movement speed multiplier during hit stun (e.g. 0.3 = 30% speed).")]
+    [SerializeField] private float _hitStunMultiplier = 0.3f;
+    [Tooltip("Duration of the movement speed stun in seconds.")]
+    [SerializeField] private float _hitStunDuration = 2f;
+
     [ServerRpc]
     public void Damage(int damage)
     {
         if (IsDead) return;
         currentHealth.value = Mathf.Max(currentHealth.value - damage, 0);
+        RpcOnHit();
         CheckServerDeath();
+    }
+
+    /// <summary>
+    /// Notifies all clients of a hit so the owning client can apply the movement stun.
+    /// </summary>
+    [ObserversRpc(runLocally: true)]
+    private void RpcOnHit()
+    {
+        if (TryGetComponent(out StarterAssets.FirstPersonController fpc))
+            fpc.ApplyHitStun(_hitStunMultiplier, _hitStunDuration);
+        
+        if (TryGetComponent(out PlayerMovement pm))
+            pm.ApplyHitStun(_hitStunMultiplier, _hitStunDuration);
     }
 
     [ServerRpc]
