@@ -15,6 +15,9 @@ using UnityEngine;
 ///
 /// Put this on the Dampener root (a networked scene object) and wire the zone transform
 /// and beam here. The per-slot snap visual and the insert sound live on the slots.
+///
+/// When every cell is in (all its slots filled, or the explicit <c>_cellsToWin</c>),
+/// the server sends all players to the Victory scene via <see cref="SceneChanger"/>.
 /// </summary>
 public class Dampener : NetworkIdentity
 {
@@ -43,11 +46,25 @@ public class Dampener : NetworkIdentity
     [Tooltip("Played on every client the moment the light beam activates.")]
     [SerializeField] private AudioClip _beamActivateSound;
 
+    [Header("Victory")]
+    [Tooltip("Scene everyone is sent to once every cell is in. Loaded through " +
+             "SceneChanger so the change is networked.")]
+    [SerializeField] private string _victorySceneName = "Victory";
+    [Tooltip("Cells needed to win. 0 = auto: the number of cell slots under this " +
+             "Dampener (capped by Max Cells if that's set).")]
+    [SerializeField] private int _cellsToWin = 0;
+    [Tooltip("Seconds to wait after the final cell before loading Victory, so the " +
+             "last zone expansion and beam can play.")]
+    [SerializeField] private float _victoryDelay = 3f;
+
     // Replicated so every client (and late joiners) agree on how far it has expanded.
     private readonly SyncVar<int> _cellCount = new(0);
 
     private Vector3 _baseZoneScale = Vector3.one;
     private Coroutine _expandRoutine;
+
+    private int _winTarget;          // server-only: cells needed to win, resolved on spawn
+    private bool _victoryTriggered;  // server-only: guard so victory fires once
 
     /// <summary>Cells accepted so far.</summary>
     public int CellCount => _cellCount.value;
@@ -71,6 +88,10 @@ public class Dampener : NetworkIdentity
 
         // Snap to the correct state right away (handles late joiners — no animation).
         ApplyInstant(_cellCount.value);
+
+        // Slots are scene objects, so they exist by now — count them once.
+        if (asServer)
+            _winTarget = ResolveWinTarget();
     }
 
     protected override void OnDespawned(bool asServer)
@@ -93,7 +114,38 @@ public class Dampener : NetworkIdentity
         if (!CanAcceptCell) return false;
 
         _cellCount.value += 1;   // replicates → OnCellCountChanged on every client
+
+        // Every cell is in — send everyone to the Victory scene (once).
+        if (!_victoryTriggered && _winTarget > 0 && _cellCount.value >= _winTarget)
+        {
+            _victoryTriggered = true;
+            StartCoroutine(ServerWinSequence());
+        }
+
         return true;
+    }
+
+    // 0 in the inspector means "all my slots"; capped by Max Cells so a low cap can
+    // still win even if there are physically more slots than it will accept.
+    private int ResolveWinTarget()
+    {
+        int target = _cellsToWin > 0
+            ? _cellsToWin
+            : GetComponentsInChildren<EnergyCellTrigger>(true).Length;
+
+        if (_maxCells > 0) target = Mathf.Min(target, _maxCells);
+        return target;
+    }
+
+    private IEnumerator ServerWinSequence()
+    {
+        if (_victoryDelay > 0f)
+            yield return new WaitForSeconds(_victoryDelay);
+
+        if (SceneChanger.Instance != null)
+            SceneChanger.Instance.LoadSceneForEveryone(_victorySceneName);
+        else
+            UnityEngine.SceneManagement.SceneManager.LoadScene(_victorySceneName);
     }
 
     // ── Presentation (runs on every client via the SyncVar) ──────────────────
