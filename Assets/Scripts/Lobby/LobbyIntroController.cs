@@ -160,6 +160,16 @@ public class LobbyIntroController : MonoBehaviour
     [Tooltip("PurrLobby's ViewManager component (same GameObject the panels live under). Used to show LobbyScreen/MainScreen ourselves, only once the matching camera move has finished.")]
     [SerializeField] private ViewManager viewManager;
 
+    [Header("Sound")]
+    [Tooltip("Auto-added if left empty.")]
+    [SerializeField] private AudioSource sfxSource;
+    [Tooltip("Played on every Up/Down while at the menu (image switch). Leave empty to use the shared default at Resources/Sounds/UI/button-press.")]
+    [SerializeField] private AudioClip navigateClip;
+    [Tooltip("Played on Enter/confirm. Leave empty to use the shared default at Resources/Sounds/UI/button-press.")]
+    [SerializeField] private AudioClip selectClip;
+
+    private static AudioClip s_defaultUiClip;
+
     private State _state = State.Waiting;
     private int _selectedIndex;
     private GameObject _spawnedInstance;
@@ -170,6 +180,16 @@ public class LobbyIntroController : MonoBehaviour
         _mpb = new MaterialPropertyBlock();
         if (cameraTransform == null && Camera.main != null)
             cameraTransform = Camera.main.transform;
+
+        if (sfxSource == null) sfxSource = GetComponent<AudioSource>();
+        if (sfxSource == null) sfxSource = gameObject.AddComponent<AudioSource>();
+        sfxSource.playOnAwake = false;
+        sfxSource.spatialBlend = 0f; // menu SFX, not positional
+
+        if (s_defaultUiClip == null)
+            s_defaultUiClip = Resources.Load<AudioClip>("Sounds/UI/button-press");
+        if (navigateClip == null) navigateClip = s_defaultUiClip;
+        if (selectClip == null) selectClip = s_defaultUiClip;
     }
 
     private void Start()
@@ -220,12 +240,19 @@ public class LobbyIntroController : MonoBehaviour
             : Mathf.Clamp(_selectedIndex, 0, count - 1);
 
         SetScreenTexture(menuImages[_selectedIndex]);
+        PlaySfx(navigateClip);
     }
 
     private void ConfirmSelection()
     {
+        PlaySfx(selectClip);
         _state = State.Busy;
         StartCoroutine(MoveToTargetSequence(_selectedIndex));
+    }
+
+    private void PlaySfx(AudioClip clip)
+    {
+        if (clip != null && sfxSource != null) sfxSource.PlayOneShot(clip);
     }
 
     // mainScreenCanvas/lobbyScreenCanvas/browseScreenCanvas/creatingRoomOverlay/
@@ -354,20 +381,30 @@ public class LobbyIntroController : MonoBehaviour
     // camera move happen at the right time instead of racing the network call.
     public void OnRoomJoinedFromLobby(Lobby lobby)
     {
-        // Already sitting in the lobby - this is just a later data update
-        // (a player joined/left, etc.), the panel's already showing.
-        if (_state == State.AtSubScreen)
+        // AtSubScreen covers two different screens - Browse AND the lobby
+        // screen itself - and they need opposite handling here. Whether
+        // BrowseScreen is currently active is what tells them apart: if it
+        // is, this join came from picking a room in the browse list and
+        // still needs the full camera trip + LobbyScreen reveal below, even
+        // though we're technically already "AtSubScreen". If it's not
+        // active, we're already sitting in the lobby and this is just a
+        // later data update (a player joined/left, etc.) - the panel's
+        // already showing, nothing to animate.
+        bool comingFromBrowse = browseScreenCanvas != null && browseScreenCanvas.activeSelf;
+
+        if (_state == State.AtSubScreen && !comingFromBrowse)
         {
             if (viewManager != null) viewManager.OnRoomJoined();
             return;
         }
 
-        // Anything other than AtMainScreen here means we're already mid
-        // transition (e.g. a second OnRoomJoined for this same creation
-        // arrived a frame later, while EnterLobbyScreen is still running) -
-        // ignore it instead of prematurely revealing LobbyScreen. The
-        // coroutine already in flight will show it itself once it's done.
-        if (_state != State.AtMainScreen) return;
+        // Anything other than AtMainScreen (or AtSubScreen-via-Browse) here
+        // means we're already mid transition (e.g. a second OnRoomJoined for
+        // this same creation arrived a frame later, while EnterLobbyScreen
+        // is still running) - ignore it instead of prematurely revealing
+        // LobbyScreen. The coroutine already in flight will show it itself
+        // once it's done.
+        if (_state != State.AtMainScreen && !comingFromBrowse) return;
 
         _state = State.Busy;
         StartCoroutine(EnterLobbyScreen());
@@ -375,11 +412,14 @@ public class LobbyIntroController : MonoBehaviour
 
     private IEnumerator EnterLobbyScreen()
     {
-        // Hide everything - MainScreen and the CreatingRoomOverlay/
+        // Hide everything that could currently be showing - MainScreen (the
+        // normal path), BrowseScreen (if this join came from picking a room
+        // in the browse list instead), and the CreatingRoomOverlay/
         // LoadingRoomOverlay (shown separately by ViewManager with
         // hideOthers:false) - so the camera move is fully visible with no
         // UI on screen at all while it travels.
         HideView(mainScreenCanvas);
+        HideView(browseScreenCanvas);
         HideView(creatingRoomOverlay);
         HideView(loadingRoomOverlay);
 
