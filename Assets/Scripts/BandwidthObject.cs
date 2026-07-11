@@ -51,6 +51,13 @@ public class BandwidthObject : GrabbableObject
     [Tooltip("Enabled only while the object is Worthless.")]
     [SerializeField] private GameObject _worthlessVisual;
 
+    [Header("Debug")]
+    [Tooltip("Forces this object to spawn Damaged, ignoring the odds above. Lets you " +
+             "test damaged visuals/value/pickup sound/noise-alert on demand instead of " +
+             "waiting on the random roll. Only matters on the server — same as the roll " +
+             "itself — so it works correctly in a networked build, not just standalone.")]
+    [SerializeField] private bool _debugForceDamaged = false;
+
     // ── Ambient hum ────────────────────────────────────────────────────────
 
     [Header("Constant Ambient Sound (optional)")]
@@ -96,7 +103,7 @@ public class BandwidthObject : GrabbableObject
         base.OnSpawned(asServer);
 
         if (asServer)
-            _conditionIndex.value = (int)RollCondition();
+            _conditionIndex.value = (int)(_debugForceDamaged ? Condition.Damaged : RollCondition());
 
         _conditionIndex.onChanged += OnConditionChanged;
         ApplyConditionVisuals(CurrentCondition);
