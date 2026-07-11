@@ -68,6 +68,16 @@ public class PlayerMovement : NetworkIdentity
         _playerManager?.ReportNoise(sprinting ? _sprintNoise : _walkNoise);
     }
 
+    private void OnDisable()
+    {
+        if (_stunCoroutine != null)
+        {
+            StopCoroutine(_stunCoroutine);
+            _stunCoroutine = null;
+        }
+        _stunMultiplier = 1f;
+    }
+
     // ── Hit stun ──────────────────────────────────────────────────────────────
 
     /// <summary>

@@ -24,7 +24,12 @@ public class ActivateVacuumButton : Interactable
             return InteractionType.NONE;
         }
 
-        _targetSucker.SetCanSuck(!_targetSucker.CanSuck());
+        if (_targetSucker.CanSuck())
+        {
+            return InteractionType.NONE;
+        }
+
+        _targetSucker.ActivateVacuum();
         return InteractionType.PRESS;
     }
 }

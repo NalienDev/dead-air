@@ -135,11 +135,22 @@ namespace StarterAssets
 
         // ── Hit stun ────────────────────────────────────────────────────
 
+        private float _stunMultiplier = 1f;
         private Coroutine _stunCoroutine;
 
+        private void OnDisable()
+        {
+            if (_stunCoroutine != null)
+            {
+                StopCoroutine(_stunCoroutine);
+                _stunCoroutine = null;
+            }
+            _stunMultiplier = 1f;
+        }
+
         /// <summary>
-        /// Reduces MoveSpeed and SprintSpeed to <paramref name="multiplier"/> of their
-        /// current values for <paramref name="duration"/> seconds, then restores them.
+        /// Reduces dynamic movement speed to <paramref name="multiplier"/> of the base values
+        /// for <paramref name="duration"/> seconds.
         /// Safe to call while already stunned — resets the timer.
         /// </summary>
         public void ApplyHitStun(float multiplier = 0.3f, float duration = 2f)
@@ -150,16 +161,9 @@ namespace StarterAssets
 
         private System.Collections.IEnumerator StunRoutine(float multiplier, float duration)
         {
-            float originalMove   = MoveSpeed;
-            float originalSprint = SprintSpeed;
-
-            MoveSpeed   = originalMove   * multiplier;
-            SprintSpeed = originalSprint * multiplier;
-
+            _stunMultiplier = multiplier;
             yield return new WaitForSeconds(duration);
-
-            MoveSpeed   = originalMove;
-            SprintSpeed = originalSprint;
+            _stunMultiplier = 1f;
             _stunCoroutine = null;
         }
 
@@ -201,6 +205,7 @@ namespace StarterAssets
 		{
             // set target speed based on move speed, sprint speed and if sprint is pressed
             float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            targetSpeed *= _stunMultiplier;
 
 			// a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
