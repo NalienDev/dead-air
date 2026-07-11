@@ -2,15 +2,46 @@ using System.Collections;
 using PurrNet;
 using UnityEngine;
 
+/// <summary>
+/// Server-authoritative expedition flow.
+///
+/// DEPART: the <see cref="ExpeditionStartZone"/> (all alive players inside) calls
+/// <see cref="ServerStartExpedition"/> on the server: departure sound + loading screen
+/// for everyone, dungeon generation if needed, then teleport once BOTH generation is
+/// done AND the minimum loading time has passed (so there's always a short "travel"
+/// loading screen even when the dungeon is ready).
+///
+/// RETURN: <see cref="ReturnToBaseButton"/> → <see cref="ServerRequestReturnToBase"/>.
+/// Valid only after the early-return lock expires and with every alive player inside
+/// the <see cref="ReturnGatherZone"/>. Then: completion sound + "expedition complete"
+/// UI on all clients for a few seconds, and only after that the quota is evaluated and
+/// everyone is teleported/reset.
+/// </summary>
 public class RoverManager : NetworkBehaviour
 {
     public static RoverManager Instance { get; private set; }
 
+    [Header("Lobby Drops")]
     [SerializeField] private Transform _lobbyDropPoint;
     [SerializeField] private GameObject _energyCellPrefab;
 
+    [Header("Expedition Flow")]
+    [Tooltip("Minimum seconds the loading screen stays up when departing — a short fake " +
+             "loading even if the dungeon is already generated. If generation takes " +
+             "longer, the screen simply stays until it finishes.")]
+    [SerializeField] private float _minLoadingScreenSeconds = 2f;
     [Tooltip("Seconds after an expedition starts before the return-to-base button works.")]
     [SerializeField] private float _returnLockSeconds = 60f;
+    [Tooltip("Seconds the 'expedition complete' UI shows before players are teleported home.")]
+    [SerializeField] private float _completeUISeconds = 4f;
+
+    [Header("Sounds (2D, played for everyone)")]
+    [Tooltip("Played when the expedition departs (everyone gathered in the start zone).")]
+    [SerializeField] private AudioClip _expeditionStartSound;
+    [Tooltip("Played when the expedition is completed (return button accepted).")]
+    [SerializeField] private AudioClip _expeditionCompleteSound;
+
+    // ── Replicated / server state ─────────────────────────────────────────────
 
     // False while the early-return lock is armed. Replicated so every client's
     // ReturnToBaseButton agrees; the server also re-validates on use.
@@ -18,10 +49,26 @@ public class RoverManager : NetworkBehaviour
 
     private Coroutine _unlockRoutine;
 
-    /// <summary>Whether the return-to-base button currently works.</summary>
+    private Transform _expeditionSpawnPoint;
+    private int _energyCells;
+
+    // Departure: set while waiting for generation + minimum loading time.
+    private bool _awaitingDeparture;
+    private float _departAfterTime;
+
+    // Return: guards the completion sequence so it can't run twice.
+    private bool _returnSequenceRunning;
+
+    /// <summary>Whether the return-to-base button currently works (time lock only).</summary>
     public bool CanReturnToBase => _canReturnToBase.value;
 
-    private int _energyCells;
+    /// <summary>True from "expedition triggered" until players are teleported in.</summary>
+    public bool IsStartingExpedition => _awaitingDeparture;
+
+    /// <summary>Server time of the last completed return (zones use it to re-arm).</summary>
+    public float LastReturnTime { get; private set; } = -999f;
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     protected override void OnSpawned(bool asServer) => Instance = this;
 
@@ -29,6 +76,22 @@ public class RoverManager : NetworkBehaviour
     {
         if (Instance == this) Instance = null;
     }
+
+    private void Update()
+    {
+        // Departure poll (server): teleport once the dungeon is ready AND the minimum
+        // loading time has elapsed. Polling (not OnGenerated) — see the note below.
+        if (!_awaitingDeparture || !isServer) return;
+        if (Time.time < _departAfterTime) return;
+
+        DungeonGenerator gen = DungeonGenerator.Instance;
+        if (gen != null && !gen.IsGenerated()) return;
+
+        _awaitingDeparture = false;
+        TeleportPlayersToExpedition();
+    }
+
+    // ── Cargo (server) ────────────────────────────────────────────────────────
 
     // Server: called when the expedition sucker pulls something in. Bandwidth and energy
     // are banked into the quota IMMEDIATELY so the HUD updates the moment an item is
@@ -53,49 +116,19 @@ public class RoverManager : NetworkBehaviour
         Destroy(identity.gameObject);
     }
 
-    // ── Expedition start (server-driven) ─────────────────────────────────────
+    // ── Expedition start (server-driven by ExpeditionStartZone) ───────────────
     //
-    // The WHOLE start flow must run on the server: StartGeneration() is a no-op on
-    // clients and OnGenerated only ever fires server-side. The old client-side flow
-    // (in StartExpeditionButton) silently did nothing when a non-host pressed the
-    // button — the loading screen appeared locally and never went away because no
-    // generation was actually started.
+    // The WHOLE start flow runs on the server: StartGeneration() is a no-op on clients
+    // and completion is only observable server-side. We POLL isGenerated in Update
+    // instead of subscribing to DungeonGenerator.OnGenerated — PurrNet's weaver cannot
+    // emit the method-group delegate (ldftn) such a subscription compiles to inside
+    // RPC-reachable code (it threw InvalidProgramException).
 
-    private Transform _expeditionSpawnPoint;
-
-    /// <summary>
-    /// Any client presses the rover button → the server runs the expedition start:
-    /// generate the dungeon if needed (loading screen up for everyone while it runs),
-    /// then teleport all players in and arm the early-return lock.
-    ///
-    /// The body just forwards to a plain method. PurrNet IL-rewrites [ServerRpc] bodies,
-    /// and a method-group delegate subscription (gen.OnGenerated += ...) inside a rewritten
-    /// RPC produces invalid IL (InvalidProgramException at the ldftn). Keeping the RPC
-    /// body trivial and doing the real work off-RPC avoids that.
-    /// </summary>
-    [ServerRpc(requireOwnership: false)]
-    public void ServerStartExpedition() => StartExpeditionServer();
-
-    // Set on the server while we're waiting for a just-started dungeon to finish
-    // generating. Polled in Update instead of subscribing to DungeonGenerator.OnGenerated:
-    // PurrNet's weaver traces methods reachable from [ServerRpc] and cannot emit the
-    // method-group delegate (ldftn) that `OnGenerated += ...` compiles to, which threw
-    // InvalidProgramException. Polling a bool sidesteps delegates entirely.
-    private bool _awaitingGeneration;
-
-    private void Update()
+    /// <summary>Server only. Kicks off the departure sequence.</summary>
+    public void ServerStartExpedition()
     {
-        if (!_awaitingGeneration || !isServer) return;
+        if (!isServer || _awaitingDeparture || _returnSequenceRunning) return;
 
-        DungeonGenerator gen = DungeonGenerator.Instance;
-        if (gen == null || !gen.IsGenerated()) return;
-
-        _awaitingGeneration = false;
-        TeleportPlayersToExpedition();
-    }
-
-    private void StartExpeditionServer()
-    {
         if (_expeditionSpawnPoint == null)
         {
             GameObject spawnGo = GameObject.FindGameObjectWithTag("ExpeditionSpawn");
@@ -107,19 +140,26 @@ public class RoverManager : NetworkBehaviour
             _expeditionSpawnPoint = spawnGo.transform;
         }
 
+        RpcExpeditionDeparting();
+
+        _awaitingDeparture = true;
+        _departAfterTime = Time.time + _minLoadingScreenSeconds;
+
         DungeonGenerator gen = DungeonGenerator.Instance;
         if (gen != null && !gen.IsGenerated())
         {
-            Debug.Log("[RoverManager] Dungeon not generated — showing loading screen and waiting.");
-            if (SceneChanger.Instance != null)
-                SceneChanger.Instance.RpcShowLoadingScreen();
-
-            _awaitingGeneration = true; // Update() teleports once generation completes
+            Debug.Log("[RoverManager] Dungeon not generated — loading screen stays until it finishes.");
             gen.StartGeneration();
-            return;
         }
+    }
 
-        TeleportPlayersToExpedition();
+    // Departure presentation on every client: sound + loading screen.
+    [ObserversRpc(runLocally: true)]
+    private void RpcExpeditionDeparting()
+    {
+        PlayUISound(_expeditionStartSound);
+        if (LoadingScreenManager.Instance != null)
+            LoadingScreenManager.Instance.ShowLoadingScreen();
     }
 
     // Server only. Sends everyone in and closes the loading screen on all clients.
@@ -153,16 +193,41 @@ public class RoverManager : NetworkBehaviour
         Debug.Log("[RoverManager] Return-to-base unlocked.");
     }
 
+    // ── Return to base ────────────────────────────────────────────────────────
+
     [ServerRpc(requireOwnership: false)]
     public void ServerRequestReturnToBase(Vector3 teleportPos, Quaternion teleportRot)
+        => RequestReturnServer(teleportPos, teleportRot);
+
+    private void RequestReturnServer(Vector3 teleportPos, Quaternion teleportRot)
     {
-        // Server-side re-validation of the early-return lock — the client-side check
-        // in ReturnToBaseButton is only for instant feedback.
+        // Server-side re-validation — the client-side checks in ReturnToBaseButton are
+        // only for instant feedback.
         if (!_canReturnToBase.value)
         {
-            Debug.Log("[RoverManager] Return-to-base denied — expedition just started.");
+            Debug.Log("[RoverManager] Return denied — expedition just started.");
             return;
         }
+
+        if (_returnSequenceRunning) return;
+
+        if (ReturnGatherZone.Instance != null && !ReturnGatherZone.Instance.AreAllAlivePlayersInside())
+        {
+            Debug.Log("[RoverManager] Return denied — not every player is in the return zone.");
+            return;
+        }
+
+        StartCoroutine(ReturnSequence(teleportPos, teleportRot));
+    }
+
+    private IEnumerator ReturnSequence(Vector3 teleportPos, Quaternion teleportRot)
+    {
+        _returnSequenceRunning = true;
+
+        // Completion fanfare first: sound + "EXPEDITION COMPLETE" UI on every client,
+        // held for a few seconds before anyone moves.
+        RpcExpeditionComplete(_completeUISeconds);
+        yield return new WaitForSeconds(_completeUISeconds);
 
         if (QuotaManager.Instance != null)
         {
@@ -188,5 +253,29 @@ public class RoverManager : NetworkBehaviour
             Instantiate(_energyCellPrefab, _lobbyDropPoint.position + Vector3.up * (0.4f * i), _lobbyDropPoint.rotation);
 
         _energyCells = 0;
+        LastReturnTime = Time.time; // the start zone re-arms off this
+        _returnSequenceRunning = false;
+    }
+
+    // Completion presentation on every client: sound + splash UI.
+    [ObserversRpc(runLocally: true)]
+    private void RpcExpeditionComplete(float uiSeconds)
+    {
+        PlayUISound(_expeditionCompleteSound);
+        ExpeditionCompleteUI.Instance?.Show(uiSeconds);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    // Plays a flat 2D one-shot (UI/stinger sound, not positional).
+    private static void PlayUISound(AudioClip clip)
+    {
+        if (clip == null) return;
+
+        var go = new GameObject("UISound");
+        var src = go.AddComponent<AudioSource>();
+        src.spatialBlend = 0f;
+        src.PlayOneShot(clip);
+        Destroy(go, clip.length + 0.5f);
     }
 }

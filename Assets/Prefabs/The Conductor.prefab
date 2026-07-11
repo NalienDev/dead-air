@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 2014396834185856882}
   - component: {fileID: 5063556548485739162}
   - component: {fileID: 7154670995839933969}
+  - component: {fileID: 5818512001638295067}
   m_Layer: 14
   m_Name: The Conductor
   m_TagString: Untagged
@@ -303,6 +304,23 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &5818512001638295067
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2241714412072148392}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dda66cc2c0589f243ab0a669a7cd23f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CrossfadeLoopPlayer
+  _fadeInSeconds: 0.2
+  _fadeOutSeconds: 0.3
+  _crossfadeSeconds: 0.6
+  _volume: 1
+  _spatialBlend: 1
 --- !u!1001 &6191166947842962613
 PrefabInstance:
   m_ObjectHideFlags: 0

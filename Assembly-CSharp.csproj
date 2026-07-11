@@ -77,6 +77,7 @@
     <Compile Include="Assets\Scripts\LocalPlayerUI.cs" />
     <Compile Include="Assets\Scripts\Upgrades\UpgradeDefinition.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\Utilities\MobileDisableAutoSwitchControls.cs" />
+    <Compile Include="Assets\Scripts\Rover\ExpeditionStartZone.cs" />
     <Compile Include="Assets\Scripts\Voice\VoiceRecorder.cs" />
     <Compile Include="Assets\Packages\StarterAssets\InputSystem\StarterAssetsInputs.cs" />
     <Compile Include="Assets\Scripts\ProximityDoor.cs" />
@@ -132,9 +133,12 @@
     <Compile Include="Assets\Scripts\DungeonCreator\EntryPoint.cs" />
     <Compile Include="Assets\Dissonance\Integrations\Offline\OfflineCommsNetwork.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerVoiceNoise.cs" />
+    <Compile Include="Assets\Scripts\Rover\PlayerGatherZone.cs" />
     <Compile Include="Assets\Scripts\GrabbableObject.cs" />
+    <Compile Include="Assets\Scripts\Audio\DungeonAmbience.cs" />
     <Compile Include="Assets\Packages\StarterAssets\Mobile\Scripts\VirtualInputs\UIVirtualButton.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\DungeonPart.cs" />
+    <Compile Include="Assets\Scripts\Rover\ReturnGatherZone.cs" />
     <Compile Include="Assets\Scripts\LoadingScreenManager.cs" />
     <Compile Include="Assets\InputSystem_Actions.cs" />
     <Compile Include="Assets\Scripts\NetworkedSceneButton.cs" />
@@ -156,9 +160,9 @@
     <Compile Include="Assets\Scripts\Voice\VoiceSettingsUI.cs" />
     <Compile Include="Assets\Models\PC\PekdataCRTMonitor\Scripts\ExplodableMonitor.cs" />
     <Compile Include="Assets\Scripts\Bandwith.cs" />
-    <Compile Include="Assets\Scripts\Rover\StartExpeditionButton.cs" />
     <Compile Include="Assets\Scripts\ConnectionIntent.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerManager.cs" />
+    <Compile Include="Assets\Scripts\ExpeditionCompleteUI.cs" />
     <Compile Include="Assets\Scripts\DungeonCreator\MainEntrance.cs" />
     <Compile Include="Assets\Scripts\QuotaUI.cs" />
     <Compile Include="Assets\Scripts\GameOverHandler.cs" />
@@ -171,6 +175,7 @@
     <Compile Include="Assets\Scripts\Voice\CapturedVoiceClip.cs" />
     <Compile Include="Assets\Scripts\SoundEmitter.cs" />
     <Compile Include="Assets\Samples\Shader Graph\17.3.0\UGUI Shaders\Scripts\BlurredHexagonController.cs" />
+    <Compile Include="Assets\Scripts\Audio\CrossfadeLoopPlayer.cs" />
     <Compile Include="Assets\Scripts\Interactor.cs" />
     <Compile Include="Assets\Scripts\BorderWaveLoop.cs" />
     <Compile Include="Assets\Scripts\Rover\ReturnToBaseButton.cs" />
@@ -1358,12 +1363,12 @@
       <HintPath>Library\ScriptAssemblies\Unity.AI.Navigation.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="PPv2URPConverters">
-      <HintPath>Library\ScriptAssemblies\PPv2URPConverters.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Unity.TestTools.CodeCoverage.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.TestTools.CodeCoverage.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="PPv2URPConverters">
+      <HintPath>Library\ScriptAssemblies\PPv2URPConverters.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.RenderPipelines.Core.Runtime.Shared">

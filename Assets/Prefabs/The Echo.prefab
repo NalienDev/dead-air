@@ -242,6 +242,7 @@ GameObject:
   - component: {fileID: 1507715794020240686}
   - component: {fileID: 7934174453374494334}
   - component: {fileID: 7743109151992524685}
+  - component: {fileID: 5351361650655573827}
   m_Layer: 14
   m_Name: The Echo
   m_TagString: Untagged
@@ -591,6 +592,23 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   _burst: {fileID: 0}
+--- !u!114 &5351361650655573827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1005199041002494308}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dda66cc2c0589f243ab0a669a7cd23f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CrossfadeLoopPlayer
+  _fadeInSeconds: 0.2
+  _fadeOutSeconds: 0.3
+  _crossfadeSeconds: 0.6
+  _volume: 1
+  _spatialBlend: 1
 --- !u!1 &1530074029194106741
 GameObject:
   m_ObjectHideFlags: 0

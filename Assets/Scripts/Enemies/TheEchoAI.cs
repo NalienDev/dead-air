@@ -76,7 +76,8 @@ public class TheEchoAI : NetworkBehaviour
     [Tooltip("Number of flashes (beam re-entering any visible part of the Echo) " +
              "needed to scare it away while it's chasing. Flick the light on/off.")]
     [SerializeField] private int _flashlightScareFlashes = 5;
-    [Tooltip("One-shot when the flashlight drives it away.")]
+    [Tooltip("One-shot played whenever the Echo disappears — flashlight scare, lure " +
+             "timeout, target reaching the safe zone, or vanishing after a hit.")]
     [SerializeField] private AudioClip _scaredSound;
     [Tooltip("When false, only the lured target can trigger the chase, and only the " +
              "chase target can scare it with the flashlight; others are ignored.")]
@@ -103,7 +104,7 @@ public class TheEchoAI : NetworkBehaviour
     // ── State (server) ─────────────────────────────────────────────────────
 
     private NavMeshAgent _agent;
-    private AudioSource _loopSource;
+    private CrossfadeLoopPlayer _loopPlayer;
 
     private State _state = State.Hidden;
     private PlayerManager _target;       // player we spawn next to
@@ -153,9 +154,11 @@ public class TheEchoAI : NetworkBehaviour
         if (_audioSource == null)
             _audioSource = gameObject.AddComponent<AudioSource>();
 
-        _loopSource = gameObject.AddComponent<AudioSource>();
-        _loopSource.loop = true;
-        _loopSource.spatialBlend = 1f;
+        // Loops (breathing/running) go through a crossfader so starts, stops and the
+        // ambient↔chase switch never click. Add the component to the prefab to tune the
+        // fade times; it's created with defaults if missing.
+        _loopPlayer = GetComponent<CrossfadeLoopPlayer>();
+        if (_loopPlayer == null) _loopPlayer = gameObject.AddComponent<CrossfadeLoopPlayer>();
 
         if (_morpher == null)
             _morpher = GetComponent<ModelMorpher>();
@@ -273,6 +276,13 @@ public class TheEchoAI : NetworkBehaviour
 
     private void TickLure()
     {
+        // Target died, left the dungeon, or reached the safe return zone — give up now.
+        if (!IsValidTarget(_target))
+        {
+            Retreat();
+            return;
+        }
+
         foreach (PlayerManager player in GetDungeonPlayers())
         {
             bool canReact = _reactToAllPlayers || player == _target;
@@ -366,8 +376,7 @@ public class TheEchoAI : NetworkBehaviour
     private void ScareAway(PlayerManager player)
     {
         Debug.Log($"[TheEchoAI] Scared away by '{player.name}'s flashlight.");
-        RpcPlayScared(transform.position);
-        Retreat();
+        Retreat(); // Retreat plays the scared sound for every disappearance
     }
 
     private FlashProgress GetFlashProgress(PlayerManager player)
@@ -434,6 +443,10 @@ public class TheEchoAI : NetworkBehaviour
 
         Debug.Log($"[TheEchoAI] Retreating ({_state}). Back in {_respawnCooldown:F0}s.");
 
+        // Scared cry on EVERY disappearance (flashlight, timeout, safe zone, hit-and-run…)
+        // — played at the spot it fled from, before the transform is parked away.
+        RpcPlayScared(transform.position);
+
         _state = State.Hidden;
         _target = null;
         _chaseTarget = null;
@@ -451,8 +464,10 @@ public class TheEchoAI : NetworkBehaviour
 
     // ── Targeting helpers (server) ─────────────────────────────────────────
 
+    // The return gather zone is a safe area — a player standing in it can't be lured
+    // or chased, and losing a target to it makes the Echo retreat instantly.
     private static bool IsValidTarget(PlayerManager p)
-        => p != null && !p.IsDead && p.IsInsideDungeon();
+        => p != null && !p.IsDead && p.IsInsideDungeon() && !ReturnGatherZone.IsInside(p);
 
     private List<PlayerManager> GetDungeonPlayers()
     {
@@ -636,7 +651,7 @@ public class TheEchoAI : NetworkBehaviour
         }
 
         if (visible) PlayLoop(_breathingSound);
-        else _loopSource.Stop();
+        else _loopPlayer.StopLoop(); // fade out — no snap when it vanishes
     }
 
     [ObserversRpc(runLocally: true)]
@@ -692,11 +707,12 @@ public class TheEchoAI : NetworkBehaviour
             AudioSource.PlayClipAtPoint(_scaredSound, position);
     }
 
+    // Crossfades between loops (breathing ↔ running) and fades in/out at the edges,
+    // so loop changes never click. Fade times are configurable on CrossfadeLoopPlayer.
     private void PlayLoop(AudioClip clip)
     {
-        if (clip == null) { _loopSource.Stop(); return; }
-        _loopSource.clip = clip;
-        _loopSource.Play();
+        if (clip == null) { _loopPlayer.StopLoop(); return; }
+        _loopPlayer.PlayLoop(clip);
     }
 
     // Throttled status log so the blocking condition is visible without spamming.

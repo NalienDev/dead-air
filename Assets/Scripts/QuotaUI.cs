@@ -23,9 +23,16 @@ public class QuotaUI : MonoBehaviour
 
         var qm = QuotaManager.Instance;
 
-        if (_dayText) _dayText.text = $"DAY {qm.currentDay.value}";
-        
-        if (_quotaText)
+        // Day + quota only show DURING an expedition — hidden in the lobby.
+        bool inExpedition = PlayerManager.Local != null && PlayerManager.Local.IsInsideDungeon();
+        if (_dayText && _dayText.gameObject.activeSelf != inExpedition)
+            _dayText.gameObject.SetActive(inExpedition);
+        if (_quotaText && _quotaText.gameObject.activeSelf != inExpedition)
+            _quotaText.gameObject.SetActive(inExpedition);
+
+        if (_dayText && inExpedition) _dayText.text = $"DAY {qm.currentDay.value}";
+
+        if (_quotaText && inExpedition)
         {
             _quotaText.text = $"{qm.sessionBandwidth.value} / {qm.currentQuota.value}";
             _quotaText.color = qm.sessionBandwidth.value >= qm.currentQuota.value ? _sufficientQuotaColor : _defaultColor;

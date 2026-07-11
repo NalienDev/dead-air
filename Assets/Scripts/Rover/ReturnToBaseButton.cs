@@ -29,6 +29,14 @@ public class ReturnToBaseButton : Interactable
             return InteractionType.NONE;
         }
 
+        // Everyone (alive) must be gathered in the return zone. Positions are
+        // replicated, so this local check matches the server's re-validation.
+        if (ReturnGatherZone.Instance != null && !ReturnGatherZone.Instance.AreAllAlivePlayersInside())
+        {
+            Debug.Log("[ReturnToBaseButton] Denied — not every player is in the return zone.");
+            return InteractionType.NONE;
+        }
+
         // Submit items, evaluate quota, and teleport players securely on the server.
         RoverManager.Instance.ServerRequestReturnToBase(_lobbyTeleportPoint.position, _lobbyTeleportPoint.rotation);
 

@@ -36,6 +36,13 @@ public class Dampener : NetworkIdentity
     [Tooltip("Keep the beam on after the expansion finishes.")]
     [SerializeField] private bool _keepBeamAfterExpand = false;
 
+    [Header("Audio")]
+    [Tooltip("Source the beam sound plays from (3D, at the dampener). Falls back to " +
+             "PlayClipAtPoint if left empty.")]
+    [SerializeField] private AudioSource _audioSource;
+    [Tooltip("Played on every client the moment the light beam activates.")]
+    [SerializeField] private AudioClip _beamActivateSound;
+
     // Replicated so every client (and late joiners) agree on how far it has expanded.
     private readonly SyncVar<int> _cellCount = new(0);
 
@@ -115,6 +122,7 @@ public class Dampener : NetworkIdentity
             {
                 beamOn = true;
                 SetBeam(true);
+                PlayBeamSound(); // activation moment only — ApplyInstant stays silent
             }
 
             _silenceZoneTransform.localScale =
@@ -140,5 +148,12 @@ public class Dampener : NetworkIdentity
     private void SetBeam(bool on)
     {
         if (_beamObject != null) _beamObject.SetActive(on);
+    }
+
+    private void PlayBeamSound()
+    {
+        if (_beamActivateSound == null) return;
+        if (_audioSource != null) _audioSource.PlayOneShot(_beamActivateSound);
+        else AudioSource.PlayClipAtPoint(_beamActivateSound, transform.position);
     }
 }

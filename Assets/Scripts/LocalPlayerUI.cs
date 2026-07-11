@@ -18,6 +18,11 @@ public class LocalPlayerUI : MonoBehaviour
     [SerializeField] private Image _healthFillImage;
     [SerializeField] private Image _oxygenFillImage;
 
+    [Tooltip("fillAmount shown at FULL oxygen. The oxygen sprite's usable arc doesn't " +
+             "cover the whole circle, so full maps to this instead of 1 to line up " +
+             "visually (empty is still 0).")]
+    [SerializeField, Range(0f, 1f)] private float _oxygenFillMax = 0.78f;
+
     [Tooltip("Optional container holding the vitals. If set, it is toggled as a " +
              "whole on death; otherwise the health/oxygen labels are toggled individually.")]
     [SerializeField] private GameObject _vitalsRoot;
@@ -58,7 +63,10 @@ public class LocalPlayerUI : MonoBehaviour
             _healthFillImage.fillAmount = (float)PlayerManager.Local.GetCurrentHealth() / PlayerManager.Local.GetMaxHealth();
 
         if (_oxygenFillImage != null)
-            _oxygenFillImage.fillAmount = (float)PlayerManager.Local.GetCurrentOxygen() / PlayerManager.Local.GetMaxOxygen();
+        {
+            float oxygen01 = (float)PlayerManager.Local.GetCurrentOxygen() / PlayerManager.Local.GetMaxOxygen();
+            _oxygenFillImage.fillAmount = oxygen01 * _oxygenFillMax; // 0..max maps to 0..0.78
+        }
     }
 
     private void SetVitalsVisible(bool visible)

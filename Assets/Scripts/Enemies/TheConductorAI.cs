@@ -123,7 +123,7 @@ public class TheConductorAI : NetworkBehaviour
     // ── Server state ───────────────────────────────────────────────────────
 
     private NavMeshAgent _agent;
-    private AudioSource _loopSource;
+    private CrossfadeLoopPlayer _loopPlayer;
 
     private State _state = State.Inactive;
     private PlayerManager _chaseTarget;
@@ -162,9 +162,11 @@ public class TheConductorAI : NetworkBehaviour
             _audioSource = gameObject.AddComponent<AudioSource>();
         _audioSource.spatialBlend = 1f;
 
-        _loopSource = gameObject.AddComponent<AudioSource>();
-        _loopSource.loop = true;
-        _loopSource.spatialBlend = 1f;
+        // Loops (idle/chase) go through a crossfader so starts, stops and the
+        // idle↔chase switch never click. Add the component to the prefab to tune the
+        // fade times; it's created with defaults if missing.
+        _loopPlayer = GetComponent<CrossfadeLoopPlayer>();
+        if (_loopPlayer == null) _loopPlayer = gameObject.AddComponent<CrossfadeLoopPlayer>();
 
         if (_modelRoot != null)
             _modelRoot.SetActive(false);
@@ -583,8 +585,11 @@ public class TheConductorAI : NetworkBehaviour
 
     // ── Targeting helpers ─────────────────────────────────────────────────────
 
+    // The return gather zone is a safe area — a player standing in it can't be sensed
+    // or chased, and a chase target reaching it sends the Conductor straight back to
+    // wandering (TickChase's validity check).
     private static bool IsValidTarget(PlayerManager p)
-        => p != null && !p.IsDead && p.IsInsideDungeon();
+        => p != null && !p.IsDead && p.IsInsideDungeon() && !ReturnGatherZone.IsInside(p);
 
     private List<PlayerManager> GetDungeonPlayers()
     {
@@ -654,7 +659,7 @@ public class TheConductorAI : NetworkBehaviour
     private void RpcSetVisible(bool visible)
     {
         if (_modelRoot != null) _modelRoot.SetActive(visible);
-        if (!visible) _loopSource.Stop();
+        if (!visible) _loopPlayer.StopLoop(); // fade out — no snap when it vanishes
     }
 
     [ObserversRpc(runLocally: true)]
@@ -703,11 +708,11 @@ public class TheConductorAI : NetworkBehaviour
     [ObserversRpc(runLocally: true)]
     private void RpcPlayLoop(bool chasing)
     {
+        // Crossfades idle ↔ chase (and fades in/out at the edges) so the switch never
+        // clicks. Fade times are configurable on the CrossfadeLoopPlayer component.
         AudioClip clip = chasing ? _chaseLoop : _idleLoop;
-        if (clip == null) { _loopSource.Stop(); return; }
-        if (_loopSource.clip == clip && _loopSource.isPlaying) return;
-        _loopSource.clip = clip;
-        _loopSource.Play();
+        if (clip == null) { _loopPlayer.StopLoop(); return; }
+        _loopPlayer.PlayLoop(clip);
     }
 
     private void UpdateAnimatorSpeed()
