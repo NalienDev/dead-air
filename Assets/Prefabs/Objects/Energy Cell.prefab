@@ -6510,7 +6510,7 @@ MonoBehaviour:
   _visitiblityRules: {fileID: 0}
   _icon: {fileID: 21300000, guid: 1537e9b22a970c041ad02a84380172b4, type: 3}
   _heldLayerName: Held
-  _throwForce: 8
+  _throwForce: 3
 --- !u!114 &-5287533057609236858
 MonoBehaviour:
   m_ObjectHideFlags: 0
