@@ -173,17 +173,18 @@ MonoBehaviour:
   _perfectMultiplier: 1
   _damagedMultiplier: 0.6
   _worthlessMultiplier: 0
-  _perfectChance: 0.733
+  _perfectChance: 0.722
   _damagedChance: 0.4
   _perfectVisual: {fileID: 0}
   _damagedVisual: {fileID: 0}
   _worthlessVisual: {fileID: 0}
+  _debugForceDamaged: 0
   _ambientSource: {fileID: 8361924888709395980}
   _playAmbientOnSpawn: 1
   _pickupSound: {fileID: 8300000, guid: f839342e0ff2ff349a05d8ae7a8f48e4, type: 3}
   _pickupSoundChance: 0.35
   _pickupSoundVolume: 1
-  _pickupNoiseLoudness: 0.55
+  _pickupNoiseLoudness: 0.823
 --- !u!82 &8361924888709395980
 AudioSource:
   m_ObjectHideFlags: 0
@@ -197,7 +198,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 5e3f2bf9a41a0e04091a89e694ee66b9, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 0.152
+  m_Volume: 0.077
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -206,7 +207,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 0
-  MaxDistance: 10
+  MaxDistance: 5
   Pan2D: 0
   rolloffMode: 2
   BypassEffects: 0

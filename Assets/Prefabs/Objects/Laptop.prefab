@@ -178,12 +178,13 @@ MonoBehaviour:
   _perfectVisual: {fileID: 0}
   _damagedVisual: {fileID: 0}
   _worthlessVisual: {fileID: 0}
+  _debugForceDamaged: 0
   _ambientSource: {fileID: 8361924888709395980}
   _playAmbientOnSpawn: 1
   _pickupSound: {fileID: 8300000, guid: dd995124ed6112a44915cbec45674eea, type: 3}
   _pickupSoundChance: 0.35
   _pickupSoundVolume: 1
-  _pickupNoiseLoudness: 0.55
+  _pickupNoiseLoudness: 0.748
 --- !u!82 &8361924888709395980
 AudioSource:
   m_ObjectHideFlags: 0
@@ -206,7 +207,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 0
-  MaxDistance: 10
+  MaxDistance: 5
   Pan2D: 0
   rolloffMode: 2
   BypassEffects: 0
