@@ -349,7 +349,7 @@ MonoBehaviour:
   _screechSound: {fileID: 0}
   _runningSound: {fileID: 8300000, guid: 19660649b9757994f9d04eb97cf11ec4, type: 3}
   _scratchSound: {fileID: 0}
-  _respawnCooldown: 60
+  _respawnCooldown: 30
   _minSpawnDistance: 10
   _maxSpawnDistance: 20
   _aloneRadius: 20
