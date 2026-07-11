@@ -33,9 +33,9 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _DensityMultiplier: 0.62
+    - _DensityMultiplier: 0.37
     - _DensityThreshold: 1
-    - _LightScattering: 0.194
+    - _LightScattering: 0.18
     - _MaxDistance: 100
     - _NoiseOffset: 0
     - _NoiseTiling: 8.32

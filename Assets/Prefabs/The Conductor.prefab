@@ -123,14 +123,14 @@ MonoBehaviour:
   _wanderSpeed: 1.6
   _inspectSpeed: 2.2
   _chaseSpeed: 3.4
-  _wanderRadius: 22
+  _wanderRadius: 35
   _inspectRoamRadius: 5
-  _spawnDelayAfterEntry: 20
-  _entranceNoSpawnRadius: 15
+  _spawnDelayAfterEntry: 40
+  _entranceNoSpawnRadius: 20
   _stepDistance: 2
   _hearingThreshold: 0.6
-  _chaseNoiseThreshold: 0.903
-  _hearingRange: 13
+  _chaseNoiseThreshold: 0.809
+  _hearingRange: 16
   _noiseMemory: 0.5
   _closeChaseRadius: 3
   _wallMuffle: 0.5

@@ -650,6 +650,8 @@ MonoBehaviour:
     _value: 0
     _ownerAuth: 0
     _sendIntervalInSeconds: 0
+  _suffocationDamagePerSecond: 10
+  _suffocationLoop: {fileID: 0}
 --- !u!114 &5292867448715972009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -704,8 +706,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9a35b1013a44cd4db2b3b773ccc4215, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VoiceRecorder
-  _silenceThreshold: 0.01
-  _silenceGapSeconds: 0.6
   _minUtteranceSeconds: 0.9
   _maxUtteranceSeconds: 20
 --- !u!114 &-6105437416882813334
@@ -836,7 +836,7 @@ MonoBehaviour:
   _walkStepInterval: 0.5
   _sprintStepInterval: 0.3
   _walkNoise: 0.3
-  _sprintNoise: 0.6
+  _sprintNoise: 0.706
 --- !u!114 &4188053122039071316
 MonoBehaviour:
   m_ObjectHideFlags: 0
