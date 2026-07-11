@@ -22,6 +22,21 @@ public class GrabbableObject : Interactable
 
     private SyncVar<bool> _isHeld = new SyncVar<bool>(false);
 
+    // Dungeon-loot bookkeeping. Objects baked into room prefabs are frozen while
+    // the dungeon generates (rooms teleport around; live rigidbodies get scattered)
+    // and swept up by the generator when the dungeon is torn down or strays are
+    // left orphaned by a failed placement.
+    private bool _isDungeonLoot;
+    private bool _wasEverHeld;              // server-side: a player held this at least once
+    private bool _frozenForGeneration;
+    private DungeonGenerator _generator;    // cached so unsubscribe survives teardown
+
+    /// <summary>True if this object was spawned as part of a dungeon room prefab.</summary>
+    public bool IsDungeonLoot => _isDungeonLoot;
+
+    /// <summary>Server-side: true once any player has picked this object up.</summary>
+    public bool WasEverHeld => _wasEverHeld;
+
     private void Awake()
     {
         _rb = GetComponent<Rigidbody>();
@@ -31,12 +46,79 @@ public class GrabbableObject : Interactable
 
         _renderers = GetComponentsInChildren<Renderer>();
         _colliders = GetComponentsInChildren<Collider>();
+
+        // Freeze as early as possible — Awake runs during the room's Instantiate,
+        // before the generator has even aligned the room into place.
+        _isDungeonLoot = GetComponentInParent<DungeonPart>() != null;
+        if (_isDungeonLoot && DungeonGenerator.Instance != null
+            && !DungeonGenerator.Instance.IsGenerated())
+        {
+            SetGenerationFreeze(true);
+        }
+    }
+
+    protected override void OnSpawned(bool asServer)
+    {
+        base.OnSpawned(asServer);
+
+        if (!_isDungeonLoot) return;
+
+        if (_generator == null && DungeonGenerator.Instance != null)
+        {
+            _generator = DungeonGenerator.Instance;
+            _generator.isGenerated.onChanged += OnDungeonGeneratedChanged;
+
+            if (!_generator.IsGenerated())
+                SetGenerationFreeze(true);
+        }
+    }
+
+    protected override void OnDespawned(bool asServer)
+    {
+        base.OnDespawned(asServer);
+
+        if (_generator != null)
+        {
+            _generator.isGenerated.onChanged -= OnDungeonGeneratedChanged;
+            _generator = null;
+        }
+    }
+
+    private void OnDungeonGeneratedChanged(bool generated)
+    {
+        if (generated)
+        {
+            SetGenerationFreeze(false);
+        }
+        else if (!_isHeld.value && GetComponentInParent<DungeonPart>() != null)
+        {
+            // Regeneration started — refreeze loot still sitting in a room. Items
+            // players carried out (no room parent anymore) keep their physics.
+            SetGenerationFreeze(true);
+        }
+    }
+
+    private void SetGenerationFreeze(bool frozen)
+    {
+        if (_frozenForGeneration == frozen) return;
+        _frozenForGeneration = frozen;
+
+        if (frozen)
+        {
+            _rb.isKinematic = true;
+        }
+        else if (_pickupTarget == null && !_isHeld.value)
+        {
+            _rb.isKinematic = false;
+            _rb.useGravity = true;
+        }
     }
 
     [ServerRpc(requireOwnership: false)]
     private void ServerSetHeld(bool held)
     {
         _isHeld.value = held;
+        if (held) _wasEverHeld = true;
     }
 
     public bool TryPickup(GameObject user)
@@ -64,8 +146,11 @@ public class GrabbableObject : Interactable
     {
         _pickupTarget = null;
 
-        _rb.useGravity = true;
-        _rb.isKinematic = false;
+        if (!_frozenForGeneration)
+        {
+            _rb.useGravity = true;
+            _rb.isKinematic = false;
+        }
         gameObject.layer = _originalLayer;
 
         SetVisible(true);

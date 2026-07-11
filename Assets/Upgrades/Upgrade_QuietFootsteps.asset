@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::QuietFootstepsUpgrade
   DisplayName: Quiet Footsteps
   Description: 
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: b0b12638a23d81641babdb8ace52ba72, type: 3}
   RarityColor: {r: 1, g: 0.9137255, b: 0.5803922, a: 1}
   Weight: 1
   AppearChance: 1

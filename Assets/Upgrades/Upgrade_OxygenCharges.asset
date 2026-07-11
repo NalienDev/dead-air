@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::OxygenChargesUpgrade
   DisplayName: Oxygen Charges
   Description: 
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: c9eb6cc5745ca1c4bb9b5b489c2a85c6, type: 3}
   RarityColor: {r: 1, g: 0.9137255, b: 0.5803922, a: 1}
   Weight: 1
   AppearChance: 1

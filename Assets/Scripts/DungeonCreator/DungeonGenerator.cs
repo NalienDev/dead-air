@@ -132,6 +132,8 @@ public class DungeonGenerator : NetworkBehaviour
 
         Debug.Log($"[DungeonGenerator] RegenerateDungeon called (frame {Time.frameCount}).");
 
+        CleanupDungeonLoot(includeRoomChildren: true);
+
         foreach (DungeonPart part in _generatedRooms)
         {
             if (part != null) Destroy(part.gameObject);
@@ -265,6 +267,10 @@ public class DungeonGenerator : NetworkBehaviour
         foreach (DungeonPart room in _generatedRooms)
             room.FillEmptyDoors(_spawnedFillerWalls);
 
+        // Failed placements during this run may have orphaned loot children at the
+        // generator origin (the entrance) — sweep them before opening the dungeon.
+        CleanupDungeonLoot(includeRoomChildren: false);
+
         isGenerated.value = true;
         Debug.Log($"[DungeonGenerator] Generation complete after {_restartAttempts} restart(s). {_generatedRooms.Count} parts placed.");
         OnGenerated?.Invoke();
@@ -285,6 +291,8 @@ public class DungeonGenerator : NetworkBehaviour
         }
 
         Debug.LogWarning($"[DungeonGenerator] Restarting generation (attempt {_restartAttempts}/{_maxRestartAttempts}).");
+
+        CleanupDungeonLoot(includeRoomChildren: true);
 
         foreach (DungeonPart part in _generatedRooms)
         {
@@ -312,6 +320,33 @@ public class DungeonGenerator : NetworkBehaviour
         _tickTimer = 0f;
         isGenerated.value = false;
         // _shouldGenerate stays true so Update() resumes automatically next tick
+    }
+
+    // ── Loot cleanup ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Destroys loot objects that came from dungeon room prefabs and were never
+    /// picked up by a player. With <paramref name="includeRoomChildren"/> (full
+    /// teardown) every untouched piece of dungeon loot goes; without it (after a
+    /// successful generation) only orphans whose room no longer exists — the ones
+    /// left lying around the entrance by failed placements. Loot a player has
+    /// held is always spared, so items carried out of the dungeon survive.
+    /// </summary>
+    private void CleanupDungeonLoot(bool includeRoomChildren)
+    {
+        int removed = 0;
+
+        foreach (GrabbableObject loot in FindObjectsByType<GrabbableObject>(FindObjectsSortMode.None))
+        {
+            if (!loot.IsDungeonLoot || loot.WasEverHeld) continue;
+            if (!includeRoomChildren && loot.GetComponentInParent<DungeonPart>() != null) continue;
+
+            Destroy(loot.gameObject);
+            removed++;
+        }
+
+        if (removed > 0)
+            Debug.Log($"[DungeonGenerator] Cleaned up {removed} stray dungeon loot object(s).");
     }
 
     // ── Alternate entrances ────────────────────────────────────────────────
