@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Not repeatable, super rare (set AppearChance ≈ 0.01). Oxygen stops draining.
+/// Upgrade that stops the player's oxygen from draining.
 /// </summary>
 [CreateAssetMenu(menuName = "DeadAir/Upgrades/Infinite Oxygen", fileName = "Upgrade_InfiniteOxygen")]
 public class InfiniteOxygenUpgrade : UpgradeDefinition

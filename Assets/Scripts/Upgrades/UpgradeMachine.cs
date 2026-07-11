@@ -3,32 +3,7 @@ using PurrNet;
 using UnityEngine;
 
 /// <summary>
-/// The retro sci-fi "slot machine". Sits at base; the player looks at it and presses E
-/// (see <see cref="Interactor"/>). It offers a roguelike "pick one of N" upgrade choice,
-/// paid for out of a shared credit pool that fills as energy cells are fed into the
-/// <see cref="Dampener"/>.
-///
-/// Credit model (server &amp; clients both derive it from replicated state, so they always
-/// agree): each energy cell inserted into the dampener grants one upgrade credit, EXCEPT
-/// the final one — cells 1..<see cref="_maxUpgradeGrantingCells"/> grant a credit, the
-/// 7th (the last) does not. Credits spent are tracked in <see cref="_spentUpgrades"/>.
-/// Because cells can only be inserted at base, upgrades are naturally a between-expedition
-/// activity: expedition → return with cells → feed dampener → spend the credits here →
-/// next expedition.
-///
-/// Flow (fully server-authoritative on PurrNet):
-/// <list type="bullet">
-/// <item>Client presses E → <see cref="OnInteract"/> → ServerRpc asks for an offer.</item>
-/// <item>Server rolls the options (honouring rarity/requirements), remembers them for
-/// that player, and TargetRpcs them back to open the HUD on that client only.</item>
-/// <item>Client picks a card → ServerRpc → server re-validates the pick, rolls the
-/// value, applies it via <see cref="PlayerUpgrades"/>, and spends a credit.</item>
-/// </list>
-///
-/// Setup: put this on the machine object (a networked scene object on the interactable
-/// layer with a collider). Assign the <see cref="UpgradeDatabase"/> and the
-/// <see cref="Dampener"/>. There should be exactly one <see cref="UpgradeMachineHud"/>
-/// in the scene.
+/// Server-authoritative upgrade machine offering a pick-one-of-N choice paid for with dampener credits.
 /// </summary>
 public class UpgradeMachine : Interactable
 {
@@ -38,17 +13,16 @@ public class UpgradeMachine : Interactable
     [SerializeField] private Dampener _dampener;
     [Tooltip("How many upgrade cards to offer per interaction.")]
     [SerializeField, Min(1)] private int _optionsPerRoll = 3;
-    [Tooltip("Cells 1..N grant an upgrade credit; the (N+1)-th (the last) grants none.")]
+    [Tooltip("Cells 1..N grant an upgrade credit; the last grants none.")]
     [SerializeField, Min(0)] private int _maxUpgradeGrantingCells = 6;
 
-    [Header("Audio (optional)")]
+    [Header("Audio")]
     [SerializeField] private AudioSource _audioSource;
     [SerializeField] private AudioClip _openSound;
     [SerializeField] private AudioClip _purchaseSound;
 
     [Header("Debug")]
-    [Tooltip("When on, the debug key opens the machine with EVERY upgrade listed and " +
-             "purchases are free and skip all requirement checks.")]
+    [Tooltip("Opens the machine with every upgrade listed and purchases free.")]
     [SerializeField] private bool _debugFreeUpgrades = false;
     [Tooltip("Key the local player presses to open the free debug picker.")]
     [SerializeField] private KeyCode _debugKey = KeyCode.F3;
@@ -60,15 +34,10 @@ public class UpgradeMachine : Interactable
     private sealed class Offer { public int[] options; public bool free; }
     private readonly Dictionary<PlayerID, Offer> _pendingOffers = new();
 
-    // ── Credit accounting (derived, agrees on all peers) ─────────────────────
-
     private int CellsGranting =>
         _dampener != null ? Mathf.Min(_dampener.CellCount, _maxUpgradeGrantingCells) : 0;
 
-    /// <summary>Upgrade credits currently available to spend.</summary>
     public int AvailableUpgrades => Mathf.Max(0, CellsGranting - _spentUpgrades.value);
-
-    // ── Lifecycle ──────────────────────────────────────────────────────────
 
     private void Awake()
     {
@@ -85,8 +54,6 @@ public class UpgradeMachine : Interactable
         RequestOffer(PlayerUpgrades.Local, debug: true);
     }
 
-    // ── Interaction ────────────────────────────────────────────────────────
-
     public override InteractionType OnInteract(GameObject user)
     {
         PlayerUpgrades pu = user.GetComponentInChildren<PlayerUpgrades>(true)
@@ -102,8 +69,6 @@ public class UpgradeMachine : Interactable
     }
 
     private void RequestOffer(PlayerUpgrades player, bool debug) => ServerRequestOffer(player, debug);
-
-    // ── Server: build and hand out an offer ──────────────────────────────────
 
     [ServerRpc(requireOwnership: false)]
     private void ServerRequestOffer(PlayerUpgrades player, bool debug)
@@ -160,9 +125,7 @@ public class UpgradeMachine : Interactable
         UpgradeMachineHud.Instance?.ShowNoUpgrades();
     }
 
-    // ── Client → server: the player picked a card ─────────────────────────────
-
-    /// <summary>Called by the HUD when the local player clicks an upgrade card.</summary>
+    // Called by the HUD when the local player clicks an upgrade card.
     public void ChooseUpgrade(int defIndex)
     {
         if (PlayerUpgrades.Local == null) return;
@@ -175,7 +138,7 @@ public class UpgradeMachine : Interactable
         if (player == null || !player.owner.HasValue) return;
         PlayerID pid = player.owner.Value;
 
-        // Must match an offer we actually handed this player.
+        // Must match an offer actually handed to this player.
         if (!_pendingOffers.TryGetValue(pid, out Offer offer)) return;
         if (System.Array.IndexOf(offer.options, defIndex) < 0) return;
         _pendingOffers.Remove(pid);
@@ -185,7 +148,7 @@ public class UpgradeMachine : Interactable
 
         if (!offer.free)
         {
-            // Re-validate everything server-side — the client is never trusted.
+            // Re-validate server-side; the client is never trusted.
             if (AvailableUpgrades <= 0) return;
 
             int expeditions = QuotaManager.Instance != null
@@ -210,8 +173,6 @@ public class UpgradeMachine : Interactable
         UpgradeDefinition def = _database != null ? _database.Get(defIndex) : null;
         UpgradeMachineHud.Instance?.ShowResult(def, rolledValue, creditsLeft);
     }
-
-    // ── Helpers ──────────────────────────────────────────────────────────────
 
     private void PlayLocal(AudioClip clip)
     {

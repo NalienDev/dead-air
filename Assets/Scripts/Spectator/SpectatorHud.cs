@@ -5,20 +5,12 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// On-screen HUD for the local dead player while spectating:
-///   • the name of the player you're currently watching ("person" if unknown), and
-///   • a list of every dead player with their Steam name + avatar.
-///
-/// Place on (or under) a Canvas in the game scene and wire the fields. The whole thing
-/// is shown only while the local player is spectating. Names/avatars come from each
-/// player's <see cref="PlayerIdentity"/>; the local spectator is found via
-/// <see cref="PlayerManager.Local"/>.
+/// Spectator HUD showing who the local dead player is watching and a list of all dead players.
 /// </summary>
 public class SpectatorHud : MonoBehaviour
 {
-    [Header("Root (shown only while spectating)")]
-    [Tooltip("Parent object toggled on/off with spectator mode. Keep this script on a " +
-             "SEPARATE always-active object so it can turn the root back on.")]
+    [Header("Root")]
+    [Tooltip("Parent object toggled with spectator mode. Keep this script on a separate always-active object.")]
     [SerializeField] private GameObject _root;
 
     [Header("Now watching")]
@@ -73,8 +65,7 @@ public class SpectatorHud : MonoBehaviour
         return id != null ? id.DisplayNameOrDefault : "person";
     }
 
-    // Rebuild only when the set of dead players changes, so we don't churn UI objects
-    // (and leak sprites) every refresh.
+    // Rebuild only when the set of dead players changes, to avoid churning UI objects and sprites.
     private void RebuildDeadListIfChanged()
     {
         if (_deadListParent == null || _deadEntryPrefab == null) return;
@@ -84,8 +75,8 @@ public class SpectatorHud : MonoBehaviour
             if (pm != null && pm.IsDead) dead.Add(pm);
         dead.Sort((a, b) => a.GetInstanceID().CompareTo(b.GetInstanceID()));
 
-        // Resolve avatars up front — they load asynchronously from Steam, so one that
-        // arrives after the list was built must change the signature and rebuild it.
+        // Resolve avatars up front; they load asynchronously, so a late arrival changes
+        // the signature and rebuilds the list.
         List<Texture2D> avatars = new(dead.Count);
         foreach (PlayerManager pm in dead)
         {
@@ -122,14 +113,12 @@ public class SpectatorHud : MonoBehaviour
             }
             else
             {
-                avatar.enabled = false; // no avatar available — hide the image
+                avatar.enabled = false; // no avatar available, so hide the image
             }
         }
     }
 
-    // The entry root itself may be an Image (row background), and GetComponentInChildren
-    // would return that first — so prefer a child named "Avatar", then any Image that
-    // is NOT the root, and only fall back to the root image if there's nothing else.
+    // Prefer a child named "Avatar", then any non-root Image, falling back to the root image.
     private static Image FindAvatarImage(GameObject entry)
     {
         Image[] images = entry.GetComponentsInChildren<Image>(true);

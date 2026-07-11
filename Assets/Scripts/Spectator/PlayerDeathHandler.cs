@@ -3,63 +3,38 @@ using PurrNet.Logging;
 using UnityEngine;
 
 /// <summary>
-/// Sits on the PlayerCapsule alongside PlayerManager.
-/// Watches health and oxygen and triggers death / revival.
-///
-/// Extends NetworkBehaviour (not NetworkIdentity) so it shares the same network
-/// context as PlayerManager on the same GameObject — a second NetworkIdentity on
-/// one GameObject breaks SyncVar replication for the extra component.
-///
-/// Death condition:
-///   • currentHealth reaches 0 (running out of oxygen suffocates the player — see
-///     PlayerManager — draining health until it hits 0, rather than killing instantly)
-///
-/// State is server-authoritative via the <see cref="isDead"/> SyncVar. When it
-/// flips, every client hides the dead player's body; the owning client also
-/// disables its own control components and drops into third-person spectator mode
-/// (see <see cref="SpectatorController"/>).
+/// Server-authoritative death and revival for a player, hiding the body and switching the owner to spectating.
 /// </summary>
 [RequireComponent(typeof(PlayerManager))]
 public class PlayerDeathHandler : NetworkBehaviour
 {
-    // ── Inspector ──────────────────────────────────────────────────────────
-
-    [Header("Components to disable on death (auto-found if empty)")]
+    [Header("Components to disable on death")]
     [SerializeField] private StarterAssets.FirstPersonController _fpc;
     [SerializeField] private VoiceRecorder _voiceRecorder;
     [SerializeField] private CharacterController _characterController;
 
-    [Header("Visual roots to hide on death (e.g. Models). Add as many as you need.")]
+    [Header("Visual roots to hide on death")]
     [SerializeField] private GameObject[] _playerVisualRoots;
 
-    [Header("Colliders to disable on death (auto-found if empty)")]
-    [Tooltip("Every collider on the player is turned off while dead so the corpse can't " +
-             "block or shove anyone, then turned back on when revived.")]
+    [Header("Colliders to disable on death")]
+    [Tooltip("Colliders turned off while dead so the corpse can't block or shove anyone.")]
     [SerializeField] private Collider[] _collidersToDisable;
 
-    [Header("Death FX (spawned as a SEPARATE object at the death spot)")]
-    [Tooltip("Prefab with an AudioSource + ParticleSystem (both set to play on awake). " +
-             "Spawned at the death location on every client — as its own object so it is " +
-             "still seen and heard even after the body is hidden or teleported away.")]
+    [Header("Death FX")]
+    [Tooltip("Spawned at the death spot as its own object so it outlives the hidden body.")]
     [SerializeField] private GameObject _deathEffectPrefab;
     [Tooltip("Seconds before the spawned death-FX object destroys itself.")]
     [SerializeField] private float _deathEffectLifetime = 5f;
 
     [Header("Team Wipe")]
-    [Tooltip("Scene loaded for everyone when the LAST living player dies.")]
+    [Tooltip("Scene loaded for everyone when the last living player dies.")]
     [SerializeField] private string _gameOverSceneName = "GameOver";
 
-    // ── Synced state ───────────────────────────────────────────────────────
-
-    /// <summary>Replicated to all clients. True = this player is dead.</summary>
+    // Replicated to all clients; true when this player is dead.
     public SyncVar<bool> isDead = new(false);
-
-    // ── Private ────────────────────────────────────────────────────────────
 
     private PlayerManager _playerManager;
     private SpectatorController _spectator;
-
-    // ── Lifecycle ──────────────────────────────────────────────────────────
 
     private void Awake()
     {
@@ -77,9 +52,7 @@ public class PlayerDeathHandler : NetworkBehaviour
     {
         isDead.onChanged += OnDeadStateChanged;
 
-        // Late-join safety: if this player is already dead when we spawn in,
-        // hide them right away instead of waiting for the next change event.
-        // No death FX here — they died before we joined, so there's nothing to replay.
+        // Late-join safety: if already dead on spawn, hide them now, without replaying FX.
         if (isDead.value)
             ApplyDeadState(playEffects: false);
     }
@@ -89,37 +62,24 @@ public class PlayerDeathHandler : NetworkBehaviour
         isDead.onChanged -= OnDeadStateChanged;
     }
 
-    /// <summary>
-    /// Server-authoritative death check. Called by <see cref="PlayerManager"/>
-    /// after it changes health/oxygen on the server.
-    ///
-    /// We can't detect death from this component's Update: NetworkOwnershipToggle
-    /// disables PlayerDeathHandler on the server's copy of a remote client, so its
-    /// Update never runs for them — which is why previously only the host could
-    /// die. Driving it from PlayerManager's ServerRpcs (which always run on the
-    /// server) makes every player die correctly.
-    /// </summary>
+    // Death check called by PlayerManager after server-side health/oxygen changes. Driven
+    // from there because this component's Update is disabled on the server's copy of remotes.
     public void ServerCheckDeath()
     {
         if (!isServer || isDead.value) return;
 
         if (_playerManager == null) _playerManager = GetComponent<PlayerManager>();
 
-        // Oxygen no longer kills directly — running out makes the player suffocate
-        // (PlayerManager drains health while at 0 oxygen), so death is health-only.
+        // Death is health-only; running out of oxygen just suffocates, draining health.
         if (_playerManager.GetCurrentHealth() <= 0)
             Die();
     }
 
-    // ── Public API ─────────────────────────────────────────────────────────
-
-    /// <summary>Revive this player. Safe to call from any context.</summary>
+    // Revives this player; safe to call from any context.
     public void Revive(int restoreHealth, int restoreOxygen)
     {
         ServerRevive(restoreHealth, restoreOxygen);
     }
-
-    // ── Server-side logic ──────────────────────────────────────────────────
 
     private void Die()
     {
@@ -130,21 +90,18 @@ public class PlayerDeathHandler : NetworkBehaviour
         _playerManager.currentHealth.value = 0;
         _playerManager.currentOxygen.value = 0;
 
-        isDead.value = true; // Replicates to all clients via SyncVar
+        isDead.value = true;
 
         CheckTeamWipe();
     }
 
-    /// <summary>
-    /// Server-side. If this death left nobody alive, send everyone to the Game Over
-    /// scene (which resets the run and returns to the City after a short delay).
-    /// </summary>
+    // If this death left nobody alive, send everyone to the game-over scene.
     private void CheckTeamWipe()
     {
         foreach (PlayerManager pm in FindObjectsByType<PlayerManager>(FindObjectsSortMode.None))
             if (!pm.IsDead) return;
 
-        PurrLogger.Log("[PlayerDeathHandler] Every player is dead — Game Over.");
+        PurrLogger.Log("[PlayerDeathHandler] Every player is dead, Game Over.");
 
         if (QuotaManager.Instance != null)
             QuotaManager.Instance.lastGameOverReason.value = GameOverReason.TeamWiped;
@@ -152,7 +109,7 @@ public class PlayerDeathHandler : NetworkBehaviour
         if (SceneChanger.Instance != null)
             SceneChanger.Instance.LoadSceneForEveryone(_gameOverSceneName);
         else
-            Debug.LogError("[PlayerDeathHandler] SceneChanger.Instance is null — cannot load Game Over.");
+            Debug.LogError("[PlayerDeathHandler] SceneChanger.Instance is null, cannot load Game Over.");
     }
 
     [ServerRpc(requireOwnership: false)]
@@ -165,7 +122,7 @@ public class PlayerDeathHandler : NetworkBehaviour
         _playerManager.currentHealth.value = Mathf.Clamp(restoreHealth, 1, _playerManager.maxHealth.value);
         _playerManager.currentOxygen.value = Mathf.Clamp(restoreOxygen, 1, _playerManager.maxOxygen.value);
 
-        isDead.value = false; // Replicates — all clients react
+        isDead.value = false;
 
         GameObject reviveLoc = GameObject.FindGameObjectWithTag("ReviveLocation");
         if (reviveLoc == null)
@@ -174,16 +131,10 @@ public class PlayerDeathHandler : NetworkBehaviour
             return;
         }
 
-        // Route through TeleportToPosition (ObserversRpc, runLocally) instead of
-        // moving the transform here on the server. The NetworkTransform is
-        // owner-authoritative, so a server-side move gets overwritten by the
-        // owning client's replicated position — that's why only the host (who
-        // owns their own player) respawned correctly. TeleportToPosition runs on
-        // the owner and disables the CharacterController around the move so it sticks.
+        // Route through TeleportToPosition so the owner-authoritative NetworkTransform
+        // doesn't overwrite a server-side move; it also toggles the CharacterController.
         _playerManager.TeleportToPosition(reviveLoc.transform.position, reviveLoc.transform.rotation);
     }
-
-    // ── SyncVar callback (runs on ALL clients + server) ────────────────────
 
     private void OnDeadStateChanged(bool newValue)
     {
@@ -195,14 +146,11 @@ public class PlayerDeathHandler : NetworkBehaviour
 
     private void ApplyDeadState(bool playEffects)
     {
-        // Hidden for everyone — the corpse should not be visible to other players.
         SetVisualRootsActive(false);
 
-        // No collision while dead: the corpse can't block, trip, or shove anyone.
+        // No collision while dead so the corpse can't block, trip, or shove anyone.
         SetCollidersActive(false);
 
-        // A fresh death spawns its own FX object at the death spot so it survives the
-        // body being hidden/teleported. (Skipped for a late-join catch-up.)
         if (playEffects) SpawnDeathEffect();
 
         if (!isOwner) return;
@@ -250,8 +198,7 @@ public class PlayerDeathHandler : NetworkBehaviour
     {
         if (_deathEffectPrefab == null) return;
 
-        // Its own object at the death spot — not parented to the player, so hiding or
-        // teleporting the body doesn't cut off the sound or particles.
+        // Not parented to the player, so hiding or teleporting the body doesn't cut off the FX.
         GameObject fx = Instantiate(_deathEffectPrefab, transform.position, transform.rotation);
         if (_deathEffectLifetime > 0f) Destroy(fx, _deathEffectLifetime);
     }

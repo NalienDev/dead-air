@@ -2,27 +2,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Local-only third-person spectator camera.
-///
-/// This is NOT a networked component. <see cref="PlayerDeathHandler"/> adds it at
-/// runtime on the owning client the moment they die and drives it via
-/// <see cref="BeginSpectating"/> / <see cref="EndSpectating"/>. Nothing to wire in
-/// the Inspector and nothing to place in the scene.
-///
-/// How the camera works:
-///   The player's FirstPersonController normally drives the "PlayerCameraRoot"
-///   (its CinemachineCameraTarget) and the scene's Cinemachine vcam follows it.
-///   On death the FPC is disabled, so this component is free to steer that same
-///   camera root. Each LateUpdate it parks the root behind + above the spectated
-///   player and looks at them — a third-person orbit-follow. Because the vcam
-///   still follows the camera root, the rendered view follows along.
-///
-/// Controls: Left / Right arrow keys cycle through the other alive players.
+/// Local third-person spectator camera that orbit-follows other alive players after death.
 /// </summary>
 [DisallowMultipleComponent]
 public class SpectatorController : MonoBehaviour
 {
-    // ── Third-person framing (tweak to taste) ──────────────────────────────
     [Header("Third-person framing")]
     [Tooltip("How far behind the spectated player the camera sits.")]
     [SerializeField] private float _distance = 4f;
@@ -34,8 +18,7 @@ public class SpectatorController : MonoBehaviour
     [SerializeField] private float _lookHeight = 1.4f;
 
     [Header("Collision")]
-    [Tooltip("Layers the camera should not clip through (walls, dungeon geometry). " +
-             "Exclude the Player layer so it doesn't collide with players.")]
+    [Tooltip("Layers the camera should not clip through. Exclude the Player layer.")]
     [SerializeField] private LayerMask _collisionMask = ~(1 << 6);
     [Tooltip("Keeps the camera this far off surfaces it collides with.")]
     [SerializeField] private float _collisionRadius = 0.3f;
@@ -44,7 +27,6 @@ public class SpectatorController : MonoBehaviour
     [SerializeField] private KeyCode _nextKey = KeyCode.RightArrow;
     [SerializeField] private KeyCode _prevKey = KeyCode.LeftArrow;
 
-    // ── State ──────────────────────────────────────────────────────────────
     private bool _isSpectating;
     private Transform _cameraTarget;          // local PlayerCameraRoot (vcam follows this)
     private PlayerManager _self;
@@ -60,15 +42,9 @@ public class SpectatorController : MonoBehaviour
     private PlayerManager CurrentTarget =>
         (_index >= 0 && _index < _targets.Count) ? _targets[_index] : null;
 
-    // ── Read by the spectator HUD ──────────────────────────────────────────
-
-    /// <summary>The player currently being watched, or null.</summary>
     public PlayerManager CurrentlyWatching => CurrentTarget;
 
-    /// <summary>True while this (dead) player is in spectator mode.</summary>
     public bool IsSpectating => _isSpectating;
-
-    // ── Public API (called by PlayerDeathHandler, owner only) ──────────────
 
     public void BeginSpectating(PlayerManager self, Transform cameraTarget)
     {
@@ -101,8 +77,6 @@ public class SpectatorController : MonoBehaviour
         _savedTransform = false;
     }
 
-    // ── Loop ───────────────────────────────────────────────────────────────
-
     private void Update()
     {
         if (!_isSpectating) return;
@@ -126,8 +100,7 @@ public class SpectatorController : MonoBehaviour
         Vector3 focus = t.position + Vector3.up * _lookHeight;
         Vector3 pos = focus - t.forward * _distance + Vector3.up * _height;
 
-        // Don't let the camera pass through walls — pull it in to the first hit
-        // between the target and the desired spot, so you can't see outside the dungeon.
+        // Pull the camera in to the first wall hit so it can't see outside the dungeon.
         Vector3 dir = pos - focus;
         float dist = dir.magnitude;
         if (dist > 0.001f &&
@@ -144,8 +117,6 @@ public class SpectatorController : MonoBehaviour
             _cameraTarget.rotation = Quaternion.LookRotation(lookDir);
     }
 
-    // ── Target selection ───────────────────────────────────────────────────
-
     private void Cycle(int dir)
     {
         RefreshTargets();
@@ -153,16 +124,8 @@ public class SpectatorController : MonoBehaviour
         _index = (_index + dir + _targets.Count) % _targets.Count;
     }
 
-    /// <summary>
-    /// Rebuilds the alive-player list, keeping the camera locked to whoever we
-    /// were already watching when possible.
-    ///
-    /// PurrNet tracks connected PlayerIDs but has no concept of which GameObject
-    /// is a player's avatar, so there's nothing to gain from its player list here
-    /// — we just grab the live PlayerManagers directly. This is only called on
-    /// death and on each arrow-key press, so the lookup cost is irrelevant. The
-    /// sort gives cycling a stable order (FindObjectsByType does not guarantee one).
-    /// </summary>
+    // Rebuilds the alive-player list, keeping the current target when possible. Sorted so
+    // cycling has a stable order, since FindObjectsByType doesn't guarantee one.
     private void RefreshTargets()
     {
         PlayerManager keep = CurrentTarget;

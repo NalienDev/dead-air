@@ -2,18 +2,12 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// The single source of truth for every available upgrade. The index of an upgrade in
-/// <see cref="_upgrades"/> IS its network id — server and clients reference the same
-/// asset, so an int is all that ever needs to travel over the wire.
-///
-/// Create one asset (DeadAir/Upgrades/Database), drag every UpgradeDefinition into it,
-/// and assign it on the <see cref="UpgradeMachine"/>.
+/// Source of truth for every upgrade, where each one's list index is its network id.
 /// </summary>
 [CreateAssetMenu(menuName = "DeadAir/Upgrades/Database", fileName = "UpgradeDatabase")]
 public class UpgradeDatabase : ScriptableObject
 {
-    [Tooltip("Every upgrade that can appear. Order matters only in that the index is " +
-             "the id sent over the network — don't reorder mid-playtest.")]
+    [Tooltip("Every upgrade that can appear. The index is the id sent over the network, so don't reorder mid-playtest.")]
     [SerializeField] private List<UpgradeDefinition> _upgrades = new();
 
     public int Count => _upgrades.Count;
@@ -23,12 +17,7 @@ public class UpgradeDatabase : ScriptableObject
 
     public int IndexOf(UpgradeDefinition def) => _upgrades.IndexOf(def);
 
-    /// <summary>
-    /// Server-side. Rolls up to <paramref name="count"/> distinct upgrade options to
-    /// offer, honouring requirements (expeditions, repeatability) and the per-upgrade
-    /// super-rare <see cref="UpgradeDefinition.AppearChance"/> gate, weighted by
-    /// <see cref="UpgradeDefinition.Weight"/>.
-    /// </summary>
+    // Rolls up to count distinct upgrade options, honouring requirements, rarity, and weight.
     public int[] RollOptions(int count, PlayerUpgrades player, int expeditionsCompleted)
     {
         var pool = new List<int>();
@@ -40,7 +29,7 @@ public class UpgradeDatabase : ScriptableObject
             if (d == null) continue;
             if (expeditionsCompleted < d.MinExpeditions) continue;
             if (!d.Repeatable && player != null && player.HasUpgrade(i)) continue;
-            // Super-rare independent gate — rolled per offer.
+            // Super-rare independent gate, rolled per offer.
             if (d.AppearChance < 1f && Random.value > d.AppearChance) continue;
 
             pool.Add(i);
@@ -58,10 +47,7 @@ public class UpgradeDatabase : ScriptableObject
         return result.ToArray();
     }
 
-    /// <summary>
-    /// Every upgrade, ignoring all requirements/rarity. Used by the machine's debug mode
-    /// so you can hand-pick any upgrade without meeting its conditions.
-    /// </summary>
+    // Every upgrade, ignoring requirements and rarity; used by the machine's debug mode.
     public int[] AllOptions()
     {
         var all = new List<int>();

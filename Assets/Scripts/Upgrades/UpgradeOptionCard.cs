@@ -4,9 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// One clickable upgrade card in the <see cref="UpgradeMachineHud"/>. Put this on a UI
-/// prefab that has a Button, a name label, a description label, and (optionally) an icon
-/// and a background image to tint by rarity. The HUD instantiates one per offered option.
+/// One clickable upgrade card in the upgrade picker, populated from an UpgradeDefinition.
 /// </summary>
 public class UpgradeOptionCard : MonoBehaviour
 {

@@ -1,15 +1,11 @@
-﻿// SuckableObject.cs
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
-/// Attach to any prefab that should be pulled toward a SuctionZone.
-/// Movement only activates when a SuctionZone registers this object.
-/// The zone's collider shape defines the attraction area — no range value needed here.
+/// Object that accelerates toward a SuctionZone's target while being pulled in.
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
 public class SuckableObject : MonoBehaviour
 {
-
     [Header("Attraction Settings")]
     [SerializeField] private float _attractionStartSpeed = 1f;
     [SerializeField] private float _attractionMaxSpeed = 10f;

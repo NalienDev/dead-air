@@ -28,7 +28,7 @@ public class GameOverHandler : MonoBehaviour
         if (LoadingScreenManager.Instance != null)
             LoadingScreenManager.Instance.ShowLoadingScreen();
 
-        // Only the server drives the reset — clients just show their loading screen
+        // Only the server drives the reset; clients just show their loading screen
         // and wait for the networked scene change to arrive.
         NetworkManager nm = NetworkManager.main;
         bool proceed = nm != null && nm.isServer;

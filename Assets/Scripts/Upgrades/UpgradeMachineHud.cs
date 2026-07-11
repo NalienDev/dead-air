@@ -4,18 +4,12 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// The on-screen upgrade picker. One per scene, on a Canvas. The <see cref="UpgradeMachine"/>
-/// drives it via TargetRpcs so it only ever shows on the interacting player's screen.
-///
-/// Setup: a root panel (assigned to <see cref="_root"/>, starts disabled), a container for
-/// the cards, and an <see cref="UpgradeOptionCard"/> prefab. Optionally a title label, a
-/// credits label, a result/toast label, and a close button.
+/// On-screen upgrade picker driven by the UpgradeMachine on the interacting player's screen.
 /// </summary>
 public class UpgradeMachineHud : MonoBehaviour
 {
     public static UpgradeMachineHud Instance { get; private set; }
 
-    /// <summary>True while the picker is open — other systems can poll this.</summary>
     public static bool IsOpen { get; private set; }
 
     [Header("Layout")]
@@ -23,7 +17,7 @@ public class UpgradeMachineHud : MonoBehaviour
     [SerializeField] private Transform _cardContainer;
     [SerializeField] private UpgradeOptionCard _cardPrefab;
 
-    [Header("Labels (optional)")]
+    [Header("Labels")]
     [SerializeField] private TMP_Text _titleText;
     [SerializeField] private TMP_Text _creditsText;
     [SerializeField] private TMP_Text _resultText;
@@ -64,8 +58,6 @@ public class UpgradeMachineHud : MonoBehaviour
         }
     }
 
-    // ── Shown by the machine (TargetRpc → here) ───────────────────────────────
-
     public void Show(UpgradeMachine machine, UpgradeDatabase db, int[] options, bool debug, int credits)
     {
         _machine = machine;
@@ -98,7 +90,6 @@ public class UpgradeMachineHud : MonoBehaviour
 
     public void ShowNoUpgrades()
     {
-        // Nothing to spend — flash a short message if we have a result label, else log.
         if (_resultText != null)
         {
             ShowResultText("NO UPGRADES AVAILABLE — feed the dampener more cells.");
@@ -115,8 +106,6 @@ public class UpgradeMachineHud : MonoBehaviour
         string msg = def != null ? $"ACQUIRED: {def.ResultDescription(rolledValue)}" : "UPGRADE ACQUIRED";
         ShowResultText(msg);
     }
-
-    // ── Internals ────────────────────────────────────────────────────────────
 
     private void OnCardChosen(int defIndex)
     {

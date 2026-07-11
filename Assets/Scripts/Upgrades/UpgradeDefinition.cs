@@ -1,66 +1,49 @@
 using UnityEngine;
 
 /// <summary>
-/// Base class for every upgrade the <see cref="UpgradeMachine"/> can offer. One
-/// ScriptableObject asset = one upgrade. Adding a new upgrade is meant to be trivial:
-/// make a subclass, implement <see cref="ServerApply"/>, and drop the asset into the
-/// <see cref="UpgradeDatabase"/>. Everything else (rolling, rarity, requirements, the
-/// HUD card, networking) is handled generically here and in the machine.
-///
-/// Effects are applied SERVER-SIDE (see <see cref="ServerApply"/>) so the whole thing is
-/// authoritative on PurrNet — the client only ever asks for and picks an option.
+/// Base ScriptableObject for an upgrade, handling rolling, rarity, requirements, and display generically.
 /// </summary>
 public abstract class UpgradeDefinition : ScriptableObject
 {
     [Header("Display")]
     public string DisplayName = "Upgrade";
 
-    [Tooltip("Card text. Use the {value} token to inject the rolled amount, e.g. " +
-             "\"Move faster (+{value})\".")]
+    [Tooltip("Card text. Use the {value} token to inject the rolled amount.")]
     [TextArea] public string Description = "";
 
-    [Tooltip("Optional icon shown on the upgrade card.")]
+    [Tooltip("Icon shown on the upgrade card.")]
     public Sprite Icon;
 
-    [Tooltip("Tint for this card / its rarity. Purely cosmetic.")]
+    [Tooltip("Tint for this card. Purely cosmetic.")]
     public Color RarityColor = Color.white;
 
     [Header("Availability")]
-    [Tooltip("Relative weight when the machine rolls which options to offer. " +
-             "Higher = appears more often. Ignored by super-rare gating below.")]
+    [Tooltip("Relative weight when rolling which options to offer.")]
     [Min(0f)] public float Weight = 1f;
 
-    [Tooltip("Independent chance (0..1) this upgrade is even eligible to appear in a " +
-             "given roll. Use for super-rare upgrades — e.g. 0.01 for a 1% chance, " +
-             "0.1 for 10%. Leave at 1 for normal upgrades.")]
+    [Tooltip("Independent chance this upgrade is eligible to appear in a roll. 1 = normal.")]
     [Range(0f, 1f)] public float AppearChance = 1f;
 
     [Tooltip("If false this upgrade can only be taken once per run.")]
     public bool Repeatable = true;
 
-    [Tooltip("Completed expeditions required before this can appear " +
-             "(e.g. 3 = only from the return of the 3rd expedition onward). 0 = always.")]
+    [Tooltip("Completed expeditions required before this can appear. 0 = always.")]
     [Min(0)] public int MinExpeditions = 0;
 
-    [Header("Rolled Value (optional)")]
-    [Tooltip("If y > x the effect magnitude is rolled uniformly in [x, y] each time it's " +
-             "taken. Leave both at 0 (or equal) for upgrades with no numeric value.")]
+    [Header("Rolled Value")]
+    [Tooltip("If y > x the effect magnitude is rolled uniformly in [x, y]. Equal for no value.")]
     public Vector2 ValueRange = Vector2.zero;
 
-    /// <summary>Whether this upgrade has a rolled numeric magnitude at all.</summary>
     public bool HasValue => !Mathf.Approximately(ValueRange.x, ValueRange.y);
 
-    /// <summary>Rolls the effect magnitude. Called on the server at purchase time.</summary>
+    // Rolls the effect magnitude on the server at purchase time.
     public virtual float Roll() =>
         ValueRange.y > ValueRange.x ? Random.Range(ValueRange.x, ValueRange.y) : ValueRange.x;
 
-    /// <summary>
-    /// How a single rolled value is formatted for display. Override for percentages,
-    /// multipliers, etc. Default prints up to two decimals.
-    /// </summary>
+    // Formats a rolled value for display; override for percentages, multipliers, etc.
     protected virtual string FormatValue(float v) => v.ToString("0.##");
 
-    /// <summary>Card text shown BEFORE picking — {value} becomes the possible range.</summary>
+    // Card text shown before picking; {value} becomes the possible range.
     public virtual string PreviewDescription()
     {
         if (string.IsNullOrEmpty(Description)) return DisplayName;
@@ -70,15 +53,12 @@ public abstract class UpgradeDefinition : ScriptableObject
         return Description.Replace("{value}", token);
     }
 
-    /// <summary>Text shown AFTER picking — {value} becomes the actual rolled amount.</summary>
+    // Text shown after picking; {value} becomes the actual rolled amount.
     public virtual string ResultDescription(float rolledValue) =>
         string.IsNullOrEmpty(Description)
             ? DisplayName
             : Description.Replace("{value}", FormatValue(rolledValue));
 
-    /// <summary>
-    /// Server only. Applies this upgrade's effect to <paramref name="player"/> using the
-    /// already-rolled <paramref name="rolledValue"/>. Implement per upgrade.
-    /// </summary>
+    // Server only; applies this upgrade's effect to the player using the rolled value.
     public abstract void ServerApply(PlayerUpgrades player, float rolledValue);
 }

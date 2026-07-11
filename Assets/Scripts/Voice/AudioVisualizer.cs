@@ -1,52 +1,43 @@
-/*
-    https://rumpledcode.com/
-    Extended with live microphone input support.
-
-    IMPORTANT: Dissonance's own mic capture (BasicMicrophoneCapture) uses
-    Unity's Microphone class internally. Calling Microphone.Start() again
-    ourselves for the same device steals/restarts that recording session -
-    only one of the two stays "live", which is why an earlier version of
-    this script (that called Microphone.Start directly) showed no movement
-    at all once Dissonance was running. Instead, when useMicrophone is on,
-    this script subscribes to Dissonance's already-open mic stream (same
-    mechanism as VoiceRecorder.cs) and computes its own FFT from those raw
-    samples - no second recording session, so nothing conflicts.
-*/
+// Base bar visualizer from https://rumpledcode.com/, extended with live microphone input.
 using System;
 using Dissonance;
 using Dissonance.Audio.Capture;
 using NAudio.Wave;
 using UnityEngine;
 
+/// <summary>
+/// Spectrum bar visualizer driven by either an AudioSource clip or the local player's Dissonance mic.
+/// </summary>
+// Uses Dissonance's already-open mic stream rather than calling Microphone.Start, which
+// would steal the recording session Dissonance is already using.
 public class AudioVisualizer : BaseMicrophoneSubscriber
 {
     [Header("References")]
-    [Tooltip("Only used when Use Microphone is off - plays a regular clip and reads its spectrum the normal Unity way.")]
+    [Tooltip("Used only when Use Microphone is off.")]
     public AudioSource audioSource;
     public Transform[] bars;
 
     [Header("Microphone")]
-    [Tooltip("If enabled, bars react to the local player's voice via Dissonance's mic capture instead of audioSource.")]
+    [Tooltip("If enabled, bars react to the local player's voice instead of audioSource.")]
     public bool useMicrophone = true;
-    [Tooltip("Raw FFT magnitudes from the mic are much smaller than Unity's built-in GetSpectrumData scale, so they get multiplied by this before Amplification is applied. Increase if bars barely move when you talk, decrease if they're pinned at max the whole time.")]
+    [Tooltip("Multiplier on raw mic FFT magnitudes before Amplification.")]
     public float micGain = 60f;
 
     [Header("Settings")]
     public FrequencyFocusWindow frequencyFocusWindow = FrequencyFocusWindow.FirstQuarter;
     public float amplification = 1.0f;
     public float baseHeight = 0.0f;
-    [Tooltip("Only used when Use Microphone is off.")]
+    [Tooltip("Used only when Use Microphone is off.")]
     public FFTWindow fftWindow = FFTWindow.BlackmanHarris;
     public bool useDecibels;
 
     [Header("State")]
     public float[] spectrumData;
-    [Tooltip("Debug: true once Dissonance has started delivering mic data. If this stays false, the meter never gets a signal at all (subscription/DissonanceComms problem, not an amplification problem).")]
+    [Tooltip("Debug: true once Dissonance is delivering mic data.")]
     public bool micStreamActive;
-    [Tooltip("Debug: average of the current mic spectrum, after micGain, before Amplification. Watch this while talking - if it moves but the bars don't, raise Amplification. If it never moves, the mic signal isn't reaching this script.")]
+    [Tooltip("Debug: average of the current mic spectrum, after micGain.")]
     public float micLevelDebug;
 
-    // ── Mic FFT ────────────────────────────────────────────────────────────
     private const int FftSize = 1024; // power of 2
 
     private DissonanceComms _dissonanceComms;
@@ -60,7 +51,7 @@ public class AudioVisualizer : BaseMicrophoneSubscriber
 
     void Awake()
     {
-        // Must be a power of 2 number, between 64 and 8192
+        // Must be a power of 2 between 64 and 8192.
         spectrumData = new float[4096];
     }
 
@@ -71,7 +62,7 @@ public class AudioVisualizer : BaseMicrophoneSubscriber
         _dissonanceComms = FindFirstObjectByType<DissonanceComms>();
         if (_dissonanceComms == null)
         {
-            Debug.LogWarning("[AudioVisualizer] No DissonanceComms found in the scene - microphone mode disabled.", this);
+            Debug.LogWarning("[AudioVisualizer] No DissonanceComms found; microphone mode disabled.", this);
             useMicrophone = false;
             return;
         }
@@ -84,8 +75,6 @@ public class AudioVisualizer : BaseMicrophoneSubscriber
         DissonanceComms comms = _dissonanceComms != null ? _dissonanceComms : FindFirstObjectByType<DissonanceComms>();
         comms?.UnsubscribeFromRecordedAudio(this);
     }
-
-    // ── BaseMicrophoneSubscriber (called by Dissonance, main thread) ─────────
 
     protected override void ResetAudioStream(WaveFormat waveFormat)
     {
@@ -115,7 +104,7 @@ public class AudioVisualizer : BaseMicrophoneSubscriber
 
     public override void Update()
     {
-        base.Update(); // pumps Dissonance's audio buffer into ProcessAudio above
+        base.Update(); // pumps Dissonance's audio buffer into ProcessAudio
 
         if (bars == null || bars.Length == 0) return;
 
@@ -173,7 +162,7 @@ public class AudioVisualizer : BaseMicrophoneSubscriber
         for (int i = 0; i < FftSize; i++)
         {
             float sample = _ring[(_writePos + i) % FftSize];
-            // Hann window - reduces spectral leakage, same purpose as fftWindow above
+            // Hann window to reduce spectral leakage.
             float w = 0.5f - 0.5f * Mathf.Cos(2f * Mathf.PI * i / (FftSize - 1));
             _fftReal[i] = sample * w;
             _fftImag[i] = 0f;

@@ -70,12 +70,8 @@ public class RoverManager : NetworkBehaviour
         TeleportPlayersToExpedition();
     }
 
-    // ── Cargo (server) ────────────────────────────────────────────────────────
-
-    // Server: called when the expedition sucker pulls something in. Bandwidth and energy
-    // are banked into the quota IMMEDIATELY so the HUD updates the moment an item is
-    // vacuumed up. Energy cells are also counted locally so they can be respawned in the
-    // lobby on return.
+    // Banks bandwidth and energy into the quota immediately; energy cells are also counted
+    // locally so they can be respawned in the lobby on return.
     public void StoreCargo(NetworkIdentity identity)
     {
         if (identity.TryGetComponent(out BandwidthObject bw))
@@ -95,15 +91,8 @@ public class RoverManager : NetworkBehaviour
         Destroy(identity.gameObject);
     }
 
-    // ── Expedition start (server-driven by ExpeditionStartZone) ───────────────
-    //
-    // The WHOLE start flow runs on the server: StartGeneration() is a no-op on clients
-    // and completion is only observable server-side. We POLL isGenerated in Update
-    // instead of subscribing to DungeonGenerator.OnGenerated — PurrNet's weaver cannot
-    // emit the method-group delegate (ldftn) such a subscription compiles to inside
-    // RPC-reachable code (it threw InvalidProgramException).
-
-    /// <summary>Server only. Kicks off the departure sequence.</summary>
+    // Server only; kicks off the departure sequence. Update polls isGenerated instead of
+    // subscribing to OnGenerated because PurrNet's weaver can't emit that delegate here.
     public void ServerStartExpedition()
     {
         if (!isServer || _awaitingDeparture || _returnSequenceRunning) return;
@@ -127,12 +116,12 @@ public class RoverManager : NetworkBehaviour
         DungeonGenerator gen = DungeonGenerator.Instance;
         if (gen != null && !gen.IsGenerated())
         {
-            Debug.Log("[RoverManager] Dungeon not generated — loading screen stays until it finishes.");
+            Debug.Log("[RoverManager] Dungeon not generated; loading screen stays until it finishes.");
             gen.StartGeneration();
         }
     }
 
-    // Departure presentation on every client: sound + loading screen.
+    // Departure presentation on every client: sound and loading screen.
     [ObserversRpc(runLocally: true)]
     private void RpcExpeditionDeparting()
     {
@@ -141,7 +130,7 @@ public class RoverManager : NetworkBehaviour
             LoadingScreenManager.Instance.ShowLoadingScreen();
     }
 
-    // Server only. Sends everyone in and closes the loading screen on all clients.
+    // Server only; sends everyone in and closes the loading screen on all clients.
     private void TeleportPlayersToExpedition()
     {
         ArmReturnLock();
@@ -155,7 +144,7 @@ public class RoverManager : NetworkBehaviour
         SceneChanger.Instance?.RpcHideLoadingScreen();
     }
 
-    // Server only. Locks return-to-base for _returnLockSeconds.
+    // Server only; locks return-to-base for _returnLockSeconds.
     private void ArmReturnLock()
     {
         _canReturnToBase.value = false;
@@ -172,19 +161,16 @@ public class RoverManager : NetworkBehaviour
         Debug.Log("[RoverManager] Return-to-base unlocked.");
     }
 
-    // ── Return to base ────────────────────────────────────────────────────────
-
     [ServerRpc(requireOwnership: false)]
     public void ServerRequestReturnToBase(Vector3 teleportPos, Quaternion teleportRot)
         => RequestReturnServer(teleportPos, teleportRot);
 
     private void RequestReturnServer(Vector3 teleportPos, Quaternion teleportRot)
     {
-        // Server-side re-validation — the client-side checks in ReturnToBaseButton are
-        // only for instant feedback.
+        // Server-side re-validation; the ReturnToBaseButton checks are only local feedback.
         if (!_canReturnToBase.value)
         {
-            Debug.Log("[RoverManager] Return denied — expedition just started.");
+            Debug.Log("[RoverManager] Return denied, expedition just started.");
             return;
         }
 
@@ -192,7 +178,7 @@ public class RoverManager : NetworkBehaviour
 
         if (ReturnGatherZone.Instance != null && !ReturnGatherZone.Instance.AreAllAlivePlayersInside())
         {
-            Debug.Log("[RoverManager] Return denied — not every player is in the return zone.");
+            Debug.Log("[RoverManager] Return denied, not every player is in the return zone.");
             return;
         }
 
@@ -203,28 +189,24 @@ public class RoverManager : NetworkBehaviour
     {
         _returnSequenceRunning = true;
 
-        // Completion fanfare first: sound + "EXPEDITION COMPLETE" UI on every client,
-        // held for a few seconds before anyone moves.
+        // Completion fanfare first, held for a few seconds before anyone moves.
         RpcExpeditionComplete(_completeUISeconds);
         yield return new WaitForSeconds(_completeUISeconds);
 
         if (QuotaManager.Instance != null)
         {
-            // Cargo was already banked live in StoreCargo — just count the expedition
-            // and evaluate the (already-accumulated) quota.
+            // Cargo was already banked in StoreCargo; just count the expedition and evaluate.
             QuotaManager.Instance.ServerRegisterExpeditionReturn();
             QuotaManager.Instance.ServerCheckQuotaAndProceed();
         }
 
         foreach (PlayerManager player in FindObjectsByType<PlayerManager>(FindObjectsSortMode.None))
         {
-            // Completing an expedition wipes the slate: dead players come back, and
-            // health / oxygen / station charges reset to max. Runs BEFORE the teleport
-            // so the revived player is moved to the lobby with everyone else.
+            // Reset before the teleport so revived players move to the lobby with everyone else.
             player.ServerResetForNewExpedition();
 
             player.TeleportToPosition(teleportPos, teleportRot);
-            player.SetInsideDungeon(false); // back in the lobby — hide from the Echo
+            player.SetInsideDungeon(false); // back in the lobby, hide from the Echo
         }
 
         // Stagger drops so they don't spawn on top of each other and explode.
@@ -236,7 +218,7 @@ public class RoverManager : NetworkBehaviour
         _returnSequenceRunning = false;
     }
 
-    // Completion presentation on every client: sound + splash UI.
+    // Completion presentation on every client: sound and splash UI.
     [ObserversRpc(runLocally: true)]
     private void RpcExpeditionComplete(float uiSeconds)
     {
@@ -244,9 +226,7 @@ public class RoverManager : NetworkBehaviour
         ExpeditionCompleteUI.Instance?.Show(uiSeconds);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    // Plays a flat 2D one-shot (UI/stinger sound, not positional).
+    // Plays a flat 2D one-shot.
     private static void PlayUISound(AudioClip clip)
     {
         if (clip == null) return;

@@ -1,10 +1,7 @@
-// SuctionZone.cs
 using UnityEngine;
 
 /// <summary>
-/// Attach to a GameObject that has a Trigger Collider.
-/// Any SuckableObject that enters the trigger starts being attracted to
-/// <see cref="_attractionTarget"/> (defaults to this transform if left null).
+/// Trigger volume that pulls any SuckableObject inside it toward an attraction target.
 /// </summary>
 [RequireComponent(typeof(Collider))]
 public class SuctionZone : MonoBehaviour

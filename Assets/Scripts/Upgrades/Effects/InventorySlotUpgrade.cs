@@ -1,6 +1,8 @@
 using UnityEngine;
 
-/// <summary>Not repeatable (by default). Grants one extra inventory slot.</summary>
+/// <summary>
+/// Upgrade that grants extra inventory slots.
+/// </summary>
 [CreateAssetMenu(menuName = "DeadAir/Upgrades/Inventory Slot", fileName = "Upgrade_InventorySlot")]
 public class InventorySlotUpgrade : UpgradeDefinition
 {

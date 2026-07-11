@@ -2,47 +2,28 @@ using PurrNet;
 using UnityEngine;
 
 /// <summary>
-/// Per-player upgrade state, replicated with PurrNet. Lives on the player prefab
-/// (alongside <see cref="PlayerManager"/>).
-///
-/// The <see cref="UpgradeMachine"/> validates and applies everything on the SERVER by
-/// calling the <c>Server*</c> methods here. The results are held in SyncVars / a
-/// SyncList so every client — and late joiners — end up with the same character:
-/// <list type="bullet">
-/// <item>walk-speed and inventory bonuses are cumulative SyncVars, re-applied to the
-/// local <see cref="PlayerMovement"/>/<see cref="Interactor"/> whenever they change;</item>
-/// <item>oxygen and "infinite oxygen" live on <see cref="PlayerManager"/> (its own
-/// SyncVars) and are just poked from here;</item>
-/// <item><see cref="ownedUpgrades"/> records the taken non-repeatable upgrades so they
-/// can't be offered again.</item>
-/// </list>
+/// Per-player upgrade state, replicated with PurrNet and re-applied on every client.
 /// </summary>
 public class PlayerUpgrades : NetworkIdentity
 {
-    /// <summary>The local player's upgrade component (set on the owner).</summary>
     public static PlayerUpgrades Local { get; private set; }
 
     // Cumulative bonuses. Server writes; everyone reads and re-applies locally.
     public readonly SyncVar<float> bonusWalkSpeed = new(0f);
     public readonly SyncVar<int> bonusInventorySlots = new(0);
 
-    // Personal Echo-voice pitch. Server writes it (so the purchase stays validated), but
-    // only the OWNING client ever reads it — the Echo pitches its local playback by
-    // PlayerUpgrades.Local.EchoVoicePitch, so only the buyer hears the difference.
+    // Personal Echo-voice pitch. Server writes it, but only the owning client reads it,
+    // so only the buyer hears the difference.
     public readonly SyncVar<float> echoVoicePitch = new(1f);
 
-    /// <summary>Local Echo-voice pitch for this player (1 = unchanged).</summary>
     public float EchoVoicePitch => echoVoicePitch.value;
 
-    // Multiplier on this player's footstep/movement noise (1 = normal). Stacks
-    // multiplicatively per quiet-footsteps upgrade. Read owner-side in
-    // PlayerManager.ReportNoise, so every noise source is covered.
+    // Multiplier on this player's footstep noise, stacking multiplicatively per upgrade.
     public readonly SyncVar<float> footstepNoiseMult = new(1f);
 
-    /// <summary>How loud this player's footsteps are relative to normal (0..1).</summary>
     public float FootstepNoiseMultiplier => footstepNoiseMult.value;
 
-    // Def indices of taken upgrades. Used to gate non-repeatable upgrades and for UI.
+    // Def indices of taken upgrades, used to gate non-repeatable upgrades and for UI.
     public readonly SyncList<int> ownedUpgrades = new();
 
     private PlayerManager _playerManager;
@@ -55,10 +36,8 @@ public class PlayerUpgrades : NetworkIdentity
     private float _fpcBaseMoveSpeed = -1f;
     private float _fpcBaseSprintSpeed = -1f;
 
-    // Refs are resolved lazily so this component behaves correctly whether or not it's
-    // enabled on a given copy (e.g. disabled by NetworkOwnershipToggle on the server's
-    // copy of a remote player). Server-side writes and event applies never depend on
-    // this component's own Behaviour.enabled state.
+    // Refs are resolved lazily so this works even when the component is disabled on a copy
+    // (e.g. by NetworkOwnershipToggle on the server's copy of a remote player).
     private void EnsureRefs()
     {
         if (_playerManager == null) _playerManager = GetComponentInChildren<PlayerManager>(true);
@@ -66,8 +45,6 @@ public class PlayerUpgrades : NetworkIdentity
         if (_interactor == null) _interactor = GetComponentInChildren<Interactor>(true);
         if (_fpc == null) _fpc = GetComponentInChildren<StarterAssets.FirstPersonController>(true);
     }
-
-    // ── Lifecycle ──────────────────────────────────────────────────────────
 
     protected override void OnSpawned(bool asServer)
     {
@@ -80,7 +57,7 @@ public class PlayerUpgrades : NetworkIdentity
         bonusWalkSpeed.onChanged += ApplyWalkSpeed;
         bonusInventorySlots.onChanged += ApplyInventorySlots;
 
-        // Snap to current state (covers late joiners — SyncVars arrive pre-populated).
+        // Snap to current state, covering late joiners whose SyncVars arrive pre-populated.
         ApplyWalkSpeed(bonusWalkSpeed.value);
         ApplyInventorySlots(bonusInventorySlots.value);
     }
@@ -93,11 +70,7 @@ public class PlayerUpgrades : NetworkIdentity
         if (Local == this) Local = null;
     }
 
-    // ── Queries ──────────────────────────────────────────────────────────────
-
     public bool HasUpgrade(int defIndex) => ownedUpgrades.Contains(defIndex);
-
-    // ── Server-side apply (called by UpgradeMachine / UpgradeDefinition) ──────
 
     public void ServerAddWalkSpeed(float amount)
     {
@@ -131,8 +104,7 @@ public class PlayerUpgrades : NetworkIdentity
         echoVoicePitch.value = Mathf.Max(0.1f, pitch);
     }
 
-    /// <summary>Cuts footstep noise by <paramref name="fraction"/> (0.3 = 30% quieter).
-    /// Stacks multiplicatively; floored so footsteps are never fully silent.</summary>
+    // Cuts footstep noise by a fraction, stacking multiplicatively and floored above silence.
     public void ServerReduceFootstepNoise(float fraction)
     {
         if (!isServer) return;
@@ -140,7 +112,6 @@ public class PlayerUpgrades : NetworkIdentity
             Mathf.Clamp(footstepNoiseMult.value * (1f - Mathf.Clamp01(fraction)), 0.05f, 1f);
     }
 
-    /// <summary>Grants extra oxygen-station charges (raises max + current).</summary>
     public void ServerAddOxygenCharges(int amount)
     {
         if (!isServer) return;
@@ -148,14 +119,12 @@ public class PlayerUpgrades : NetworkIdentity
         _playerManager?.ServerAddOxygenCharges(amount);
     }
 
-    /// <summary>Records a non-repeatable upgrade so it won't be offered again.</summary>
+    // Records a non-repeatable upgrade so it won't be offered again.
     public void ServerMarkOwned(int defIndex)
     {
         if (!isServer) return;
         if (!ownedUpgrades.Contains(defIndex)) ownedUpgrades.Add(defIndex);
     }
-
-    // ── Local presentation (runs on every client via the SyncVars) ───────────
 
     private void ApplyWalkSpeed(float bonus)
     {
@@ -164,8 +133,7 @@ public class PlayerUpgrades : NetworkIdentity
         // Test prefab (simple mover).
         if (_movement != null) _movement.SetBonusSpeed(bonus);
 
-        // Real prefab (StarterAssets rig) — the controller's public speeds ARE the
-        // source of truth for movement, so the bonus goes straight onto them.
+        // Real prefab: the StarterAssets controller's speeds are the source of truth.
         if (_fpc != null)
         {
             if (_fpcBaseMoveSpeed < 0f)

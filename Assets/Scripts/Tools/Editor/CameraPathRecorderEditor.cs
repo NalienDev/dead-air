@@ -3,6 +3,9 @@ using UnityEngine;
 
 namespace Tools
 {
+    /// <summary>
+    /// Custom inspector with capture and export buttons for CameraPathRecorder.
+    /// </summary>
     [CustomEditor(typeof(CameraPathRecorder))]
     public class CameraPathRecorderEditor : Editor
     {

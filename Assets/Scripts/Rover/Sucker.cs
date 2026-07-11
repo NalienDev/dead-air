@@ -1,7 +1,9 @@
 using PurrNet;
 using UnityEngine;
 
-// Trigger volume on a rover. While active, cargo that reaches it is stored in the RoverManager.
+/// <summary>
+/// Rover intake that, while active, stores any cargo reaching its trigger in the RoverManager.
+/// </summary>
 public class Sucker : NetworkBehaviour
 {
     [SerializeField] private SuctionZone _suctionZone;

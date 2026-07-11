@@ -55,8 +55,8 @@ public class OutOfBoundsGuard : MonoBehaviour
         }
     }
 
-    // Only remember spots the object could actually sit at — a resting rigidbody or a
-    // grounded character — so we never recover it back into mid-air or mid-fall.
+    // Only remember spots the object could actually sit at (a resting rigidbody or a
+    // grounded character) so it never recovers back into mid-air or mid-fall.
     private bool IsResting()
     {
         if (_rb != null) return _rb.linearVelocity.magnitude <= _restingSpeed;

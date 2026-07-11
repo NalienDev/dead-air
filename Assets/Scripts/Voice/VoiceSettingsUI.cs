@@ -8,41 +8,28 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Voice options panel that works WITHOUT a DissonanceComms in the scene (e.g. in the
-/// Steam-lobby menu). Everything is saved on the device and applied to the real comms
-/// that spawns in Main:
-/// <list type="bullet">
-/// <item>Mic device / remote volume / self-mute → <see cref="VoiceSettingsStore"/>
-/// (PlayerPrefs). <see cref="VoiceSettingsApplier"/> pushes these onto Main's comms.</item>
-/// <item>VAD sensitivity / noise suppression / background-noise removal →
-/// <c>VoiceSettings.Instance</c>, which Dissonance already persists to PlayerPrefs and
-/// every comms reads on startup.</item>
-/// </list>
-/// If a comms DOES exist while this panel is open (e.g. opened in Main), the per-comms
-/// settings are also applied to it live.
-///
-/// All UI references are optional — wire only the controls your panel has.
+/// Voice options panel that saves settings to the device and applies them to the comms when one exists.
 /// </summary>
 public class VoiceSettingsUI : MonoBehaviour
 {
-    [Header("Device / Output (per-comms, saved on device)")]
+    [Header("Device / Output")]
     [SerializeField] private TMP_Dropdown microphoneDropdown;
     [SerializeField] private Slider volumeSlider;
     [SerializeField] private TextMeshProUGUI volumeLabel;
     [SerializeField] private Toggle muteToggle;
 
-    [Header("Preprocessing (global Dissonance settings, saved on device)")]
-    [Tooltip("Optional. VAD sensitivity — higher picks up quieter speech (and more noise).")]
+    [Header("Preprocessing")]
+    [Tooltip("VAD sensitivity; higher picks up quieter speech and more noise.")]
     [SerializeField] private TMP_Dropdown vadSensitivityDropdown;
-    [Tooltip("Optional. Noise-suppression strength.")]
+    [Tooltip("Noise-suppression strength.")]
     [SerializeField] private TMP_Dropdown noiseSuppressionDropdown;
-    [Tooltip("Optional. Background-noise removal on/off (RNNoise).")]
+    [Tooltip("Background-noise removal on or off.")]
     [SerializeField] private Toggle backgroundRemovalToggle;
 
     private readonly List<string> _devices = new List<string>();
     private bool _initializing;
 
-    // A comms only exists in Main; in the menu this is null and that's fine.
+    // A comms only exists in Main; in the menu this is null, which is fine.
     private static DissonanceComms FindComms() => FindFirstObjectByType<DissonanceComms>();
 
     private void OnEnable()
@@ -77,8 +64,6 @@ public class VoiceSettingsUI : MonoBehaviour
         if (backgroundRemovalToggle) backgroundRemovalToggle.onValueChanged.RemoveListener(OnBgRemovalChanged);
     }
 
-    // ── Microphone device (Unity enumerates devices, no comms needed) ────────
-
     private void InitMicrophones()
     {
         if (microphoneDropdown == null) return;
@@ -106,8 +91,6 @@ public class VoiceSettingsUI : MonoBehaviour
         if (comms != null) comms.MicrophoneName = device;
     }
 
-    // ── Output volume (how loud other players are) ───────────────────────────
-
     private void InitVolume()
     {
         if (volumeSlider == null) return;
@@ -133,8 +116,6 @@ public class VoiceSettingsUI : MonoBehaviour
         if (volumeLabel != null) volumeLabel.text = Mathf.RoundToInt(value * 100f) + "%";
     }
 
-    // ── Self mute ────────────────────────────────────────────────────────────
-
     private void InitMute()
     {
         if (muteToggle == null) return;
@@ -148,8 +129,6 @@ public class VoiceSettingsUI : MonoBehaviour
         DissonanceComms comms = FindComms();
         if (comms != null) comms.IsMuted = isMuted;
     }
-
-    // ── Preprocessing (global VoiceSettings.Instance — self-persisting) ──────
 
     private void OnVadChanged(int index)
     {
@@ -168,8 +147,6 @@ public class VoiceSettingsUI : MonoBehaviour
         if (_initializing) return;
         VoiceSettings.Instance.BackgroundSoundRemovalEnabled = enabled;
     }
-
-    // ── Enum-dropdown helpers ────────────────────────────────────────────────
 
     private static void InitEnumDropdown(TMP_Dropdown dropdown, Type enumType, int currentValue)
     {

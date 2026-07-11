@@ -101,8 +101,6 @@ public class PlayerManager : NetworkIdentity, ISoundListener
             && !FogClearingZone.ContainsPoint(transform.position);
     }
 
-    // ── Suffocation audio (local player only) ────────────────────────────────
-
     private void StartSuffocationLoop()
     {
         if (_suffocationLoop == null) return;

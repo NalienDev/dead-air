@@ -48,8 +48,8 @@ public class GrabbableObject : Interactable
         _renderers = GetComponentsInChildren<Renderer>();
         _colliders = GetComponentsInChildren<Collider>();
 
-        // Freeze as early as possible — Awake runs during the room's Instantiate,
-        // before the generator has even aligned the room into place.
+        // Freeze as early as possible, since Awake runs during the room's Instantiate,
+        // before the generator has aligned the room into place.
         _isDungeonLoot = GetComponentInParent<DungeonPart>() != null;
         if (_isDungeonLoot && DungeonGenerator.Instance != null
             && !DungeonGenerator.Instance.IsGenerated())
@@ -93,7 +93,7 @@ public class GrabbableObject : Interactable
         }
         else if (!_isHeld.value && GetComponentInParent<DungeonPart>() != null)
         {
-            // Regeneration started — refreeze loot still sitting in a room. Items
+            // Regeneration started, so refreeze loot still sitting in a room. Items
             // players carried out (no room parent anymore) keep their physics.
             SetGenerationFreeze(true);
         }

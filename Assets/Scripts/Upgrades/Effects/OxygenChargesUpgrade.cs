@@ -1,8 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Grants extra oxygen-station charges: raises the player's max (so expedition resets
-/// keep the higher count) and hands the new charges over immediately.
+/// Upgrade that grants extra oxygen-station charges and raises the player's max.
 /// </summary>
 [CreateAssetMenu(menuName = "DeadAir/Upgrades/Oxygen Charges", fileName = "Upgrade_OxygenCharges")]
 public class OxygenChargesUpgrade : UpgradeDefinition

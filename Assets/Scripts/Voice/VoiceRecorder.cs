@@ -7,32 +7,16 @@ using PurrNet;
 using UnityEngine;
 
 /// <summary>
-/// Captures the local player's voice via Dissonance's BaseMicrophoneSubscriber, segments
-/// it into utterances, then ships each completed AudioClip to the server via RPC so it
-/// can be stored in <see cref="VoiceRecordingStore"/>.
-///
-/// The audio comes from <c>SubscribeToRecordedAudio</c>, which is the PRE-PROCESSED stream
-/// (Dissonance has already applied noise suppression / background-noise removal / AGC).
-/// Rather than run our own naive silence detection — which picked up quiet room noise —
-/// we gate recording on Dissonance's OWN decision to transmit: the local player's
-/// <see cref="VoicePlayerState.IsSpeaking"/>. For a VAD-activated broadcast trigger (the
-/// proximity chat) that flag is driven by Dissonance's VAD at the configured sensitivity,
-/// so we capture exactly what Dissonance would send to other players — nothing more.
-///
-/// Attach to the player prefab. Only activates for the local owner.
+/// Captures the local player's voice into utterances and ships each completed clip to the server.
 /// </summary>
 public class VoiceRecorder : BaseMicrophoneSubscriber
 {
-    // ── Inspector ──────────────────────────────────────────────────────────
-
     [Header("Utterance Segmentation")]
     [Tooltip("Minimum utterance length in seconds. Shorter clips are discarded.")]
     [SerializeField, Range(0.1f, 2f)] private float _minUtteranceSeconds = 0.3f;
 
     [Tooltip("Maximum utterance buffer length in seconds before it is force-flushed.")]
     [SerializeField, Range(1f, 30f)] private float _maxUtteranceSeconds = 20f;
-
-    // ── Private state ──────────────────────────────────────────────────────
 
     private PlayerManager _playerManager;
     private DissonanceComms _dissonanceComms;
@@ -42,11 +26,9 @@ public class VoiceRecorder : BaseMicrophoneSubscriber
     private readonly List<float> _buffer = new();
     private bool _isRecording = false;   // true while Dissonance is transmitting
 
-    // Cached local player state (source of the IsSpeaking / VAD signal).
+    // Cached local player state, source of the IsSpeaking/VAD signal.
     private VoicePlayerState _localState;
     private string _cachedLocalName;
-
-    // ── Unity lifecycle ────────────────────────────────────────────────────
 
     private void Awake()
     {
@@ -78,31 +60,23 @@ public class VoiceRecorder : BaseMicrophoneSubscriber
         comms?.UnsubscribeFromRecordedAudio(this);
     }
 
-    // ── BaseMicrophoneSubscriber ───────────────────────────────────────────
-
-    /// <summary>Called by Dissonance when the audio format changes or the stream resets.</summary>
     protected override void ResetAudioStream(WaveFormat waveFormat)
     {
         _sampleRate = waveFormat.SampleRate;
         _channels = waveFormat.Channels;
 
-        // Flush whatever is in the buffer — stream is resetting
+        // Flush whatever is in the buffer, since the stream is resetting.
         TryFlushUtterance(force: true);
         _buffer.Clear();
         _isRecording = false;
     }
 
-    /// <summary>
-    /// Called on the main thread by Dissonance for every frame of PRE-PROCESSED PCM data.
-    /// Must copy data out before returning — the segment is reused by Dissonance.
-    /// </summary>
+    // Copies each frame of pre-processed PCM out before returning, since Dissonance reuses the segment.
     protected override void ProcessAudio(ArraySegment<float> data)
     {
         if (_sampleRate == 0) return;
 
-        // Gate on Dissonance's own transmit decision (VAD/sensitivity/trigger/mute).
-        // When it's not "speaking", nothing is being sent to other players, so we don't
-        // record it either — this is what stops quiet room noise being captured.
+        // Gate on Dissonance's own transmit decision, so quiet room noise isn't captured.
         bool speaking = IsLocalSpeaking();
 
         if (speaking)
@@ -118,18 +92,12 @@ public class VoiceRecorder : BaseMicrophoneSubscriber
         }
         else if (_isRecording)
         {
-            // Dissonance stopped transmitting — the utterance is complete.
+            // Dissonance stopped transmitting, so the utterance is complete.
             TryFlushUtterance(force: false);
         }
     }
 
-    // ── Private helpers ────────────────────────────────────────────────────
-
-    /// <summary>
-    /// True while Dissonance considers the local player to be transmitting. This reflects
-    /// the VAD (at the configured sensitivity), any active broadcast trigger, and the
-    /// self-mute state — i.e. exactly when real voice is being sent to other players.
-    /// </summary>
+    // True while Dissonance considers the local player to be transmitting.
     private bool IsLocalSpeaking()
     {
         if (_dissonanceComms == null || _dissonanceComms.IsMuted) return false;
@@ -137,8 +105,7 @@ public class VoiceRecorder : BaseMicrophoneSubscriber
         string localName = _dissonanceComms.LocalPlayerName;
         if (string.IsNullOrEmpty(localName)) return false;
 
-        // Dissonance recreates the local player state on (re)connect, so re-resolve it
-        // whenever the name changes or we don't have one yet.
+        // Dissonance recreates the local player state on reconnect, so re-resolve it when the name changes.
         if (_localState == null || _cachedLocalName != localName)
         {
             _localState = _dissonanceComms.FindPlayer(localName);

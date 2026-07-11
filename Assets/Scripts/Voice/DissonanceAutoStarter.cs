@@ -5,6 +5,9 @@ using UnityEngine.SceneManagement;
 using PurrNet;
 using PurrNet.Logging;
 
+/// <summary>
+/// Starts Dissonance after a scene load when the network is already connected.
+/// </summary>
 public static class DissonanceAutoStarter
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -15,9 +18,8 @@ public static class DissonanceAutoStarter
 
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // When a new scene loads (like transitioning from Bootstrap to City),
-        // the client might already be connected. If so, Dissonance misses the
-        // connection event. We find it and start it if we are currently connected.
+        // On a scene load the client may already be connected, so Dissonance misses the
+        // connection event; start it manually if so.
         var nm = NetworkManager.main;
         if (nm == null) return;
 
@@ -27,13 +29,11 @@ public static class DissonanceAutoStarter
         var commsNetwork = Object.FindFirstObjectByType<PurrNetCommsNetwork>();
         if (commsNetwork == null) return;
 
-        // Only kick it when it's actually down. Restarting a live comms network forces
-        // a full re-handshake for this client on EVERY scene load — after enough
-        // GameOver→City round-trips one of those restarts can lose the race against
-        // the scene change and leave a player permanently without voice.
+        // Only start it when it's actually down; restarting a live comms network forces a
+        // full re-handshake that can race the scene change and drop a player's voice.
         if (commsNetwork.Mode != NetworkMode.None)
         {
-            PurrLogger.Log("[DissonanceAutoStarter] Dissonance already running — leaving it alone.");
+            PurrLogger.Log("[DissonanceAutoStarter] Dissonance already running, leaving it alone.");
             return;
         }
 
