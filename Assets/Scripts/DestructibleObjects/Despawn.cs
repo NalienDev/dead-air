@@ -3,7 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using PurrNet;
 
-public class Despawn : NetworkBehaviour 
+/// <summary>
+/// Dither-fades a portion of an object's child pieces and destroys them after a delay.
+/// </summary>
+public class Despawn : NetworkBehaviour
 {
     private int despawnPercentage;
     private float despawnTime;

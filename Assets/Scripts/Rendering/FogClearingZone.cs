@@ -2,15 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Carves a fog-free bubble into Custom/VolumetricFog, with a thick glowing wall
-/// at its boundary. Put this on an empty GameObject and move/scale it to shape the
-/// clearing — its transform IS the volume (scale = size, rotation orients the box).
-///
-/// Drives the fog shader through global properties, so the fog material needs no
-/// wiring. Only one zone is active at a time (last one enabled wins).
-///
-/// Gameplay-wise the clear air is breathable: <see cref="ContainsPoint"/> lets other
-/// systems (oxygen drain) ask whether a world position sits inside any active zone.
+/// Carves a breathable fog-free volume into the volumetric fog shader, its transform defining the shape.
 /// </summary>
 [ExecuteAlways]
 public class FogClearingZone : MonoBehaviour
@@ -51,18 +43,16 @@ public class FogClearingZone : MonoBehaviour
         s_active.Remove(this);
     }
 
-    /// <summary>True if <paramref name="worldPos"/> is inside this zone's volume.</summary>
     public bool Contains(Vector3 worldPos)
     {
-        // The transform IS the volume: unit sphere/box in local space, scaled by the
-        // transform. So containment is just a check in local coordinates.
+        // The transform is the volume, so containment is a check in local coordinates.
         Vector3 local = transform.InverseTransformPoint(worldPos);
         return _shape == Shape.Sphere
             ? local.sqrMagnitude <= 0.25f // radius 0.5 in local space
             : Mathf.Abs(local.x) <= 0.5f && Mathf.Abs(local.y) <= 0.5f && Mathf.Abs(local.z) <= 0.5f;
     }
 
-    /// <summary>True if <paramref name="worldPos"/> is inside ANY active zone.</summary>
+    // True if the position is inside any active zone.
     public static bool ContainsPoint(Vector3 worldPos)
     {
         foreach (FogClearingZone zone in s_active)

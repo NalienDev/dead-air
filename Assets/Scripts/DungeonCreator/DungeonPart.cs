@@ -3,14 +3,11 @@ using PurrNet;
 using UnityEngine;
 
 /// <summary>
-/// Represents a single networked piece of the dungeon (room or hallway).
-/// Responsible for tracking its own entry points and spawning filler walls.
+/// A single networked dungeon piece that tracks its entry points and spawns filler walls.
 /// </summary>
 public class DungeonPart : NetworkBehaviour
 {
     public enum DungeonPartType { Room, Hallway }
-
-    // ── Inspector ──────────────────────────────────────────────────────────
 
     [SerializeField] private DungeonPartType _dungeonPartType;
     [SerializeField] private GameObject _fillerWall;
@@ -18,20 +15,15 @@ public class DungeonPart : NetworkBehaviour
     [SerializeField] private LayerMask _roomsLayerMask;
 
     [Header("Filler Wall Placement")]
-    [Tooltip("Moves the filler wall up from the entry point. Set to half your wall mesh height.")]
+    [Tooltip("Vertical offset of the filler wall from the entry point.")]
     [SerializeField] private float _fillerWallYOffset = 1f;
-    [Tooltip("Extra Y rotation applied to the filler wall. Use 180 if the wall faces the wrong way.")]
+    [Tooltip("Extra Y rotation applied to the filler wall.")]
     [SerializeField] private float _fillerWallYRotation = 180f;
 
     public List<Transform> entrypoints;
     public new Collider collider;
 
-    // ── Public API ─────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Returns an unoccupied entry point chosen at random, marking it occupied.
-    /// Returns false if none are available.
-    /// </summary>
+    // Returns a random unoccupied entry point and marks it occupied, or false if none are free.
     public bool TryGetAvailableEntrypoint(out Transform entrypoint)
     {
         entrypoint = null;
@@ -42,7 +34,7 @@ public class DungeonPart : NetworkBehaviour
         if (entrypoints.Count == 1)
             return TryOccupyEntry(entrypoints[0], out entrypoint);
 
-        // Shuffle to avoid retry-hammering the same entries
+        // Shuffle to avoid retry-hammering the same entries.
         List<Transform> shuffled = new List<Transform>(entrypoints);
         ShuffleList(shuffled);
 
@@ -55,7 +47,6 @@ public class DungeonPart : NetworkBehaviour
         return false;
     }
 
-    /// <summary>Marks a previously occupied entry point as free again.</summary>
     public void ReleaseEntrypoint(Transform entrypoint)
     {
         if (entrypoint != null && entrypoint.TryGetComponent(out EntryPoint ep))
@@ -64,11 +55,7 @@ public class DungeonPart : NetworkBehaviour
 
     public Transform GetMonsterSpawnLocation() => _monsterSpawnLocation;
 
-    /// <summary>
-    /// Spawns a filler wall on every unoccupied entry point.
-    /// Registers each spawned wall into <paramref name="wallRegistry"/> for later cleanup.
-    /// Must be called on the server — PurrNet auto-syncs the Instantiate to clients.
-    /// </summary>
+    // Spawns a filler wall on every unoccupied entry point; call on the server.
     public void FillEmptyDoors(System.Collections.Generic.List<GameObject> wallRegistry = null)
     {
         foreach (Transform entry in entrypoints)
@@ -84,8 +71,6 @@ public class DungeonPart : NetworkBehaviour
             wallRegistry?.Add(wall);
         }
     }
-
-    // ── Private helpers ────────────────────────────────────────────────────
 
     private static bool TryOccupyEntry(Transform entry, out Transform result)
     {
@@ -106,8 +91,6 @@ public class DungeonPart : NetworkBehaviour
             (list[i], list[j]) = (list[j], list[i]);
         }
     }
-
-    // ── Editor gizmos ──────────────────────────────────────────────────────
 
     private void OnDrawGizmos()
     {

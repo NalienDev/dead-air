@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// Interactable button that loads a scene for every player.
+/// </summary>
 public class NetworkedSceneButton : Interactable
 {
     [SerializeField] private string _sceneName;

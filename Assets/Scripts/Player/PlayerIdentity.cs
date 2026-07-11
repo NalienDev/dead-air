@@ -10,22 +10,7 @@ using PurrNet;
 using UnityEngine;
 
 /// <summary>
-/// Publishes this player's cross-system identity so other clients can:
-///   • mute their voice by team (via the Dissonance voice name), and
-///   • show them in the spectator UI with their Steam name + avatar.
-///
-/// The owner resolves its own identity and replicates it through SyncVars:
-///   • <see cref="voiceName"/> — the Dissonance <c>LocalPlayerName</c> (a per-client
-///     GUID Dissonance assigns on start). Other clients look a player up by this to
-///     mute them (<see cref="DeadVoiceRouter"/>).
-///   • <see cref="steamId"/> / <see cref="displayName"/> — from the persisted lobby
-///     data (see <see cref="LobbyLocalUser"/>). Avatars aren't networked; each client
-///     resolves the Texture2D locally — first from its <see cref="LobbyDataHolder"/>
-///     cache, then directly from Steam (lobby avatars load asynchronously, so the
-///     holder snapshot can predate the texture arriving; Steam has it cached by now).
-///
-/// NetworkBehaviour (not NetworkIdentity) so it shares PlayerManager's identity on the
-/// same GameObject — a second NetworkIdentity would break SyncVar replication.
+/// Publishes the player's Dissonance voice name and Steam identity so others can mute them by team and show their name and avatar.
 /// </summary>
 [RequireComponent(typeof(PlayerManager))]
 public class PlayerIdentity : NetworkBehaviour
@@ -34,7 +19,7 @@ public class PlayerIdentity : NetworkBehaviour
     public SyncVar<string> steamId = new("");       // lobby member id
     public SyncVar<string> displayName = new("");   // lobby display name
 
-    /// <summary>Display name, or "person" when we don't have one.</summary>
+    // Display name, or "person" when we don't have one.
     public string DisplayNameOrDefault =>
         string.IsNullOrEmpty(displayName.value) ? "person" : displayName.value;
 
@@ -55,8 +40,7 @@ public class PlayerIdentity : NetworkBehaviour
         string name = LobbyLocalUser.DisplayName ?? "";
 
         if (string.IsNullOrEmpty(localId))
-            Debug.LogWarning("[PlayerIdentity] LobbyLocalUser.Id is empty — was " +
-                             "LobbyLocalUserCapture in the lobby scene? Avatar/name will fall back.");
+            Debug.LogWarning("[PlayerIdentity] LobbyLocalUser.Id is empty; avatar and name will fall back.");
 
         // Fall back to the lobby member list if the name wasn't captured.
         if (string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(localId))
@@ -64,7 +48,7 @@ public class PlayerIdentity : NetworkBehaviour
 
         ServerSetIdentity(localId, name);
 
-        // Dissonance assigns LocalPlayerName only once it has started — wait for it.
+        // Dissonance assigns LocalPlayerName only once it has started, so wait for it.
         DissonanceComms comms = FindFirstObjectByType<DissonanceComms>();
         while (comms == null || string.IsNullOrEmpty(comms.LocalPlayerName))
         {
@@ -84,14 +68,8 @@ public class PlayerIdentity : NetworkBehaviour
     [ServerRpc]
     private void ServerSetVoiceName(string v) => voiceName.value = v;
 
-    // ── Avatar resolution ────────────────────────────────────────────────────
-
-    /// <summary>
-    /// This player's Steam avatar, or null. Tries the lobby snapshot first, then asks
-    /// Steam directly (the snapshot may have been taken before the async avatar
-    /// download finished). May legitimately return null for a few refreshes while
-    /// Steam fetches the image — callers should simply retry later.
-    /// </summary>
+    // This player's Steam avatar, or null; tries the lobby snapshot then Steam, and may
+    // return null for a few refreshes while Steam fetches the image, so callers retry.
     public Texture2D ResolveAvatar()
     {
         string id = steamId.value;

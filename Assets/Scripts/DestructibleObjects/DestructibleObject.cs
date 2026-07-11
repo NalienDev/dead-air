@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using PurrNet;
 
+/// <summary>
+/// Breaks into physics-driven debris when hit hard enough.
+/// </summary>
 public class DestructibleObject : NetworkBehaviour
 {
     [System.Serializable]

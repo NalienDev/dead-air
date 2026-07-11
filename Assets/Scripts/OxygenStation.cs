@@ -2,35 +2,19 @@ using PurrNet;
 using UnityEngine;
 
 /// <summary>
-/// A wall/floor station that refills a player's oxygen to full when they press E on it
-/// (routed through <see cref="Interactor"/>). Refills are limited by PER-PLAYER charges
-/// (<see cref="PlayerManager.currentOxygenCharges"/>, 3 by default): every player has
-/// their own pool, spendable at any station, and they reset to max when an expedition
-/// completes (see <see cref="PlayerManager.ServerResetForNewExpedition"/>). The
-/// +charge upgrade raises a player's max.
-///
-/// Server-authoritative: the interacting client asks, the server validates and spends
-/// the charge. Sounds: the recharge hiss plays at the station for everyone nearby
-/// (ObserversRpc); the deny buzz plays only for the rejected player. The optional
-/// "no charges" visual reflects the LOCAL player's pool — each client sees the station
-/// dead/alive according to their own remaining charges.
-///
-/// Put this on a networked scene object with a collider on the interactable layer, and
-/// wire the AudioSource + clips + visual.
+/// Station that refills a player's oxygen on interact, spending one of their per-player charges.
 /// </summary>
 public class OxygenStation : Interactable
 {
     [Header("Audio")]
     [SerializeField] private AudioSource _audioSource;
-    [Tooltip("Played at the station when a refill succeeds (everyone nearby hears it).")]
+    [Tooltip("Played at the station when a refill succeeds.")]
     [SerializeField] private AudioClip _rechargeSound;
-    [Tooltip("Played for the interacting player when they're out of charges " +
-             "(or already at full oxygen).")]
+    [Tooltip("Played for the interacting player when out of charges or already full.")]
     [SerializeField] private AudioClip _denySound;
 
     [Header("Visuals")]
-    [Tooltip("Toggled ON while the LOCAL player has no charges left (e.g. a dead screen " +
-             "or red light). Per-client — each player sees their own state.")]
+    [Tooltip("Shown while the local player has no charges left.")]
     [SerializeField] private GameObject _noChargesVisual;
 
     private void Update()
@@ -42,8 +26,6 @@ public class OxygenStation : Interactable
         if (_noChargesVisual.activeSelf != exhausted)
             _noChargesVisual.SetActive(exhausted);
     }
-
-    // ── Interaction (runs on the interacting client) ──────────────────────────
 
     public override InteractionType OnInteract(GameObject user)
     {
@@ -67,8 +49,6 @@ public class OxygenStation : Interactable
         return InteractionType.PRESS;
     }
 
-    // ── Server ────────────────────────────────────────────────────────────────
-
     [ServerRpc(requireOwnership: false)]
     private void ServerUseStation(PlayerManager pm)
     {
@@ -79,8 +59,6 @@ public class OxygenStation : Interactable
         else if (pm.owner.HasValue)
             TargetDeny(pm.owner.Value);
     }
-
-    // ── Presentation ─────────────────────────────────────────────────────────
 
     [ObserversRpc(runLocally: true)]
     private void RpcPlayRecharge() => PlayLocal(_rechargeSound);

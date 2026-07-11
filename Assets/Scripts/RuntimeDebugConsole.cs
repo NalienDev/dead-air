@@ -3,6 +3,9 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 
+/// <summary>
+/// In-game overlay that captures Unity log messages into a scrollable console.
+/// </summary>
 public class RuntimeDebugConsole : MonoBehaviour
 {
     [Header("UI")]

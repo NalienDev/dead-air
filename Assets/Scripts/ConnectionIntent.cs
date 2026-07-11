@@ -1,9 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Carries the player's connection intent (Host / Join + room code)
-/// across a plain SceneManager.LoadScene from MainMenu → BootstrapScene.
-/// BootstrapLoader reads and destroys this object once consumed.
+/// Carries the player's host/join intent across the load from main menu to the bootstrap scene.
 /// </summary>
 public class ConnectionIntent : MonoBehaviour
 {
@@ -35,7 +33,6 @@ public class ConnectionIntent : MonoBehaviour
         Instance.RoomCode = roomCode.Trim().ToUpper();
     }
 
-    /// <summary>Called by BootstrapLoader after it has read the intent.</summary>
     public static void Consume()
     {
         if (Instance != null)

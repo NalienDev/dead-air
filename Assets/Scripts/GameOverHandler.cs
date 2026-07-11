@@ -3,14 +3,7 @@ using UnityEngine;
 using System.Collections;
 
 /// <summary>
-/// Lives in the GameOver scene. After a short delay it resets the run (day 1, quota,
-/// bandwidth, energy) and loads everyone back into the City.
-///
-/// IMPORTANT: only the SERVER/HOST runs the reset + scene load. This script exists on
-/// every client (each loads the GameOver scene), and both calls route through
-/// ServerRpcs (requireOwnership: false) — so without the guard, N players meant the
-/// City scene got loaded N times back-to-back. Those pile-up reloads restarted
-/// Dissonance repeatedly and could drop a client's voice connection for good.
+/// Resets the run and loads everyone back into the City after a short game-over delay.
 /// </summary>
 public class GameOverHandler : MonoBehaviour
 {
@@ -19,7 +12,7 @@ public class GameOverHandler : MonoBehaviour
 
 #if UNITY_EDITOR
     [Header("Editor Testing")]
-    [Tooltip("When you Play this scene alone in the Editor, there's no host/NetworkManager running, so the isServer check below would silently skip the scene change. With this on, that check is bypassed in the Editor only - never compiled into an actual build.")]
+    [Tooltip("Bypass the isServer check so the scene change runs when playing this scene alone in the Editor.")]
     [SerializeField] private bool forceResetWithoutServer = true;
 #endif
 

@@ -1,13 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Plays looping audio with smooth fades so loops never click/snap on start, stop, or
-/// switch. Owns two internal AudioSources and crossfades between them when the loop
-/// changes (e.g. an enemy going ambient → chase). All fade times are configurable in
-/// the inspector.
-///
-/// Used by the enemies (TheEchoAI, TheConductorAI) in place of a raw looping
-/// AudioSource. Add next to the enemy's other components — it creates its own sources.
+/// Plays looping audio with smooth fades and crossfades between loops using two internal sources.
 /// </summary>
 public class CrossfadeLoopPlayer : MonoBehaviour
 {
@@ -16,7 +10,7 @@ public class CrossfadeLoopPlayer : MonoBehaviour
     [SerializeField, Min(0f)] private float _fadeInSeconds = 0.2f;
     [Tooltip("Fade-out when the loop stops.")]
     [SerializeField, Min(0f)] private float _fadeOutSeconds = 0.3f;
-    [Tooltip("Crossfade length when switching between two loops (ambient ↔ chase).")]
+    [Tooltip("Crossfade length when switching between two loops.")]
     [SerializeField, Min(0f)] private float _crossfadeSeconds = 0.6f;
 
     [Header("Source Settings")]
@@ -42,19 +36,16 @@ public class CrossfadeLoopPlayer : MonoBehaviour
         }
     }
 
-    /// <summary>Current loop clip, or null when silent/stopping.</summary>
+    // Current loop clip, or null when silent or stopping.
     public AudioClip CurrentClip =>
         _active >= 0 && _targetVolume[_active] > 0f ? _sources[_active].clip : null;
 
-    /// <summary>
-    /// Starts (or switches to) a loop. Fades in from silence, or crossfades from
-    /// whatever loop is currently playing. Passing null fades everything out.
-    /// </summary>
+    // Starts or crossfades to a loop; passing null fades everything out.
     public void PlayLoop(AudioClip clip)
     {
         if (clip == null) { StopLoop(); return; }
 
-        // Already playing (and not fading out) this exact clip — nothing to do.
+        // Already playing this clip and not fading out: nothing to do.
         if (_active >= 0 && _sources[_active].clip == clip && _targetVolume[_active] > 0f)
             return;
 
@@ -78,7 +69,6 @@ public class CrossfadeLoopPlayer : MonoBehaviour
         _active = next;
     }
 
-    /// <summary>Fades out whatever is playing and stops it.</summary>
     public void StopLoop()
     {
         for (int i = 0; i < 2; i++)
@@ -104,7 +94,7 @@ public class CrossfadeLoopPlayer : MonoBehaviour
 
             src.volume = Mathf.MoveTowards(src.volume, _targetVolume[i], _fadeRate[i] * Time.deltaTime);
 
-            // Fully faded out — actually stop the source.
+            // Fully faded out: stop the source.
             if (_targetVolume[i] <= 0f && src.volume <= 0.0001f)
             {
                 src.Stop();

@@ -4,10 +4,7 @@ using PurrLobby;
 using UnityEngine;
 
 /// <summary>
-/// Place one of these in the LOBBY scene. Once the lobby provider knows the local user,
-/// it snapshots their Steam id + display name into <see cref="LobbyLocalUser"/> — which
-/// survives the scene change into the game, where <see cref="PlayerIdentity"/> reads it
-/// (the LobbyManager itself does not carry over).
+/// Snapshots the local user's Steam id and name into LobbyLocalUser while still in the lobby scene.
 /// </summary>
 public class LobbyLocalUserCapture : MonoBehaviour
 {

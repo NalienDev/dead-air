@@ -3,17 +3,15 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Attach to a Canvas GameObject.
-/// Reads the local player's Interactor each frame and updates two slot UI panels.
-/// Each slot panel needs an Image (background tint) and optionally a TMP_Text (item name).
+/// Draws the local player's inventory slots and highlights the active one.
 /// </summary>
 public class InventoryHUD : MonoBehaviour
 {
     [System.Serializable]
     private struct SlotUI
     {
-        public Image background;      // panel background
-        public TMP_Text itemLabel;    // optional label showing item name
+        public Image background;
+        public TMP_Text itemLabel;
         public Image icon;
         public RectTransform root;
     }
@@ -24,7 +22,7 @@ public class InventoryHUD : MonoBehaviour
     [SerializeField] private Color _occupiedTint = new Color(0.6f, 1f, 0.6f, 1f);
     [SerializeField] private float _activeScale = 1.2f;
     [SerializeField] private float _inactiveScale = 0.85f;
-    [SerializeField] private float _scaleLerpSpeed = 8f; // velocidade da transição
+    [SerializeField] private float _scaleLerpSpeed = 8f;
 
     private Interactor _interactor;
     private bool _hidden;
@@ -73,9 +71,7 @@ public class InventoryHUD : MonoBehaviour
 
     private void Refresh()
     {
-        // The inventory grows with the +inventory-slot upgrade, so it may have fewer
-        // slots than there are slot UIs. Only drive (and show) the slots that exist;
-        // keep the rest hidden until unlocked — and never index past Slots.Length.
+        // The inventory grows with upgrades, so only drive the slots that currently exist.
         int slotCount = _interactor.Slots != null ? _interactor.Slots.Length : 0;
 
         for (int i = 0; i < _slotUIs.Length; i++)
@@ -116,10 +112,6 @@ public class InventoryHUD : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Finds the Interactor that belongs to the local player.
-    /// Relies on PurrNet's NetworkTransform.isOwner to identify the local player.
-    /// </summary>
     private static Interactor FindLocalInteractor()
     {
         foreach (Interactor interactor in FindObjectsByType<Interactor>(FindObjectsSortMode.None))

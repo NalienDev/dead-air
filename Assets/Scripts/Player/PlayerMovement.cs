@@ -1,6 +1,9 @@
 using PurrNet;
 using UnityEngine;
 
+/// <summary>
+/// Owner-driven player movement with sprinting and footstep noise reporting.
+/// </summary>
 public class PlayerMovement : NetworkIdentity
 {
     [Header("Movement")]
@@ -9,15 +12,14 @@ public class PlayerMovement : NetworkIdentity
     [SerializeField] private float _sprintMultiplier = 1.8f;
     [SerializeField] private KeyCode _sprintKey = KeyCode.LeftShift;
 
-    [Header("Footstep Noise (heard by the Conductor)")]
+    [Header("Footstep Noise")]
     [Tooltip("Seconds between footstep noises while walking.")]
     [SerializeField] private float _walkStepInterval = 0.5f;
     [Tooltip("Seconds between footstep noises while sprinting.")]
     [SerializeField] private float _sprintStepInterval = 0.3f;
-    [Tooltip("How loud a walking step is to the Conductor (0..1). Usually below its " +
-             "hearing threshold — walking should be reasonably safe.")]
+    [Tooltip("How loud a walking step is to the Conductor.")]
     [SerializeField, Range(0f, 1f)] private float _walkNoise = 0.25f;
-    [Tooltip("How loud a sprinting step is (0..1). Loud enough to draw an investigation.")]
+    [Tooltip("How loud a sprinting step is to the Conductor.")]
     [SerializeField, Range(0f, 1f)] private float _sprintNoise = 0.55f;
 
     private PlayerManager _playerManager;
@@ -30,7 +32,6 @@ public class PlayerMovement : NetworkIdentity
     private float _stunMultiplier = 1f;
     private Coroutine _stunCoroutine;
 
-    /// <summary>Sets the additive walk-speed bonus applied on top of the base speed.</summary>
     public void SetBonusSpeed(float bonus) => _bonusSpeed = Mathf.Max(0f, bonus);
 
     protected override void OnSpawned()
@@ -78,13 +79,7 @@ public class PlayerMovement : NetworkIdentity
         _stunMultiplier = 1f;
     }
 
-    // ── Hit stun ──────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Applies a movement speed stun for <paramref name="duration"/> seconds,
-    /// reducing speed to <paramref name="multiplier"/> of normal (e.g. 0.3 = 30%).
-    /// Safe to call while already stunned — resets the timer.
-    /// </summary>
+    // Reduces speed to a fraction of normal for a duration; resets the timer if already stunned.
     public void ApplyHitStun(float multiplier = 0.3f, float duration = 2f)
     {
         if (_stunCoroutine != null) StopCoroutine(_stunCoroutine);

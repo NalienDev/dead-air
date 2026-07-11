@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Breaks destructibles and applies explosion force to nearby rigidbodies after a delay.
+/// </summary>
 public class Explosion : MonoBehaviour
 {
     public float radius;

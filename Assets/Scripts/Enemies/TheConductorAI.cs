@@ -4,53 +4,25 @@ using UnityEngine;
 using UnityEngine.AI;
 
 /// <summary>
-/// The Conductor. A blind, server-authoritative stalker that orients ONLY by sound.
-///
-/// It forces players to whisper and to keep the ambient noise down: talk loudly, run,
-/// or grab a noisy item and it comes to investigate; a real sound spike — a shout or a
-/// scream — sends it charging. It never uses sight.
-///
-/// Three states:
-/// <list type="bullet">
-/// <item><b>Wander</b> — roams the dungeon on the NavMesh, landing heavy footsteps.
-/// Every step plays a (randomised) stomp.</item>
-/// <item><b>Inspect</b> — a noise it could hear pulls it to that spot, where it prowls
-/// the area for a few seconds. If it senses a player up close (it is blind, so this is
-/// proximity, not sight) it starts chasing; otherwise it gives up and wanders off.</item>
-/// <item><b>Chase</b> — runs the player down. Once in range it swings.</item>
-/// <item><b>Attack</b> — plays the attack animation; the hit lands on the clip's
-/// "slicing" frame (an animation event calling OnAttackHit), then drops into Recover.</item>
-/// <item><b>Recover</b> — stands still for a couple of seconds, listening. Any noise it
-/// can hear in that window (a sprint, a shout, a noisy grab) re-triggers the chase;
-/// stay silent and it loses interest and wanders off.</item>
-/// </list>
-///
-/// Hearing is attenuated by distance (a sprint is only audible up close, a scream
-/// carries across the dungeon) and muffled by walls — it barely hears through a wall
-/// unless the noise happens right on the other side of it.
-///
-/// Needs on this GameObject: NavMeshAgent, NetworkTransform, a child model root.
-/// The dungeon NavMesh is baked at runtime by DungeonNavMeshBaker, exactly like TheEcho.
+/// Blind, server-authoritative stalker that hunts players entirely by sound through wander, inspect, chase, attack, and recover states.
 /// </summary>
 public class TheConductorAI : NetworkBehaviour
 {
     private enum State { Inactive, Wander, Inspect, Chase, Attack, Recover }
 
-    // ── Inspector ──────────────────────────────────────────────────────────
-
     [Header("References")]
-    [SerializeField] private GameObject _modelRoot;     // visuals + colliders, toggled on activate
-    [SerializeField] private Animator _animator;        // optional; gets bool "IsChasing", float "Speed"
-    [SerializeField] private AudioSource _audioSource;  // one-shots (steps, screech, attack)
+    [SerializeField] private GameObject _modelRoot;     // visuals and colliders, toggled on activate
+    [SerializeField] private Animator _animator;        // gets bool "IsChasing", float "Speed"
+    [SerializeField] private AudioSource _audioSource;
 
     [Header("Sounds")]
-    [Tooltip("Footstep stomps. One is picked at random per step — add several for variety.")]
+    [Tooltip("Footstep stomps. One is picked at random per step.")]
     [SerializeField] private List<AudioClip> _stepSounds = new();
-    [Tooltip("Screech. Played from an animation event on the Shout (post-attack) clip.")]
+    [Tooltip("Screech, played from an animation event on the shout clip.")]
     [SerializeField] private AudioClip _screechSound;
     [Tooltip("Played when it lands a hit.")]
     [SerializeField] private AudioClip _attackSound;
-    [Tooltip("Quiet loop while wandering/inspecting (breathing, dragging chains…).")]
+    [Tooltip("Quiet loop while wandering or inspecting.")]
     [SerializeField] private AudioClip _idleLoop;
     [Tooltip("Loud loop while chasing.")]
     [SerializeField] private AudioClip _chaseLoop;
@@ -66,8 +38,7 @@ public class TheConductorAI : NetworkBehaviour
     [Header("Spawning")]
     [Tooltip("Seconds after the first player enters the dungeon before the Conductor appears.")]
     [SerializeField] private float _spawnDelayAfterEntry = 20f;
-    [Tooltip("It will not appear within this radius of the dungeon entrance (tagged " +
-             "'ExpeditionSpawn') — it can walk there, it just won't spawn there.")]
+    [Tooltip("It won't spawn within this radius of the dungeon entrance, though it can walk there.")]
     [SerializeField] private float _entranceNoSpawnRadius = 15f;
 
     [Header("Footsteps")]
@@ -75,52 +46,42 @@ public class TheConductorAI : NetworkBehaviour
     [SerializeField] private float _stepDistance = 2f;
 
     [Header("Hearing")]
-    [Tooltip("Loudness (0..1) a noise must reach for the Conductor to investigate it. " +
-             "Whispers and normal walking should sit below this.")]
+    [Tooltip("Loudness a noise must reach for the Conductor to investigate it.")]
     [SerializeField, Range(0f, 1f)] private float _hearingThreshold = 0.45f;
-    [Tooltip("Loudness (0..1) that counts as a spike — a shout/scream — and triggers an " +
-             "immediate chase instead of a calm investigation.")]
+    [Tooltip("Loudness that counts as a spike and triggers an immediate chase.")]
     [SerializeField, Range(0f, 1f)] private float _chaseNoiseThreshold = 0.8f;
-    [Tooltip("How far a MAXIMUM loudness (1.0) noise carries. Quieter noises carry " +
-             "proportionally less — e.g. a 0.55 sprint carries 55% of this range.")]
+    [Tooltip("How far a maximum-loudness noise carries; quieter noises carry proportionally less.")]
     [SerializeField] private float _hearingRange = 30f;
-    [Tooltip("How long (seconds) a heard noise stays worth reacting to.")]
+    [Tooltip("How long a heard noise stays worth reacting to.")]
     [SerializeField] private float _noiseMemory = 1f;
-    [Tooltip("A hearable noise made within this range triggers an immediate chase — " +
-             "sprinting right past the Conductor is not survivable.")]
+    [Tooltip("A hearable noise made within this range triggers an immediate chase.")]
     [SerializeField] private float _closeChaseRadius = 5f;
-    [Tooltip("Multiplier on the carry distance of a noise heard through a wall (0 = " +
-             "fully deaf through walls, 1 = walls don't matter). A noise right on the " +
-             "other side of a wall still gets through; a distant one won't.")]
+    [Tooltip("Carry multiplier through a wall. 0 = deaf through walls, 1 = walls don't matter.")]
     [SerializeField, Range(0f, 1f)] private float _wallMuffle = 0.5f;
-    [Tooltip("Layers that block/muffle sound (walls, rooms). Do NOT include the Player layer.")]
+    [Tooltip("Layers that block or muffle sound. Do not include the Player layer.")]
     [SerializeField] private LayerMask _occluderMask = Physics.DefaultRaycastLayers & ~(1 << 6);
 
     [Header("Inspect")]
     [Tooltip("Seconds spent prowling a noise before giving up and wandering off.")]
     [SerializeField] private float _inspectDuration = 10f;
-    [Tooltip("Blind proximity 'sense' — a player this close during inspect gets chased.")]
+    [Tooltip("A player this close during inspect gets chased.")]
     [SerializeField] private float _detectRadius = 3f;
 
     [Header("Chase")]
     [SerializeField] private float _attackRange = 1.6f;
     [Tooltip("Damage dealt by the single hit that ends a chase.")]
     [SerializeField] private int _attackDamage = 20;
-    [Tooltip("Seconds it stands still, listening, after landing a hit. Any noise it can " +
-             "hear in this window re-triggers the chase; silence sends it wandering.")]
+    [Tooltip("Seconds it stands still and listens after landing a hit.")]
     [SerializeField] private float _postAttackPause = 2f;
     [Tooltip("Give up the chase if this long passes without landing a hit or hearing the target.")]
     [SerializeField] private float _chaseGiveUpTime = 8f;
-    [Tooltip("Safety net: if the attack animation's hit event never fires within this many " +
-             "seconds (e.g. the event wasn't added to the clip), give up the swing and recover.")]
+    [Tooltip("Give up the swing and recover if the attack hit event never fires within this time.")]
     [SerializeField] private float _attackTimeout = 2f;
 
     private static readonly int AnimIsChasing = Animator.StringToHash("IsChasing");
     private static readonly int AnimSpeed = Animator.StringToHash("Speed");
     private static readonly int AnimAttack = Animator.StringToHash("Attack");
     private static readonly int AnimRechase = Animator.StringToHash("Rechase");
-
-    // ── Server state ───────────────────────────────────────────────────────
 
     private NavMeshAgent _agent;
     private CrossfadeLoopPlayer _loopPlayer;
@@ -148,8 +109,6 @@ public class TheConductorAI : NetworkBehaviour
 
     private float _nextLogTime;
 
-    // ── Lifecycle ──────────────────────────────────────────────────────────
-
     private void Awake()
     {
         _agent = GetComponent<NavMeshAgent>();
@@ -162,9 +121,7 @@ public class TheConductorAI : NetworkBehaviour
             _audioSource = gameObject.AddComponent<AudioSource>();
         _audioSource.spatialBlend = 1f;
 
-        // Loops (idle/chase) go through a crossfader so starts, stops and the
-        // idle↔chase switch never click. Add the component to the prefab to tune the
-        // fade times; it's created with defaults if missing.
+        // Loops go through a crossfader so starts, stops, and the idle/chase switch don't click.
         _loopPlayer = GetComponent<CrossfadeLoopPlayer>();
         if (_loopPlayer == null) _loopPlayer = gameObject.AddComponent<CrossfadeLoopPlayer>();
 
@@ -194,7 +151,7 @@ public class TheConductorAI : NetworkBehaviour
 
     private void OnDungeonRegenerated()
     {
-        // New layout — drop everything and re-place on the fresh NavMesh next tick.
+        // New layout: drop everything and re-place on the fresh NavMesh next tick.
         Deactivate();
     }
 
@@ -215,8 +172,7 @@ public class TheConductorAI : NetworkBehaviour
         UpdateAnimatorSpeed();
     }
 
-    // ── Inactive: wait for a NavMesh, then take the stage ──────────────────
-
+    // Waits for a baked NavMesh and players inside, then spawns and starts wandering.
     private void TickInactive()
     {
         if (DungeonGenerator.Instance == null || !DungeonGenerator.Instance.IsGenerated())
@@ -282,8 +238,6 @@ public class TheConductorAI : NetworkBehaviour
         RpcSetVisible(false);
     }
 
-    // ── Wander ──────────────────────────────────────────────────────────────
-
     private void EnterWander()
     {
         _state = State.Wander;
@@ -298,7 +252,7 @@ public class TheConductorAI : NetworkBehaviour
 
         if (ConsumeHeardNoise(out Vector3 pos, out float loud, out bool urgent))
         {
-            // A spike, or any hearable noise made right next to it, means blood.
+            // A spike, or any hearable noise right next to it, escalates straight to a chase.
             if ((urgent || loud >= _chaseNoiseThreshold) && TryStartChaseNear(pos)) return;
             EnterInspect(pos);
             return;
@@ -313,8 +267,6 @@ public class TheConductorAI : NetworkBehaviour
         if (TryRandomNavPoint(transform.position, _wanderRadius, out Vector3 dest))
             _agent.SetDestination(dest);
     }
-
-    // ── Inspect ──────────────────────────────────────────────────────────────
 
     private void EnterInspect(Vector3 origin)
     {
@@ -331,7 +283,7 @@ public class TheConductorAI : NetworkBehaviour
     {
         TickSteps();
 
-        // A blind "sense" of a body up close → lock on.
+        // A blind sense of a body up close locks on.
         PlayerManager near = NearestDungeonPlayer(transform.position, _detectRadius);
         if (near != null && TryStartChase(near)) return;
 
@@ -357,8 +309,6 @@ public class TheConductorAI : NetworkBehaviour
                 _agent.SetDestination(dest);
         }
     }
-
-    // ── Chase ─────────────────────────────────────────────────────────────────
 
     private bool TryStartChaseNear(Vector3 noisePos)
     {
@@ -395,8 +345,7 @@ public class TheConductorAI : NetworkBehaviour
 
         float dist = Vector3.Distance(transform.position, _chaseTarget.transform.position);
 
-        // In range → wind up the swing. The hit itself lands on the animation's
-        // "slicing" frame (see OnAttackHit), not here.
+        // In range: wind up the swing. The hit lands on the animation's slicing frame, not here.
         if (dist <= _attackRange)
         {
             EnterAttack();
@@ -409,12 +358,10 @@ public class TheConductorAI : NetworkBehaviour
 
         if (Time.time >= _chaseGiveUpAt)
         {
-            Debug.Log("[TheConductorAI] Lost the target — back to wandering.");
+            Debug.Log("[TheConductorAI] Lost the target, back to wandering.");
             EnterWander();
         }
     }
-
-    // ── Attack: play the swing, land the hit on the animation's slicing frame ──
 
     private void EnterAttack()
     {
@@ -430,37 +377,30 @@ public class TheConductorAI : NetworkBehaviour
             transform.rotation = Quaternion.LookRotation(look);
 
         _attackTimeoutAt = Time.time + _attackTimeout;
-        // Leave IsChasing true — the Attack trigger drives Chase → Attack. Flipping
-        // IsChasing false here would race the Chase → Wander transition and send him
-        // back to wandering instead of attacking. It's cleared later in EnterRecover.
+        // Leave IsChasing true; clearing it here would race the Chase-to-Wander transition.
+        // It's cleared later in EnterRecover.
         RpcTriggerAttack();
         Debug.Log("[TheConductorAI] Swinging.");
     }
 
     private void TickAttack()
     {
-        // OnAttackHit (an animation event on the slicing frame) does the real work:
-        // it applies the hit and drops into Recover. This is only a safety net in
-        // case that event never fires so the Conductor can't freeze mid-swing.
+        // Safety net: OnAttackHit normally lands the hit and recovers, so this only fires
+        // if that animation event never does, to stop the Conductor freezing mid-swing.
         if (Time.time >= _attackTimeoutAt)
         {
-            Debug.LogWarning("[TheConductorAI] Attack hit event never fired — recovering.");
+            Debug.LogWarning("[TheConductorAI] Attack hit event never fired, recovering.");
             EnterRecover();
         }
     }
 
-    /// <summary>
-    /// Animation event. Add this to the attack clip on the "slicing" pose frame —
-    /// select the frame, add an Animation Event, and set its Function to
-    /// <c>OnAttackHit</c> (no parameters). Fires on every client; only the server
-    /// applies damage, and only if the target is still within attack range.
-    /// </summary>
+    // Animation event on the attack clip's slicing frame; only the server applies damage.
     public void OnAttackHit()
     {
         if (_attackSound != null) _audioSource.PlayOneShot(_attackSound);
 
         if (!isServer) return;
-        if (_state != State.Attack) return; // ignore a stray/late event
+        if (_state != State.Attack) return; // ignore a stray or late event
 
         if (IsValidTarget(_chaseTarget) &&
             Vector3.Distance(transform.position, _chaseTarget.transform.position) <= _attackRange)
@@ -471,45 +411,36 @@ public class TheConductorAI : NetworkBehaviour
         EnterRecover();
     }
 
-    /// <summary>
-    /// Animation event. Put this on the Shout (post-attack) clip to play the screech.
-    /// Routed through <see cref="ConductorAnimationRelay"/>; fires on every client, so
-    /// no RPC is needed — each client plays its own copy.
-    /// </summary>
+    // Animation event on the shout clip that plays the screech on each client.
     public void OnShout()
     {
         if (_screechSound != null) _audioSource.PlayOneShot(_screechSound);
     }
-
-    // ── Recover: stand still after a hit, listening for a reason to go again ──
 
     private void EnterRecover()
     {
         _state = State.Recover;
         _chaseTarget = null;
         _recoverEndTime = Time.time + _postAttackPause;
-        _heardTime = -999f; // the hit itself shouldn't count — only fresh noise
+        _heardTime = -999f; // only fresh noise should count, not the hit itself
 
         _agent.ResetPath();
         _agent.isStopped = true;
 
         RpcSetChasing(false);
         SetIdleLoop();
-        Debug.Log($"[TheConductorAI] Struck — standing still and listening for {_postAttackPause:F0}s.");
+        Debug.Log($"[TheConductorAI] Struck, standing still and listening for {_postAttackPause:F0}s.");
     }
 
     private void TickRecover()
     {
-        // Interruptible: any noise it can hear during the recharge pause — a sprint
-        // away, a cry for help — and it goes right back on the hunt.
+        // Any noise it can hear during the pause sends it right back on the hunt.
         if (ConsumeHeardNoise(out Vector3 pos, out float _, out bool _))
         {
             _agent.isStopped = false;
             if (TryStartChaseNear(pos))
             {
-                // Kick the animator out of Shout and back into Chase. This trigger
-                // lingers until the attack clip finishes and the animator reaches
-                // Shout, so he only visibly resumes chasing once the swing is done.
+                // Kick the animator out of Shout back into Chase once the swing finishes.
                 RpcTriggerRechase();
                 return;
             }
@@ -517,13 +448,11 @@ public class TheConductorAI : NetworkBehaviour
 
         if (Time.time >= _recoverEndTime)
         {
-            Debug.Log("[TheConductorAI] Pause over — back to wandering.");
+            Debug.Log("[TheConductorAI] Pause over, back to wandering.");
             _agent.isStopped = false;
             EnterWander();
         }
     }
-
-    // ── Footsteps ─────────────────────────────────────────────────────────────
 
     private void TickSteps()
     {
@@ -540,23 +469,17 @@ public class TheConductorAI : NetworkBehaviour
         RpcStep(index);
     }
 
-    // ── Noise intake (server) ─────────────────────────────────────────────────
-
     private void OnHeardNoise(Vector3 pos, float loudness)
     {
         if (_state == State.Inactive) return;
 
-        // Type filter on the RAW loudness: whispers and walking are simply never
-        // interesting, no matter how close. (Attenuating before this check made the
-        // margin between sprint 0.55 and the threshold collapse within ~2 m.)
+        // Filter on raw loudness: whispers and walking are never interesting, no matter how close.
         if (loudness < _hearingThreshold) return;
 
-        // Louder noises carry farther: a max-loudness scream carries the full
-        // hearing range, a sprint (0.55) roughly half of it.
+        // Louder noises carry farther, scaled by loudness.
         float carry = _hearingRange * loudness;
 
-        // Walls halve the carry: a noise right on the other side of a wall still
-        // gets through; a distant one doesn't.
+        // Walls reduce how far the noise carries.
         Vector3 ear = transform.position + Vector3.up * 1.5f;
         Vector3 source = pos + Vector3.up * 1f;
         if (Physics.Linecast(ear, source, _occluderMask, QueryTriggerInteraction.Ignore))
@@ -565,7 +488,7 @@ public class TheConductorAI : NetworkBehaviour
         float dist = Vector3.Distance(transform.position, pos);
         if (dist > carry) return;
 
-        // Keep the most recent qualifying noise; the state ticks decide what to do.
+        // Keep the most recent qualifying noise; the state ticks decide what to do with it.
         _heardPos = pos;
         _heardLoudness = loudness;
         _heardUrgent = dist <= _closeChaseRadius;
@@ -583,11 +506,7 @@ public class TheConductorAI : NetworkBehaviour
         return true;
     }
 
-    // ── Targeting helpers ─────────────────────────────────────────────────────
-
-    // The return gather zone is a safe area — a player standing in it can't be sensed
-    // or chased, and a chase target reaching it sends the Conductor straight back to
-    // wandering (TickChase's validity check).
+    // The return gather zone is a safe area: a player inside it can't be sensed or chased.
     private static bool IsValidTarget(PlayerManager p)
         => p != null && !p.IsDead && p.IsInsideDungeon() && !ReturnGatherZone.IsInside(p);
 
@@ -611,8 +530,7 @@ public class TheConductorAI : NetworkBehaviour
         return best;
     }
 
-    // Like TryRandomNavPoint but rejects points near the dungeon entrance so the
-    // Conductor never appears where the players spawn in.
+    // Like TryRandomNavPoint but rejects points near the entrance so it never spawns on the players.
     private bool TryFindSpawnPoint(Vector3 anchor, out Vector3 result)
     {
         if (_entrance == null)
@@ -653,13 +571,11 @@ public class TheConductorAI : NetworkBehaviour
         return false;
     }
 
-    // ── Presentation (all clients) ─────────────────────────────────────────────
-
     [ObserversRpc(runLocally: true, bufferLast: true)]
     private void RpcSetVisible(bool visible)
     {
         if (_modelRoot != null) _modelRoot.SetActive(visible);
-        if (!visible) _loopPlayer.StopLoop(); // fade out — no snap when it vanishes
+        if (!visible) _loopPlayer.StopLoop(); // fade out so it doesn't snap when it vanishes
     }
 
     [ObserversRpc(runLocally: true)]
@@ -676,31 +592,24 @@ public class TheConductorAI : NetworkBehaviour
     private void RpcSetChasing(bool chasing)
     {
         if (_animator == null) return;
-        // Clear any pending Attack trigger left over from a previous swing so it can't
-        // fire the instant he (re-)enters Chase — he only attacks when EnterAttack sets
-        // it again once in range.
+        // Clear any leftover Attack trigger so it can't fire the instant Chase re-enters.
         _animator.ResetTrigger(AnimAttack);
         _animator.SetBool(AnimIsChasing, chasing);
     }
 
-    // Plays the attack animation on every client. The clip's "slicing" frame carries
-    // an animation event that calls OnAttackHit, which lands the hit and plays the sound.
+    // Plays the attack animation; its slicing frame fires the OnAttackHit event.
     [ObserversRpc(runLocally: true)]
     private void RpcTriggerAttack()
     {
         if (_animator != null) _animator.SetTrigger(AnimAttack);
     }
 
-    // Drives the Shout (post-attack recharge) → Chase transition when it hears
-    // something during the pause. Set as a trigger; it waits for the attack clip to
-    // finish and the animator to enter Shout before the transition consumes it.
+    // Drives the shout-to-chase transition when it hears something during the pause.
     [ObserversRpc(runLocally: true)]
     private void RpcTriggerRechase()
     {
         if (_animator != null) _animator.SetTrigger(AnimRechase);
     }
-
-    // ── Loops / animator (server-side helpers call these locally too) ──────────
 
     private void SetIdleLoop() => RpcPlayLoop(false);
     private void SetChaseLoop() => RpcPlayLoop(true);
@@ -708,8 +617,6 @@ public class TheConductorAI : NetworkBehaviour
     [ObserversRpc(runLocally: true)]
     private void RpcPlayLoop(bool chasing)
     {
-        // Crossfades idle ↔ chase (and fades in/out at the edges) so the switch never
-        // clicks. Fade times are configurable on the CrossfadeLoopPlayer component.
         AudioClip clip = chasing ? _chaseLoop : _idleLoop;
         if (clip == null) { _loopPlayer.StopLoop(); return; }
         _loopPlayer.PlayLoop(clip);

@@ -3,21 +3,17 @@ using UnityEngine.SceneManagement;
 using TMPro;
 
 /// <summary>
-/// Steam-free main menu. Stores the player's intent via ConnectionIntent,
-/// then does a plain SceneManager load to BootstrapScene where the
-/// NetworkManager lives and will handle starting host / client.
+/// Main menu that records the player's host/join intent and loads the bootstrap scene.
 /// </summary>
 public class MainMenuUI : MonoBehaviour
 {
     [Header("Scene")]
-    [Tooltip("Exact name of your Bootstrap scene as it appears in Build Settings.")]
+    [Tooltip("Name of the Bootstrap scene as it appears in Build Settings.")]
     [SerializeField] private string _bootstrapSceneName = "BootstrapScene";
 
     [Header("UI References")]
     [SerializeField] private TMP_InputField _roomCodeInput;
     [SerializeField] private TextMeshProUGUI _statusText;
-
-    // ── Button callbacks ──────────────────────────────────────────────
 
     public void OnHostClicked()
     {
@@ -40,8 +36,6 @@ public class MainMenuUI : MonoBehaviour
         ConnectionIntent.SetJoin(code);
         LoadBootstrap();
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────
 
     private void LoadBootstrap()
     {

@@ -3,19 +3,7 @@ using StarterAssets;
 using UnityEngine;
 
 /// <summary>
-/// Drives one character model's Animator from the owner's movement state.
-///
-/// This runs on every model the player has (FP hands, FP body, TP body), but only
-/// ONE model — the third-person body — is networked. That model is identified by
-/// its <see cref="HideRenderersForOwner"/> component:
-///   • Its sibling NetworkAnimator (auto-sync) replicates the parameters this
-///     script writes to the Animator, so observers see the same locomotion.
-///   • Its trigger events (Jump/Land) are broadcast over the network.
-///   • HideRenderersForOwner hides it on the owning client (who sees their FP
-///     models instead) while the model stays ACTIVE so the animator keeps syncing.
-///
-/// The first-person models are local-only: their NetworkAnimator auto-sync is off
-/// and their triggers are set locally, because no one else ever sees them.
+/// Drives a character model's Animator from the owner's movement state, broadcasting the third-person body's triggers.
 /// </summary>
 public class PlayerAnimationHandler : NetworkBehaviour
 {
@@ -54,9 +42,8 @@ public class PlayerAnimationHandler : NetworkBehaviour
         _animator = GetComponent<Animator>();
         if (_animator == null) _animator = GetComponentInChildren<Animator>(true);
 
-        // The third-person body is the one flagged with HideRenderersForOwner —
-        // that's the only model other players see, so it's the one whose triggers
-        // need to be broadcast. Its sibling NetworkAnimator syncs the rest.
+        // The third-person body is the one flagged with HideRenderersForOwner, the only
+        // model others see, so it's the one whose triggers are broadcast.
         _isThirdPersonBody = GetComponent<HideRenderersForOwner>() != null;
     }
 
@@ -80,14 +67,10 @@ public class PlayerAnimationHandler : NetworkBehaviour
             UpdateGrounded();
         }
 
-        // Land is derived from the IsGrounded parameter on every client that shows
-        // this model. On remote bodies IsGrounded is network-synced, so Land fires
-        // in step with the grounded state instead of racing a separately-sent
-        // trigger — which was leaving remote players stuck falling.
+        // Land is derived from the synced IsGrounded parameter, so it fires in step with
+        // the grounded state instead of racing a separately-sent trigger.
         UpdateLand();
     }
-
-    // ── Locomotion ────────────────────────────────────────────────────────────
 
     private void UpdateLocomotion()
     {
@@ -105,8 +88,6 @@ public class PlayerAnimationHandler : NetworkBehaviour
         _animator.SetFloat(AnimX, _currentX);
         _animator.SetFloat(AnimY, _currentY);
     }
-
-    // ── Airborne ──────────────────────────────────────────────────────────────
 
     // Owner only: sets the synced IsGrounded bool and fires Jump on take-off.
     private void UpdateGrounded()
@@ -133,10 +114,8 @@ public class PlayerAnimationHandler : NetworkBehaviour
             _controller.SetCanJump(true);
     }
 
-    // Every client: keeps Jump/Land in step with the (synced) IsGrounded bool.
-    // Each trigger is cleared when it enters the wrong phase, so one that arrived
-    // out of order with IsGrounded can't linger and mis-fire — which was kicking
-    // remote bodies from Land back into Jump and getting them stuck falling.
+    // Every client: keeps Jump/Land in step with the synced IsGrounded bool, clearing a
+    // trigger that arrived out of order so it can't linger and mis-fire.
     private void UpdateLand()
     {
         bool grounded = _animator.GetBool(AnimIsGrounded);
@@ -155,12 +134,7 @@ public class PlayerAnimationHandler : NetworkBehaviour
         _wasGroundedAnim = grounded;
     }
 
-    // ── Trigger Sync ──────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Fires a trigger locally. On the third-person body it is also broadcast so
-    /// other clients play it; the FP models set it locally only (nobody else sees them).
-    /// </summary>
+    // Fires a trigger locally, and also broadcasts it from the third-person body.
     private void TriggerOnAllClients(int hash)
     {
         _animator.SetTrigger(hash);
@@ -178,21 +152,17 @@ public class PlayerAnimationHandler : NetworkBehaviour
     [ObserversRpc]
     private void SyncTriggerOnClients(int hash)
     {
-        // Owner already set it locally
-        if (isOwner) return;
+        if (isOwner) return; // owner already set it locally
         if (!_animator) return;
         _animator.SetTrigger(hash);
     }
 
-    // ── Animation Events ──────────────────────────────────────────────────────
-
+    // Animation event at the end of the land clip.
     public void OnLandAnimationEnd()
     {
         if (!isOwner) return;
         _controller.SetCanJump(true);
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private bool IsInBlendTree()
     {

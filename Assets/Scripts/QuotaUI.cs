@@ -2,6 +2,9 @@ using TMPro;
 using UnityEngine;
 using PurrNet;
 
+/// <summary>
+/// HUD showing the current day, quota progress, banked bandwidth, and energy count.
+/// </summary>
 public class QuotaUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI _dayText;
@@ -23,7 +26,7 @@ public class QuotaUI : MonoBehaviour
 
         var qm = QuotaManager.Instance;
 
-        // Day + quota only show DURING an expedition — hidden in the lobby.
+        // Day and quota only show during an expedition, hidden in the lobby.
         bool inExpedition = PlayerManager.Local != null && PlayerManager.Local.IsInsideDungeon();
         if (_dayText && _dayText.gameObject.activeSelf != inExpedition)
             _dayText.gameObject.SetActive(inExpedition);

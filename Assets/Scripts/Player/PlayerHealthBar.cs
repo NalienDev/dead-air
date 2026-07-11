@@ -2,6 +2,9 @@ using UnityEngine;
 using TMPro;
 using static UnityEngine.Rendering.DebugUI;
 
+/// <summary>
+/// Updates health and oxygen text labels from the player's synced vitals.
+/// </summary>
 public class PlayerHealthBar : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI _healthText;

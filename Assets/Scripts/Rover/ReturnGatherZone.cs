@@ -1,13 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// The boarding area for going home: every alive player must stand inside it before the
-/// <see cref="ReturnToBaseButton"/> works. Put it on a trigger collider around the rover
-/// (child of the rover prefab works fine).
-///
-/// The button checks it client-side for instant feedback and the server re-validates in
-/// <see cref="RoverManager.ServerRequestReturnToBase"/> — positions are replicated, so
-/// both see the same answer.
+/// Boarding area every alive player must stand in to return home, which also counts as a safe zone.
 /// </summary>
 public class ReturnGatherZone : PlayerGatherZone
 {
@@ -24,11 +18,7 @@ public class ReturnGatherZone : PlayerGatherZone
         if (Instance == this) Instance = null;
     }
 
-    /// <summary>
-    /// True if this player stands inside the return zone. The zone doubles as a safe
-    /// area: the Echo and the Conductor drop targets that are inside it. False when no
-    /// zone exists in the scene.
-    /// </summary>
+    // True if the player stands inside the return zone, which enemies treat as a safe area.
     public static bool IsInside(PlayerManager player) =>
         Instance != null && player != null && Instance.Contains(player.transform.position);
 }

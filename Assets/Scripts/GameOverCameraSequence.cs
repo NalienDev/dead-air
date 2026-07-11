@@ -2,15 +2,7 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Lives in the GameOver scene, alongside GameOverHandler. On Start, snaps the
-/// camera to the first waypoint and then eases through the rest of them in
-/// order, slowly and smoothly, ending on (and staying at) the last one - a
-/// slow flythrough of the burning city, finishing on a wide top-down shot.
-///
-/// Waypoints are hardcoded position/rotation values (captured directly from
-/// the Scene view while framing each shot), not Transform references -
-/// nothing to wire up in the Inspector, just tweak the numbers here if a shot
-/// needs adjusting.
+/// Slow cinematic camera flythrough of the burning city for the game-over scene.
 /// </summary>
 public class GameOverCameraSequence : MonoBehaviour
 {
@@ -32,11 +24,11 @@ public class GameOverCameraSequence : MonoBehaviour
     [SerializeField] private Transform cameraTransform;
 
     [Header("Timing")]
-    [Tooltip("Average seconds per pair of waypoints - total flythrough time is this times (waypoint count - 1).")]
+    [Tooltip("Average seconds per pair of waypoints.")]
     [SerializeField] private float segmentDuration = 4f;
-    [Tooltip("Pause before the very first move starts.")]
+    [Tooltip("Pause before the first move.")]
     [SerializeField] private float startDelay = 0f;
-    [Tooltip("Eases speed in/out only at the very start and end of the WHOLE path - not per waypoint, so the camera never stops at the points in between, just flows through them.")]
+    [Tooltip("Eases speed at the start and end of the whole path, not per waypoint.")]
     [SerializeField] private AnimationCurve moveCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
     [Header("Waypoints (in order)")]
@@ -93,19 +85,15 @@ public class GameOverCameraSequence : MonoBehaviour
         {
             t += Time.deltaTime;
 
-            // moveCurve only shapes the very start/end of the ENTIRE path -
-            // everything in between moves at a steady pace, so there's no
-            // stop-start at each waypoint like separate per-segment lerps
-            // would produce.
+            // Shapes only the start and end of the whole path, so the camera flows
+            // through waypoints at a steady pace instead of stopping at each one.
             float eased = moveCurve.Evaluate(Mathf.Clamp01(t / totalDuration));
             float scaled = eased * segments;
 
             int segIndex = Mathf.Clamp(Mathf.FloorToInt(scaled), 0, segments - 1);
             float localT = scaled - segIndex;
 
-            // Catmull-Rom needs one point before and one after the current
-            // segment's pair - clamp at the ends so the path doesn't try to
-            // read past the first/last waypoint.
+            // Catmull-Rom needs a point before and after the segment; clamp at the ends.
             Vector3 p0 = waypoints[Mathf.Max(segIndex - 1, 0)].position;
             Vector3 p1 = waypoints[segIndex].position;
             Vector3 p2 = waypoints[Mathf.Min(segIndex + 1, lastIndex)].position;
@@ -120,15 +108,11 @@ public class GameOverCameraSequence : MonoBehaviour
             yield return null;
         }
 
-        // Land exactly on the last waypoint (city from above) and stay -
-        // GameOverHandler takes over the timing for when the scene actually
-        // resets/reloads.
+        // Land exactly on the last waypoint; GameOverHandler owns the reset timing.
         SetCameraTo(waypoints[lastIndex].position, waypoints[lastIndex].rotation);
     }
 
-    // Standard uniform Catmull-Rom spline segment - passes exactly through
-    // p1 (t=0) and p2 (t=1), curving smoothly based on the neighboring
-    // points p0/p3, with continuous velocity across segment boundaries.
+    // Uniform Catmull-Rom segment: passes through p1 and p2, curving via neighbours p0/p3.
     private static Vector3 CatmullRom(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
     {
         float t2 = t * t;

@@ -1,46 +1,31 @@
 using UnityEngine;
 
 /// <summary>
-/// A generic proximity door. Put this on a door object whose Animator has an "open
-/// and hold" clip and a "close" clip, driven by a single bool parameter (default
-/// "IsOpen"): the animator opens on true and closes on false.
-///
-/// While anything on <see cref="_detectorLayers"/> (players, enemies…) is within
-/// <see cref="_openRadius"/>, the door opens and stays open. It only closes once
-/// everything has moved beyond <see cref="_closeRadius"/> — the gap between the two
-/// gives it hysteresis so a body loitering on the threshold doesn't flap it open and
-/// shut.
-///
-/// Detection is proximity-only (no colliders/triggers needed) and reads the synced
-/// world positions of players and enemies, so every client drives its own door to the
-/// same state without any networking of its own.
+/// Door that opens while a player or enemy is nearby, with hysteresis so it doesn't flap.
 /// </summary>
 public class ProximityDoor : MonoBehaviour
 {
     [Header("References")]
-    [Tooltip("Animator with a bool parameter that opens the door when true. Defaults to " +
-             "an Animator on this object or its children.")]
+    [Tooltip("Animator with a bool parameter that opens the door when true.")]
     [SerializeField] private Animator _animator;
-    [Tooltip("Optional. Point the proximity is measured from. Defaults to this object's " +
-             "position — set it if the door's pivot isn't where players approach.")]
+    [Tooltip("Point the proximity is measured from. Defaults to this object.")]
     [SerializeField] private Transform _sensor;
 
     [Header("Detection")]
-    [Tooltip("Layers that open the door — set this to your Player and Enemy layers.")]
+    [Tooltip("Layers that open the door.")]
     [SerializeField] private LayerMask _detectorLayers = ~0;
     [Tooltip("A detector within this distance opens the door.")]
     [SerializeField] private float _openRadius = 3f;
-    [Tooltip("The door closes once every detector is beyond this distance. Keep it a little " +
-             "larger than the open radius so a body on the threshold doesn't flap the door.")]
+    [Tooltip("The door closes once every detector is beyond this distance.")]
     [SerializeField] private float _closeRadius = 3.5f;
-    [Tooltip("Seconds between proximity checks. Small is fine — this is cheap.")]
+    [Tooltip("Seconds between proximity checks.")]
     [SerializeField] private float _checkInterval = 0.15f;
 
     [Header("Animator")]
     [Tooltip("Bool parameter on the Animator that holds the door open while true.")]
     [SerializeField] private string _openParameter = "IsOpen";
 
-    [Header("Audio (optional)")]
+    [Header("Audio")]
     [SerializeField] private AudioSource _audioSource;
     [SerializeField] private AudioClip _openSound;
     [SerializeField] private AudioClip _closeSound;

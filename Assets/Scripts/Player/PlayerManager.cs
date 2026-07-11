@@ -3,39 +3,27 @@ using PurrNet;
 using UnityEngine;
 
 /// <summary>
-/// Manages synced player state: health, oxygen, dungeon flag, and voice relay.
-/// IsDead is a convenience property that reads from PlayerDeathHandler.
+/// Manages synced player state: health, oxygen, dungeon flag, and voice relay to the server.
 /// </summary>
 public class PlayerManager : NetworkIdentity, ISoundListener
 {
-    // ── Synced state ───────────────────────────────────────────────────────
-
     public SyncVar<int> currentHealth = new(100);
     public SyncVar<int> maxHealth = new(100);
     public SyncVar<int> maxOxygen = new(360);
     public SyncVar<int> currentOxygen = new(360);
 
-    /// <summary>When true, oxygen never drains (from the infinite-oxygen upgrade).</summary>
+    // When true, oxygen never drains (from the infinite-oxygen upgrade).
     public SyncVar<bool> hasInfiniteOxygen = new(false);
 
-    /// <summary>Oxygen-station charges. Reset to max on expedition completion;
-    /// max grows with the +charge upgrade.</summary>
+    // Oxygen-station charges; reset to max on expedition completion, max grows with the upgrade.
     public SyncVar<int> maxOxygenCharges = new(3);
     public SyncVar<int> currentOxygenCharges = new(3);
 
-    /// <summary>True while this player is inside a dungeon.</summary>
-    public SyncVar<bool> isInsideDungeon = new(false); 
-
-    // ── Local accessor ─────────────────────────────────────────────────────
+    public SyncVar<bool> isInsideDungeon = new(false);
 
     public static PlayerManager Local { get; private set; }
 
-    // ── Convenience ────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// True when this player is dead. Reads from PlayerDeathHandler.isDead so
-    /// there is a single source of truth — no duplicated SyncVar.
-    /// </summary>
+    // True when dead; reads PlayerDeathHandler so there's a single source of truth.
     public bool IsDead
     {
         get
@@ -45,30 +33,22 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         }
     }
 
-    // ── Suffocation (0 oxygen) ───────────────────────────────────────────────
-
-    [Header("Suffocation (at 0 oxygen)")]
+    [Header("Suffocation")]
     [Tooltip("Health lost per second while out of oxygen.")]
     [SerializeField] private int _suffocationDamagePerSecond = 10;
-    [Tooltip("Looping gasp/alarm played for the local player while suffocating.")]
+    [Tooltip("Looping gasp played for the local player while suffocating.")]
     [SerializeField] private AudioClip _suffocationLoop;
 
     private AudioSource _suffocationSource;
 
-    // ── Private state ──────────────────────────────────────────────────────
-
     private float _oxygenTimer = 0f;
     private PlayerDeathHandler _deathHandler;
 
-    // Server-side view of the player's current mic loudness (0..1). Updated by
-    // ServerReportVoiceLoudness and read by the blind Conductor. Decays to 0 on its
-    // own once the owner stops sending reports, so we never need an Update here
-    // (this component is disabled on the server's copy of remote clients).
+    // Server-side view of the player's mic loudness, read by the Conductor. Decays to 0
+    // on its own once the owner stops sending reports.
     private float _lastVoiceLoudness;
     private float _lastVoiceTime = -999f;
     private const float VoiceStaleSeconds = 0.3f;
-
-    // ── Lifecycle ──────────────────────────────────────────────────────────
 
     protected override void OnSpawned(bool asServer)
     {
@@ -76,7 +56,7 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         {
             Local = this;
 
-            // Hide the loading screen once the local player is fully spawned in Main
+            // Hide the loading screen once the local player is fully spawned in Main.
             if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Main")
             {
                 if (LoadingScreenManager.Instance != null)
@@ -85,19 +65,16 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         }
     }
 
-    // ── Update ─────────────────────────────────────────────────────────────
-
     private void Update()
     {
         if (!isOwner) return;
 
-        // Keep streaming any captured voice to the server even while dead, so an
-        // in-flight utterance finishes sending.
+        // Keep streaming captured voice even while dead so an in-flight utterance finishes.
         PumpVoiceStreaming();
 
         if (IsDead)
         {
-            StopSuffocationLoop(); // no gasping once dead
+            StopSuffocationLoop();
             return;
         }
 
@@ -105,21 +82,17 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         if (_oxygenTimer >= 1f)
         {
             _oxygenTimer = 0f;
-            ServerOxygenTick(); // drains, or suffocation-damages at 0
+            ServerOxygenTick();
         }
 
-        // Loop the suffocation sound locally (per-frame so it starts/stops promptly).
         if (IsSuffocatingNow()) StartSuffocationLoop();
         else StopSuffocationLoop();
 
-        // Debug bindings — remove before shipping (F is the flashlight now)
+        // Debug: X grants oxygen.
         if (Input.GetKeyDown(KeyCode.X)) GainOxygen(10);
     }
 
-    /// <summary>
-    /// True while the player is out of air and unprotected — i.e. actively suffocating.
-    /// Shared shape between the local audio and the server-side damage so they agree.
-    /// </summary>
+    // True while the player is out of air and unprotected; shared by the audio and damage checks.
     private bool IsSuffocatingNow()
     {
         return !IsDead
@@ -139,7 +112,7 @@ public class PlayerManager : NetworkIdentity, ISoundListener
             _suffocationSource = gameObject.AddComponent<AudioSource>();
             _suffocationSource.playOnAwake = false;
             _suffocationSource.loop = true;
-            _suffocationSource.spatialBlend = 0f; // your own gasping — 2D
+            _suffocationSource.spatialBlend = 0f; // the player's own gasping, so 2D
             _suffocationSource.clip = _suffocationLoop;
         }
 
@@ -152,27 +125,18 @@ public class PlayerManager : NetworkIdentity, ISoundListener
             _suffocationSource.Stop();
     }
 
-    // ── Public getters ─────────────────────────────────────────────────────
-
     public int GetCurrentHealth() => currentHealth.value;
     public int GetMaxHealth() => maxHealth.value;
     public int GetMaxOxygen() => maxOxygen.value;
     public int GetCurrentOxygen() => currentOxygen.value;
     public bool IsInsideDungeon() => isInsideDungeon.value;
 
-    // ── Dungeon state ──────────────────────────────────────────────────────
-
     public void SetInsideDungeon(bool value) => ServerSetInsideDungeon(value);
 
     [ServerRpc(requireOwnership: false)]
     private void ServerSetInsideDungeon(bool value) => isInsideDungeon.value = value;
 
-    // ── Teleport all players (server-authoritative) ────────────────────────
-
-    /// <summary>
-    /// Any client can call this. The server finds every PlayerManager and
-    /// tells each one to warp to <paramref name="position"/> via ObserversRpc.
-    /// </summary>
+    // Any client can call this; the server warps every player to the position.
     [ServerRpc(requireOwnership: false)]
     public void RequestTeleportAllPlayers(Vector3 position, Quaternion rotation)
     {
@@ -181,7 +145,6 @@ public class PlayerManager : NetworkIdentity, ISoundListener
             pm.TeleportToPosition(position, rotation);
     }
 
-    /// <summary>Runs on every client (and the server) for this specific player object.</summary>
     [ObserversRpc(runLocally: true)]
     public void TeleportToPosition(Vector3 position, Quaternion rotation)
     {
@@ -191,20 +154,13 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         if (cc != null) cc.enabled = true;
     }
 
-    // ── Server RPCs ────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Owner → server, once per second. Drains 1 oxygen; once oxygen hits 0 the player
-    /// suffocates instead of dying outright — losing <see cref="_suffocationDamagePerSecond"/>
-    /// health each tick until they get air back (death then comes from health reaching 0).
-    /// Breathing air (silence zone) or infinite oxygen protects from both.
-    /// </summary>
+    // Once per second: drains oxygen, then suffocation-damages health while at 0.
+    // A silence zone or infinite oxygen protects from both.
     [ServerRpc]
     private void ServerOxygenTick()
     {
         if (IsDead) return;
 
-        // Silence zone / infinite oxygen → breathing, so neither drain nor suffocate.
         if (hasInfiniteOxygen.value || FogClearingZone.ContainsPoint(transform.position))
             return;
 
@@ -218,30 +174,27 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         }
     }
 
-    /// <summary>External oxygen reduction (hazards etc.). Clamped; no longer lethal on
-    /// its own — running out just starts suffocation on the next oxygen tick.</summary>
+    // External oxygen reduction (hazards); running out just starts suffocation next tick.
     [ServerRpc]
     public void DrainOxygen(int amount)
     {
         if (IsDead) return;
         if (hasInfiniteOxygen.value) return;
-        // Inside a silence zone (FogClearingZone) the air is breathable — no drain.
+        // A silence zone has breathable air, so no drain.
         if (FogClearingZone.ContainsPoint(transform.position)) return;
         currentOxygen.value = Mathf.Clamp(currentOxygen.value - amount, 0, maxOxygen.value);
     }
 
-    // ── Oxygen upgrades (server-side, called by PlayerUpgrades) ──────────────
-
-    /// <summary>Raises max oxygen by a fraction of its current value and refills to full.</summary>
+    // Raises max oxygen by a fraction of its current value and refills to full.
     public void ServerAddMaxOxygenPercent(float pct)
     {
         if (!isServer) return;
         int add = Mathf.Max(1, Mathf.RoundToInt(maxOxygen.value * pct));
         maxOxygen.value += add;
-        currentOxygen.value = maxOxygen.value; // taking the upgrade maxes you out
+        currentOxygen.value = maxOxygen.value;
     }
 
-    /// <summary>Enables/disables infinite oxygen and refills to full when enabling.</summary>
+    // Enables or disables infinite oxygen, refilling to full when enabling.
     public void ServerSetInfiniteOxygen(bool value)
     {
         if (!isServer) return;
@@ -249,12 +202,7 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         if (value) currentOxygen.value = maxOxygen.value;
     }
 
-    // ── Oxygen station (server-side, called by OxygenStation) ────────────────
-
-    /// <summary>
-    /// Spends one oxygen-station charge and refills oxygen to full. Returns false when
-    /// out of charges, dead, or already at full oxygen (no charge wasted).
-    /// </summary>
+    // Spends one station charge and refills to full; false when out of charges, dead, or already full.
     public bool ServerTryUseOxygenCharge()
     {
         if (!isServer || IsDead) return false;
@@ -266,8 +214,7 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         return true;
     }
 
-    /// <summary>Grants extra station charges (the +charge upgrade): raises the max and
-    /// hands the new charges over immediately.</summary>
+    // Grants extra station charges, raising the max and handing them over immediately.
     public void ServerAddOxygenCharges(int amount)
     {
         if (!isServer || amount == 0) return;
@@ -275,12 +222,7 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         currentOxygenCharges.value += amount;
     }
 
-    // ── Expedition reset (server-side, called by RoverManager on return) ─────
-
-    /// <summary>
-    /// Completing an expedition wipes the slate: dead players are revived, and
-    /// health / oxygen / station charges all reset to max.
-    /// </summary>
+    // Completing an expedition revives dead players and resets health, oxygen, and charges to max.
     public void ServerResetForNewExpedition()
     {
         if (!isServer) return;
@@ -309,9 +251,7 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         CheckServerDeath();
     }
 
-    /// <summary>
-    /// Notifies all clients of a hit so the owning client can apply the movement stun.
-    /// </summary>
+    // Notifies all clients of a hit so the owning client applies the movement stun.
     [ObserversRpc(runLocally: true)]
     private void RpcOnHit()
     {
@@ -336,30 +276,19 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         currentHealth.value = Mathf.Clamp(currentHealth.value + amount, 0, maxHealth.value);
     }
 
-    /// <summary>
-    /// Server-authoritative death check, run after any server-side change to
-    /// health/oxygen. This lives here — not in PlayerDeathHandler.Update —
-    /// because NetworkOwnershipToggle disables PlayerDeathHandler (and this
-    /// component) on the server's copy of a remote client, so their Update never
-    /// runs. These ServerRpc bodies, however, always execute on the server, and
-    /// calling a method on a disabled component is still valid.
-    /// </summary>
+    // Death check run after any server-side health/oxygen change. Lives here because
+    // PlayerDeathHandler.Update is disabled on the server's copy of remote clients,
+    // but these ServerRpc bodies always run on the server.
     private void CheckServerDeath()
     {
         if (_deathHandler == null) _deathHandler = GetComponent<PlayerDeathHandler>();
         if (_deathHandler != null) _deathHandler.ServerCheckDeath();
     }
 
-    // ── Voice recording relay ──────────────────────────────────────────────
-    //
-    // A whole utterance can be hundreds of KB to several MB of raw float samples.
-    // Sent as one RPC it fragments and head-of-line-blocks the reliable channel that
-    // also carries movement sync, which makes remote players stutter/teleport. So we
-    // compress to 16-bit PCM (half the bytes) and stream it to the server in small
-    // per-frame chunks, and the server reassembles it.
+    // Voice relay: an utterance is compressed to 16-bit PCM and streamed to the server
+    // in small per-frame chunks so it doesn't head-of-line-block movement sync.
 
-    // ≈0.1s of 48 kHz audio per frame (~9.6 KB as PCM16). Far more than realtime
-    // speech needs, but small enough that it never floods the channel in one frame.
+    // ~0.1s of 48 kHz audio per frame, small enough not to flood the channel in one frame.
     private const int VoiceSamplesPerFrame = 4800;
     // Backpressure: if utterances pile up faster than they send, drop the oldest.
     private const int VoiceMaxQueuedClips = 8;
@@ -372,8 +301,7 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         public int Id;
     }
 
-    // Owner-side outgoing queue. Enqueue may be called from the audio capture thread,
-    // so it's guarded; everything else runs on the main thread in Update.
+    // Owner-side outgoing queue; Enqueue may run on the audio thread, so it's guarded.
     private readonly Queue<PendingVoiceClip> _voiceOutQueue = new();
     private readonly object _voiceOutLock = new();
     private PendingVoiceClip _voiceSending;   // clip currently being streamed
@@ -386,7 +314,7 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     private int _rxChannels;
     private List<float> _rxSamples;
 
-    /// <summary>Owner → server: queue a finished utterance to be streamed up.</summary>
+    // Queues a finished utterance to be streamed up to the server.
     public void SubmitVoiceClipToServer(float[] samples, int sampleRate, int channels)
     {
         if (samples == null || samples.Length == 0) return;
@@ -404,7 +332,7 @@ public class PlayerManager : NetworkIdentity, ISoundListener
             while (_voiceOutQueue.Count > VoiceMaxQueuedClips)
             {
                 _voiceOutQueue.Dequeue();
-                Debug.LogWarning("[PlayerManager] Voice send backlog — dropping oldest utterance.");
+                Debug.LogWarning("[PlayerManager] Voice send backlog, dropping oldest utterance.");
             }
         }
     }
@@ -463,7 +391,7 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     [ServerRpc]
     private void ServerVoiceChunk(int clipId, byte[] pcm16)
     {
-        if (_rxSamples == null || clipId != _rxClipId) return; // stray / out of order
+        if (_rxSamples == null || clipId != _rxClipId) return; // stray or out of order
         for (int i = 0; i + 1 < pcm16.Length; i += 2)
         {
             short s = (short)(pcm16[i] | (pcm16[i + 1] << 8));
@@ -498,20 +426,14 @@ public class PlayerManager : NetworkIdentity, ISoundListener
 
     public void OnHearSound(Vector3 origin)
     {
-        Debug.Log($"[{owner}] Ouvi um som em {origin}");
+        Debug.Log($"[{owner}] Heard a sound at {origin}");
     }
 
-    // ── Noise the Conductor can hear ────────────────────────────────────────
-
-    /// <summary>
-    /// Server-side estimate of how loud this player currently is (0..1). Reads back
-    /// to 0 automatically once the owner stops streaming voice reports. Used by
-    /// TheConductorAI both to pick a target and to detect a sustained scream.
-    /// </summary>
+    // Server-side estimate of how loud this player is, decaying to 0 once reports stop.
     public float CurrentVoiceLoudness =>
         (Time.time - _lastVoiceTime <= VoiceStaleSeconds) ? _lastVoiceLoudness : 0f;
 
-    /// <summary>Owner → server: the local mic's current normalised loudness.</summary>
+    // Reports the local mic's normalised loudness to the server.
     public void ReportVoiceLoudness(float loudness01) => ServerReportVoiceLoudness(loudness01);
 
     [ServerRpc]
@@ -520,14 +442,12 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         _lastVoiceLoudness = Mathf.Clamp01(loudness01);
         _lastVoiceTime = Time.time;
 
-        // Voices are the loudest thing in the dungeon — feed the Conductor's ears.
         NoiseEvents.Report(transform.position, _lastVoiceLoudness);
     }
 
     private PlayerUpgrades _upgrades;
 
-    /// <summary>Owner → server: a momentary noise at the player's position (footstep, sprint).
-    /// The quiet-footsteps upgrade scales it down here, so every noise source benefits.</summary>
+    // Reports a momentary noise at the player's position; the quiet-footsteps upgrade scales it down.
     public void ReportNoise(float loudness01)
     {
         if (_upgrades == null) _upgrades = GetComponent<PlayerUpgrades>();

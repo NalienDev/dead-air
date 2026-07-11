@@ -1,13 +1,16 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// Toggles the pause menu and time scale on Escape.
+/// </summary>
 public class PauseMenu : MonoBehaviour
 {
     public static bool GameIsPaused = false;
     public GameObject pauseMenuUI;
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape)) // && !LevelClearedMenu.isInClearedMenu)
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (GameIsPaused)
             {

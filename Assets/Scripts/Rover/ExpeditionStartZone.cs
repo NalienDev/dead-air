@@ -2,15 +2,7 @@ using PurrNet;
 using UnityEngine;
 
 /// <summary>
-/// The departure area (replaces the old start-expedition button). Place it in the lobby
-/// on a trigger collider shaped like the boarding area: when EVERY alive player stands
-/// inside, the expedition starts automatically (server-driven via
-/// <see cref="RoverManager.ServerStartExpedition"/> — sound, ≥2s loading screen,
-/// generation, teleport).
-///
-/// Edge-armed: it only fires on the transition from "not everyone inside" to "everyone
-/// inside", and re-arms only after someone leaves — so players teleported back into the
-/// lobby can't instantly relaunch, plus a rearm cooldown after each return.
+/// Departure area that starts the expedition once every alive player stands inside it.
 /// </summary>
 public class ExpeditionStartZone : PlayerGatherZone
 {
@@ -24,7 +16,7 @@ public class ExpeditionStartZone : PlayerGatherZone
 
     private void Update()
     {
-        // Server decides — player positions replicate to it, so its view is authoritative.
+        // The server decides, since player positions replicate to it.
         NetworkManager nm = NetworkManager.main;
         if (nm == null || !nm.isServer) return;
 
@@ -35,14 +27,14 @@ public class ExpeditionStartZone : PlayerGatherZone
         RoverManager rover = RoverManager.Instance;
         if (rover == null) return;
 
-        // Not in the lobby phase — disarm so nothing fires mid-expedition.
+        // Not in the lobby phase, so disarm to avoid firing mid-expedition.
         if (rover.IsStartingExpedition || AnyPlayerInsideDungeon())
         {
             _armed = false;
             return;
         }
 
-        // Fresh off a return — give players a moment before the zone is live again.
+        // Fresh off a return, so give players a moment before the zone is live again.
         if (Time.time - rover.LastReturnTime < _rearmSeconds)
         {
             _armed = false;
@@ -53,14 +45,14 @@ public class ExpeditionStartZone : PlayerGatherZone
 
         if (!allInside)
         {
-            _armed = true; // saw a "not everyone inside" frame — ready to trigger
+            _armed = true; // saw a not-everyone-inside frame, ready to trigger
             return;
         }
 
         if (!_armed) return;
         _armed = false;
 
-        Debug.Log($"[ExpeditionStartZone] All {aliveCount} player(s) aboard — starting expedition.");
+        Debug.Log($"[ExpeditionStartZone] All {aliveCount} player(s) aboard, starting expedition.");
         rover.ServerStartExpedition();
     }
 }

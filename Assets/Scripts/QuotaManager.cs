@@ -2,19 +2,10 @@ using PurrNet;
 using UnityEngine;
 
 /// <summary>
-/// DDOL singleton tracking quota state.
-/// Uses NetworkIdentity for SyncVar replication to clients.
-///
-/// IMPORTANT: Do NOT use [ServerRpc] on this class. This object is moved to
-/// DontDestroyOnLoad in Awake() — outside PurrNet's spawn pipeline — so
-/// PurrNet considers it "not spawned" and rejects all RPCs on it.
-///
-/// Instead, call these methods only from server/host context (e.g. from
-/// ReturnToBaseButton which runs on the interacting player's machine).
-/// On a host, networkManager.isServer is true. On a dedicated server,
-/// same applies. Pure clients should never call these directly — add a
-/// [ServerRpc] on the caller side if pure-client support is needed later.
+/// Persistent singleton tracking quota, bandwidth, and day progression via SyncVars.
 /// </summary>
+// Don't add [ServerRpc] here: this object lives in DontDestroyOnLoad, outside PurrNet's
+// spawn pipeline, so RPCs are rejected. Call these methods from server/host context only.
 public class QuotaManager : NetworkIdentity
 {
     public static QuotaManager Instance { get; private set; }
@@ -31,15 +22,10 @@ public class QuotaManager : NetworkIdentity
     public SyncVar<int> sessionBandwidth = new SyncVar<int>(0);
     public SyncVar<int> currentEnergyCells = new SyncVar<int>(0);
 
-    /// <summary>Completed expeditions (returns to base). Gates certain upgrades.</summary>
+    // Completed expeditions; gates certain upgrades.
     public SyncVar<int> expeditionsCompleted = new SyncVar<int>(0);
 
-    /// <summary>
-    /// Why the run last ended in a Game Over - see GameOverReason.cs. A
-    /// SyncVar (not a plain static field) so every client, not just the
-    /// server, sees the correct reason once the GameOver scene loads and
-    /// reads it via GameOverStatsDisplay.
-    /// </summary>
+    // Why the run last ended in a game over; see GameOverReason.
     public SyncVar<int> lastGameOverReason = new SyncVar<int>(GameOverReason.None);
 
     protected override void OnSpawned(bool asServer)
@@ -68,25 +54,19 @@ public class QuotaManager : NetworkIdentity
                   $"Session: {sessionBandwidth.value}/{currentQuota.value}");
     }
 
-    /// <summary>
-    /// Server-side. Banks bandwidth the instant it's vacuumed up, so the quota UI ticks
-    /// live during the expedition. The end-of-run quota check reads the same
-    /// <see cref="sessionBandwidth"/>, so extraction is still calculated the same way.
-    /// </summary>
+    // Banks bandwidth as it's vacuumed up so the quota UI ticks live during the expedition.
     public void ServerAddBandwidth(int amount)
     {
         if (amount == 0) return;
         sessionBandwidth.value += amount;
     }
 
-    /// <summary>Server-side. Counts energy cells live as they're vacuumed up.</summary>
     public void ServerAddEnergyCells(int amount)
     {
         if (amount == 0) return;
         currentEnergyCells.value += amount;
     }
 
-    /// <summary>Server-side. One more completed expedition (called on return to base).</summary>
     public void ServerRegisterExpeditionReturn()
     {
         expeditionsCompleted.value++;
@@ -102,8 +82,7 @@ public class QuotaManager : NetworkIdentity
             currentQuota.value = Mathf.RoundToInt(currentQuota.value * _quotaMultiplier);
 
             Debug.Log("[QuotaManager] Quota met — advancing to next day.");
-            // Teleportation to lobby is handled by ReturnToBaseButton now, no scene load needed.
-            
+            // Return to lobby is handled by ReturnToBaseButton, so no scene load here.
             if (DungeonGenerator.Instance != null)
                 DungeonGenerator.Instance.RegenerateDungeon();
         }
@@ -138,8 +117,6 @@ public class QuotaManager : NetworkIdentity
         lastGameOverReason.value = GameOverReason.None;
 
         Debug.Log("[QuotaManager] Game reset.");
-        // Resetting game doesn't need to load the lobby scene, as we teleport back to the lobby point.
-        // If a specific reset sequence is needed, handle it here.
         if (DungeonGenerator.Instance != null)
             DungeonGenerator.Instance.RegenerateDungeon();
     }

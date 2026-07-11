@@ -2,19 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// White silhouette shown while the local player is looking at an interactable.
-/// Added automatically by <see cref="Interactor"/> on first hover — nothing to place
-/// by hand. Purely local/cosmetic (each client outlines only what THEY look at).
-///
-/// On first highlight it builds one shell per mesh under the object: a child with the
-/// same mesh rendered by Custom/InteractableOutline (inverted hull, so only a thin rim
-/// shows). Works for static meshes and skinned meshes. The shells are toggled on/off
-/// on hover enter/exit.
-///
-/// Configure it by creating a material from Custom/InteractableOutline at
-/// Assets/Resources/InteractableOutline.mat (color + thickness in the inspector);
-/// that asset also keeps the shader in builds. Without it, a plain white material is
-/// built from the shader — then the shader must be in Always Included Shaders.
+/// Local inverted-hull outline shown while the player looks at an interactable.
 /// </summary>
 public class HoverOutline : MonoBehaviour
 {
@@ -28,9 +16,7 @@ public class HoverOutline : MonoBehaviour
     {
         if (s_material != null) return s_material;
 
-        // Preferred: a material asset at Assets/Resources/InteractableOutline.mat.
-        // Lets you tweak color/thickness in the inspector, and the asset reference
-        // keeps the shader in builds without touching Always Included Shaders.
+        // Preferred: a material asset in Resources, which also keeps the shader in builds.
         s_material = Resources.Load<Material>("InteractableOutline");
         if (s_material != null) return s_material;
 

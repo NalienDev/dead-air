@@ -5,6 +5,9 @@ using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// Persistent singleton that loads scenes for every player and drives the loading screen.
+/// </summary>
 public class SceneChanger : NetworkIdentity
 {
     public static SceneChanger Instance { get; private set; }

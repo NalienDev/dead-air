@@ -3,26 +3,14 @@ using PurrNet.Transports;
 using UnityEngine;
 
 /// <summary>
-/// Place this on the same GameObject as the NetworkManager in BootstrapScene.
-///
-/// Runs in Awake (before ConnectionStarter.Start) to:
-///   1. Read ConnectionIntent left by the MainMenu.
-///   2. Configure the PurrTransport room name.
-///   3. Start the NetworkManager as Host or Client.
-///
-/// If no ConnectionIntent is found (e.g. you pressed Play directly in
-/// BootstrapScene from the Editor), it defaults to Host so dev iteration works.
-///
-/// ConnectionStarter from PurrLobby is harmless here — it looks for a
-/// LobbyDataHolder and logs an error then exits when none is found.
-/// You do NOT need to remove ConnectionStarter.
+/// Reads the ConnectionIntent left by the main menu and starts the NetworkManager as host or client.
 /// </summary>
 public class BootstrapConnector : MonoBehaviour
 {
     [SerializeField] private NetworkManager _networkManager;
     [SerializeField] private PurrTransport _transport;
 
-    [Tooltip("Delay in seconds before StartClient is called, to give the server time to be ready.")]
+    [Tooltip("Delay before StartClient, to give the server time to be ready.")]
     [SerializeField] private float _clientStartDelay = 1f;
 
     private void Awake()

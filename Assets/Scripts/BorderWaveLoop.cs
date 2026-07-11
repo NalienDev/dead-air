@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// Cycles a UI Image through a sprite sequence at a fixed frame rate.
+/// </summary>
 public class BorderWaveLoop : MonoBehaviour
 {
     [SerializeField] private Sprite[] _frames;

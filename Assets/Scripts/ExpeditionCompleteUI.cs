@@ -2,20 +2,17 @@ using TMPro;
 using UnityEngine;
 
 /// <summary>
-/// The "EXPEDITION COMPLETE" splash. One per scene, on a Canvas: assign the root panel
-/// (disabled by default) and optionally a label. <see cref="RoverManager"/> shows it on
-/// every client for a configurable number of seconds before players are teleported back
-/// to the lobby.
+/// Splash panel shown to every client when an expedition completes, before returning to the lobby.
 /// </summary>
 public class ExpeditionCompleteUI : MonoBehaviour
 {
     public static ExpeditionCompleteUI Instance { get; private set; }
 
-    [Tooltip("Panel toggled on/off. Leave it disabled in the scene.")]
+    [Tooltip("Panel toggled on and off.")]
     [SerializeField] private GameObject _root;
-    [Tooltip("Optional label. Leave empty to keep whatever text the panel already has.")]
+    [Tooltip("Label to write the message into.")]
     [SerializeField] private TMP_Text _label;
-    [Tooltip("Optional message written into the label when shown.")]
+    [Tooltip("Message written into the label when shown.")]
     [SerializeField] private string _message = "EXPEDITION COMPLETE";
 
     private float _hideAt = -1f;
@@ -32,7 +29,6 @@ public class ExpeditionCompleteUI : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    /// <summary>Shows the splash for <paramref name="seconds"/>, then hides itself.</summary>
     public void Show(float seconds)
     {
         if (_root != null) _root.SetActive(true);

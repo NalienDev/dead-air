@@ -3,15 +3,7 @@ using UnityEngine;
 using System.Collections;
 
 /// <summary>
-/// Lives in the Victory scene (a copy of GameOver, minus the Reason sign).
-/// After a short delay, resets the run (day 1, quota, bandwidth, energy) and
-/// loads everyone back into the Lobby - same structure as GameOverHandler,
-/// just returning to GameLobby instead of the City, since winning doesn't
-/// need to restart the actual run/dungeon.
-///
-/// IMPORTANT: only the SERVER/HOST runs the reset + scene load, same guard
-/// as GameOverHandler - every client loads this scene, and without the
-/// isServer check N players would each trigger their own scene load.
+/// Resets the run and returns everyone to the lobby after a short victory delay.
 /// </summary>
 public class VictoryHandler : MonoBehaviour
 {
@@ -20,7 +12,7 @@ public class VictoryHandler : MonoBehaviour
 
 #if UNITY_EDITOR
     [Header("Editor Testing")]
-    [Tooltip("When you Play this scene alone in the Editor, there's no host/NetworkManager running, so the isServer check below would silently skip the scene change. With this on, that check is bypassed in the Editor only - never compiled into an actual build.")]
+    [Tooltip("Bypass the isServer check so the scene change runs when playing this scene alone in the Editor.")]
     [SerializeField] private bool forceReturnWithoutServer = true;
 #endif
 
@@ -52,7 +44,7 @@ public class VictoryHandler : MonoBehaviour
         if (!proceed) yield break;
 
         if (QuotaManager.Instance != null)
-            QuotaManager.Instance.ServerResetGame(); // fresh run, back at day 1
+            QuotaManager.Instance.ServerResetGame();
 
         if (SceneChanger.Instance != null)
             SceneChanger.Instance.LoadSceneForEveryone(_lobbySceneName);

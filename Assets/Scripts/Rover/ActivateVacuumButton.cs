@@ -1,9 +1,11 @@
 using UnityEngine;
 
-// Toggles its rover's Sucker on/off.
+/// <summary>
+/// Interactable button that activates its rover's Sucker.
+/// </summary>
 public class ActivateVacuumButton : Interactable
 {
-    [Tooltip("The Sucker this button controls. If left empty, it will try to find one on this Rover.")]
+    [Tooltip("The Sucker this button controls. Auto-found on the Rover if empty.")]
     [SerializeField] private Sucker _targetSucker;
 
     private void Awake()

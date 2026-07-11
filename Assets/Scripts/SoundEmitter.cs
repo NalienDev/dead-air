@@ -1,13 +1,15 @@
 using UnityEngine;
 using PurrNet;
 
+/// <summary>
+/// Emits a world sound that nearby ISoundListeners (and optionally the Conductor) can hear.
+/// </summary>
 public class SoundEmitter : NetworkBehaviour
 {
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private float soundRadius = 10f;
 
-    [Tooltip("How loud this world sound is to the blind Conductor (0..1). " +
-             "0 = the Conductor cannot hear it.")]
+    [Tooltip("How loud this sound is to the Conductor. 0 = inaudible to it.")]
     [SerializeField, Range(0f, 1f)] private float _conductorLoudness = 0f;
 
     private bool _wasPlaying = false;
@@ -16,11 +18,11 @@ public class SoundEmitter : NetworkBehaviour
     {
         if (!isServer) return;
 
-        // Debug — remove antes de entregar
+        // Debug: press T to play the sound.
         if (Input.GetKeyDown(KeyCode.T)) audioSource.Play();
 
         bool isPlaying = audioSource.isPlaying;
-        // Só dispara uma vez na transição false → true
+        // Fire only once, on the false to true transition.
         if (isPlaying && !_wasPlaying)
             OnSoundStarted();
 

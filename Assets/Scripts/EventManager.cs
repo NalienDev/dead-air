@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.Events;
 
+/// <summary>
+/// Static hub for global timer and scene-change events.
+/// </summary>
 public static class EventManager
 {
     // Timer events & methods

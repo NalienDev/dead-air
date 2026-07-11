@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// Singleton that survives scene loads via DontDestroyOnLoad.
+/// </summary>
 public class DDOL : MonoBehaviour
 {
     public static DDOL Instance { get; private set; }

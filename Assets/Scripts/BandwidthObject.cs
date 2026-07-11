@@ -3,100 +3,64 @@ using UnityEngine;
 using UnityEngine.Serialization;
 
 /// <summary>
-/// A grabbable "loot" object that contributes bandwidth to the quota.
-///
-/// Every object rolls a <see cref="Condition"/> on the server when it spawns:
-/// <list type="bullet">
-/// <item><b>Perfect</b> — worth 100% of its base value</item>
-/// <item><b>Damaged</b> — worth 60%</item>
-/// <item><b>Worthless</b> — worth 0% (junk)</item>
-/// </list>
-/// The odds are tunable per-prefab in the Inspector, and the rolled condition is
-/// replicated so every client (and the Rover that banks it) agrees on the value.
-///
-/// Audio-wise each object can:
-/// <list type="bullet">
-/// <item>Hum a constant, very quiet looping sound (its own <see cref="AudioSource"/>).</item>
-/// <item>Have a chance to make a louder one-shot noise when grabbed — which the
-/// blind Conductor can hear (see <see cref="NoiseEvents"/>).</item>
-/// </list>
+/// Grabbable loot object that rolls a condition on spawn and contributes bandwidth to the quota.
 /// </summary>
 public class BandwidthObject : GrabbableObject
 {
     public enum Condition { Perfect = 0, Damaged = 1, Worthless = 2 }
 
-    // ── Value ──────────────────────────────────────────────────────────────
-
     [Header("Bandwidth Value")]
-    [Tooltip("Base value at 100% (Perfect) condition.")]
+    [Tooltip("Base value at Perfect condition.")]
     [SerializeField, FormerlySerializedAs("_bandwidthValue")] private int _baseValue = 100;
 
-    [Tooltip("Value multipliers per condition. Industry-standard defaults: 100% / 60% / 0%.")]
+    [Tooltip("Value multiplier per condition.")]
     [SerializeField, Range(0f, 2f)] private float _perfectMultiplier = 1.0f;
     [SerializeField, Range(0f, 2f)] private float _damagedMultiplier = 0.6f;
     [SerializeField, Range(0f, 2f)] private float _worthlessMultiplier = 0.0f;
 
-    [Header("Condition Odds (per prefab)")]
-    [Tooltip("Chance this object spawns in Perfect condition.")]
+    [Header("Condition Odds")]
+    [Tooltip("Chance to spawn Perfect.")]
     [SerializeField, Range(0f, 1f)] private float _perfectChance = 0.45f;
-    [Tooltip("Chance this object spawns Damaged. Whatever probability is left over " +
-             "after Perfect + Damaged becomes the chance of spawning Worthless.")]
+    [Tooltip("Chance to spawn Damaged. Remaining probability becomes Worthless.")]
     [SerializeField, Range(0f, 1f)] private float _damagedChance = 0.4f;
 
-    [Header("Condition Visuals (optional)")]
-    [Tooltip("Enabled only while the object is in Perfect condition.")]
+    [Header("Condition Visuals")]
+    [Tooltip("Shown only while Perfect.")]
     [SerializeField] private GameObject _perfectVisual;
-    [Tooltip("Enabled only while the object is Damaged.")]
+    [Tooltip("Shown only while Damaged.")]
     [SerializeField] private GameObject _damagedVisual;
-    [Tooltip("Enabled only while the object is Worthless.")]
+    [Tooltip("Shown only while Worthless.")]
     [SerializeField] private GameObject _worthlessVisual;
 
     [Header("Debug")]
-    [Tooltip("Forces this object to spawn Damaged, ignoring the odds above. Lets you " +
-             "test damaged visuals/value/pickup sound/noise-alert on demand instead of " +
-             "waiting on the random roll. Only matters on the server — same as the roll " +
-             "itself — so it works correctly in a networked build, not just standalone.")]
+    [Tooltip("Force this object to spawn Damaged, ignoring the odds.")]
     [SerializeField] private bool _debugForceDamaged = false;
 
-    // ── Ambient hum ────────────────────────────────────────────────────────
-
-    [Header("Constant Ambient Sound (optional)")]
-    [Tooltip("Looping, quiet hum played from this object. Configure clip/volume/pitch/" +
-             "spatial blend directly on this AudioSource. Leave empty for a silent object.")]
+    [Header("Ambient Sound")]
+    [Tooltip("Looping hum played from this object.")]
     [SerializeField] private AudioSource _ambientSource;
-    [Tooltip("Start the ambient hum automatically when the object spawns.")]
+    [Tooltip("Start the ambient hum on spawn.")]
     [SerializeField] private bool _playAmbientOnSpawn = true;
 
-    // ── Pickup noise ───────────────────────────────────────────────────────
-
-    [Header("Pickup Sound (optional)")]
-    [Tooltip("One-shot played when grabbed. Leave empty for a silent pickup.")]
+    [Header("Pickup Sound")]
+    [Tooltip("One-shot played when grabbed.")]
     [SerializeField] private AudioClip _pickupSound;
-    [Tooltip("Chance the pickup sound fires when grabbed. 0 = never, 1 = always.")]
+    [Tooltip("Chance the pickup sound fires when grabbed.")]
     [SerializeField, Range(0f, 1f)] private float _pickupSoundChance = 0.35f;
     [SerializeField, Range(0f, 1f)] private float _pickupSoundVolume = 1f;
-    [Tooltip("How loud the pickup is to the Conductor (0..1). Grabbing a noisy item " +
-             "should be enough to make it come investigate.")]
+    [Tooltip("How loud the pickup is to the Conductor.")]
     [SerializeField, Range(0f, 1f)] private float _pickupNoiseLoudness = 0.55f;
 
-    // ── Networked state ────────────────────────────────────────────────────
-
-    // Stored as int (0/1/2) so it works on every PurrNet build regardless of enum
-    // serialization support. Rolled once on the server in OnSpawned.
+    // Stored as int so it serializes on every PurrNet build; rolled once on the server.
     private readonly SyncVar<int> _conditionIndex = new((int)Condition.Perfect);
 
     private AudioSource _pickupSource;
 
     public Condition CurrentCondition => (Condition)_conditionIndex.value;
 
-    /// <summary>
-    /// Effective bandwidth value after applying the condition multiplier.
-    /// This is what the Rover banks toward the quota (RoverManager reads it).
-    /// </summary>
+    // Effective value after the condition multiplier; the Rover banks this toward the quota.
     public int BandwidthValue =>
         Mathf.RoundToInt(_baseValue * MultiplierFor(CurrentCondition));
-
-    // ── Lifecycle ──────────────────────────────────────────────────────────
 
     protected override void OnSpawned(bool asServer)
     {
@@ -109,8 +73,7 @@ public class BandwidthObject : GrabbableObject
         ApplyConditionVisuals(CurrentCondition);
         UpdateAmbientSound();
 
-        // A dedicated, non-looping source for pickup one-shots so it never fights
-        // the ambient loop.
+        // Separate non-looping source so pickup one-shots don't fight the ambient loop.
         _pickupSource = gameObject.AddComponent<AudioSource>();
         _pickupSource.playOnAwake = false;
         _pickupSource.spatialBlend = _ambientSource != null ? _ambientSource.spatialBlend : 1f;
@@ -122,14 +85,12 @@ public class BandwidthObject : GrabbableObject
         _conditionIndex.onChanged -= OnConditionChanged;
     }
 
-    // ── Condition ──────────────────────────────────────────────────────────
-
     private Condition RollCondition()
     {
         float perfect = Mathf.Clamp01(_perfectChance);
         float damaged = Mathf.Clamp01(_damagedChance);
 
-        // Perfect + Damaged might exceed 1 if mis-configured; normalise defensively.
+        // Normalise if the chances sum above 1.
         if (perfect + damaged > 1f)
         {
             float scale = 1f / (perfect + damaged);
@@ -156,11 +117,7 @@ public class BandwidthObject : GrabbableObject
         UpdateAmbientSound();
     }
 
-    /// <summary>
-    /// Worthless junk is dead air — it doesn't hum. (Which doubles as an audio tell:
-    /// if you can hear it, it's worth something.) Runs on spawn and again when the
-    /// server-rolled condition replicates in.
-    /// </summary>
+    // Worthless junk stays silent, which doubles as a tell that audible loot has value.
     private void UpdateAmbientSound()
     {
         if (_ambientSource == null) return;
@@ -184,15 +141,11 @@ public class BandwidthObject : GrabbableObject
         if (_worthlessVisual != null) _worthlessVisual.SetActive(c == Condition.Worthless);
     }
 
-    // ── Interaction / pickup noise ─────────────────────────────────────────
-
     public override InteractionType OnInteract(GameObject user)
     {
         InteractionType result = base.OnInteract(user);
 
-        // Only DAMAGED objects can make a pickup noise — grabbing a perfect (or
-        // worthless) object is always silent. Risk/reward: damaged loot is worth less
-        // AND might call the Conductor. A silent object (no clip) can't be heard either.
+        // Only damaged objects can make a pickup noise; perfect and worthless grabs are silent.
         if (result == InteractionType.GRAB && _pickupSound != null
             && CurrentCondition == Condition.Damaged)
             ServerTryPickupSound();
@@ -203,9 +156,6 @@ public class BandwidthObject : GrabbableObject
     [ServerRpc(requireOwnership: false)]
     private void ServerTryPickupSound()
     {
-        // Server-authoritative roll for whether this grab actually makes a sound.
-        // Sound and alert are one and the same event: if it makes a sound the blind
-        // Conductor hears it; if not, nothing happens.
         if (CurrentCondition != Condition.Damaged) return; // re-validate client claim
         if (Random.value > _pickupSoundChance) return;
 

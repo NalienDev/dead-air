@@ -2,29 +2,18 @@ using PurrNet;
 using UnityEngine;
 
 /// <summary>
-/// Catches anything that falls out of the level and puts it back. Belt-and-suspenders
-/// behind solid floor/wall colliders: if physics ever shoves an object through the
-/// geometry (or an item is knocked off the map), this snaps it to the last spot it was
-/// safely resting instead of letting it fall forever.
-///
-/// Works on plain and networked objects, and on both Rigidbody items and
-/// CharacterController players. For a networked object it only repositions where it has
-/// authority (owner, or the server), so the corrected transform replicates through the
-/// object's NetworkTransform rather than fighting it.
-///
-/// Put it on item prefabs and (optionally) the player prefab. No other script needs to
-/// change.
+/// Snaps an object back to its last safe resting spot if it falls out of the level.
 /// </summary>
 [DisallowMultipleComponent]
 public class OutOfBoundsGuard : MonoBehaviour
 {
-    [Tooltip("If the object drops below this world Y it is treated as out of bounds and recovered.")]
+    [Tooltip("World Y below which the object is treated as out of bounds.")]
     [SerializeField] private float _killY = -25f;
 
-    [Tooltip("How often (seconds) to remember the current spot as 'safe' while in bounds and resting.")]
+    [Tooltip("Seconds between remembering the current spot as safe.")]
     [SerializeField] private float _safeSampleInterval = 0.5f;
 
-    [Tooltip("A Rigidbody moving slower than this counts as 'resting' and is safe to remember.")]
+    [Tooltip("A Rigidbody slower than this counts as resting.")]
     [SerializeField] private float _restingSpeed = 0.2f;
 
     private Rigidbody _rb;

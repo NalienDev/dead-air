@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// Persistent singleton that shows and hides the loading screen across scene loads.
+/// </summary>
 public class LoadingScreenManager : MonoBehaviour
 {
     public static LoadingScreenManager Instance { get; private set; }
@@ -9,7 +12,6 @@ public class LoadingScreenManager : MonoBehaviour
 
     private void Awake()
     {
-        // Make sure only one loading screen exists across scene loads
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -22,7 +24,6 @@ public class LoadingScreenManager : MonoBehaviour
 
     private void OnEnable()
     {
-        // Listen to scene changes
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
@@ -33,8 +34,7 @@ public class LoadingScreenManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Don't hide the loading screen automatically for Bootstrap or Main.
-        // For Main, it will be hidden when the player actually spawns.
+        // Main and Bootstrap hide the screen themselves once the player spawns.
         if (scene.name != "Main" && scene.name != "Bootstrap")
         {
             HideLoadingScreen();

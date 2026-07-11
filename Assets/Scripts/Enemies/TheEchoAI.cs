@@ -4,47 +4,24 @@ using UnityEngine;
 using UnityEngine.AI;
 
 /// <summary>
-/// The Echo. Server-authoritative stalker that lures players with stolen voices.
-///
-/// Loop: stays hidden on a cooldown → picks a random target inside the dungeon →
-/// waits until they're alone → spawns nearby on the NavMesh, out of everyone's
-/// sight → repeats the voice of a DIFFERENT player → if someone comes close (with
-/// line of sight) it screeches and chases them, hits for damage and vanishes.
-/// If nobody takes the bait it despawns and returns later for another target.
-///
-/// Once it's chasing, a player can scare it away by flashing the flashlight on any
-/// visible part of it _flashlightScareFlashes times. _reactToAllPlayers decides
-/// whether non-targets can trigger the chase / scare.
-///
-/// If a lure and a chase model are assigned (overlapping children, each with its
-/// own Animator), the chase start dissolve-morphs one into the other (ModelMorpher
-/// + Custom/EchoDissolve shader).
-///
-/// Needs on this GameObject: NavMeshAgent, NetworkTransform, and either a model root
-/// or the two morph forms as child visuals. The dungeon NavMesh is baked at runtime
-/// by DungeonNavMeshBaker.
+/// Server-authoritative stalker that lures players with stolen voices, then chases and strikes if they take the bait.
 /// </summary>
 public class TheEchoAI : NetworkBehaviour
 {
     private enum State { Hidden, Lure, Chase }
 
-    // ── Inspector ──────────────────────────────────────────────────────────
-
     [Header("References")]
-    [SerializeField] private AudioSource _audioSource;   // voice playback
-    [Tooltip("Optional. Whole-model parent toggled on spawn/despawn. Leave empty if " +
-             "you use the morph forms below — hiding those hides the Echo.")]
+    [SerializeField] private AudioSource _audioSource;
+    [Tooltip("Whole-model parent toggled on spawn. Leave empty when using the morph forms below.")]
     [SerializeField] private GameObject _modelRoot;
-    [SerializeField] private Animator _animator;         // optional; gets bool "IsChasing"
+    [SerializeField] private Animator _animator;         // gets bool "IsChasing"
 
-    [Header("Morph Forms (optional)")]
-    [Tooltip("Form shown while luring. Child of the model root, with its own Animator.")]
+    [Header("Morph Forms")]
+    [Tooltip("Form shown while luring, with its own Animator.")]
     [SerializeField] private GameObject _lureModel;
-    [Tooltip("Form it morphs into when the chase starts. Child of the model root, " +
-             "overlapping the lure form, with its own Animator.")]
+    [Tooltip("Form it morphs into when the chase starts, overlapping the lure form.")]
     [SerializeField] private GameObject _chaseModel;
-    [Tooltip("Drives the dissolve crossfade between the two forms. Auto-found on " +
-             "this GameObject if left empty.")]
+    [Tooltip("Drives the dissolve crossfade between the two forms. Auto-found if empty.")]
     [SerializeField] private ModelMorpher _morpher;
 
     [Header("Sounds")]
@@ -72,15 +49,12 @@ public class TheEchoAI : NetworkBehaviour
     [Tooltip("Repeat the target's own voice instead of another player's.")]
     [SerializeField] private bool _repeatTargetVoice = false;
 
-    [Header("Flashlight Scare (chase only)")]
-    [Tooltip("Number of flashes (beam re-entering any visible part of the Echo) " +
-             "needed to scare it away while it's chasing. Flick the light on/off.")]
+    [Header("Flashlight Scare")]
+    [Tooltip("Flashes needed to scare it away while chasing.")]
     [SerializeField] private int _flashlightScareFlashes = 5;
-    [Tooltip("One-shot played whenever the Echo disappears — flashlight scare, lure " +
-             "timeout, target reaching the safe zone, or vanishing after a hit.")]
+    [Tooltip("One-shot played whenever the Echo disappears.")]
     [SerializeField] private AudioClip _scaredSound;
-    [Tooltip("When false, only the lured target can trigger the chase, and only the " +
-             "chase target can scare it with the flashlight; others are ignored.")]
+    [Tooltip("When false, only the lured target can trigger or scare it; others are ignored.")]
     [SerializeField] private bool _reactToAllPlayers = true;
 
     [Header("Chasing")]
@@ -90,18 +64,15 @@ public class TheEchoAI : NetworkBehaviour
     [SerializeField] private float _chaseTimeout = 15f;
 
     [Header("Vision")]
-    [Tooltip("Layers that block sight (walls/rooms). Do NOT include the Player layer.")]
+    [Tooltip("Layers that block sight. Do not include the Player layer.")]
     [SerializeField] private LayerMask _visionBlockers = Physics.DefaultRaycastLayers;
 
     private static readonly int AnimIsChasing = Animator.StringToHash("IsChasing");
     private const float HeadHeight = 1.6f;
 
-    // Points sampled up the Echo's body when testing flashlight exposure, so the
-    // scare still registers when only part of it (feet, torso, head) is lit/visible.
+    // Points sampled up the body for the flashlight scare, so partial exposure still counts.
     private static readonly float[] ScareSampleHeights = { 0.2f, 0.7f, 1.2f, 1.6f };
     private const float ScareSampleRadius = 0.35f;
-
-    // ── State (server) ─────────────────────────────────────────────────────
 
     private NavMeshAgent _agent;
     private CrossfadeLoopPlayer _loopPlayer;
@@ -131,13 +102,9 @@ public class TheEchoAI : NetworkBehaviour
 
     private bool HasMorphForms => _lureModel != null && _chaseModel != null;
 
-    // The Echo-voice-pitch upgrade is a PERSONAL upgrade: only the client that owns it
-    // hears the pitched-up voice. Each client pitches its own playback by the local
-    // player's upgrade value, so nothing about this is networked here.
+    // Personal upgrade: each client pitches its own playback by the local player's value.
     private float LocalVoicePitch =>
         PlayerUpgrades.Local != null ? PlayerUpgrades.Local.EchoVoicePitch : 1f;
-
-    // ── Lifecycle ──────────────────────────────────────────────────────────
 
     private void Awake()
     {
@@ -146,17 +113,14 @@ public class TheEchoAI : NetworkBehaviour
 
         _restPosition = transform.position; // parked here while hidden
 
-        // The agent drives all movement — a live rigidbody would just add gravity
-        // and make the hidden Echo fall forever.
+        // The agent drives all movement; a live rigidbody would make the hidden Echo fall.
         if (TryGetComponent(out Rigidbody rb))
             rb.isKinematic = true;
 
         if (_audioSource == null)
             _audioSource = gameObject.AddComponent<AudioSource>();
 
-        // Loops (breathing/running) go through a crossfader so starts, stops and the
-        // ambient↔chase switch never click. Add the component to the prefab to tune the
-        // fade times; it's created with defaults if missing.
+        // Loops go through a crossfader so starts, stops, and the switch don't click.
         _loopPlayer = GetComponent<CrossfadeLoopPlayer>();
         if (_loopPlayer == null) _loopPlayer = gameObject.AddComponent<CrossfadeLoopPlayer>();
 
@@ -166,8 +130,7 @@ public class TheEchoAI : NetworkBehaviour
         if (_lureModel != null) _lureAnimator = _lureModel.GetComponentInChildren<Animator>(true);
         if (_chaseModel != null) _chaseAnimator = _chaseModel.GetComponentInChildren<Animator>(true);
 
-        // Start hidden. With morph forms the two models ARE the visuals, so hiding
-        // them is enough even when no separate model root is assigned.
+        // Start hidden. With morph forms, hiding the two models is enough to hide the Echo.
         if (_modelRoot != null) _modelRoot.SetActive(false);
         if (_lureModel != null) _lureModel.SetActive(false);
         if (_chaseModel != null) _chaseModel.SetActive(false);
@@ -180,7 +143,7 @@ public class TheEchoAI : NetworkBehaviour
         _nextSpawnTime = Time.time + _respawnCooldown;
         Debug.Log($"[TheEchoAI] Server ready. First appearance allowed in {_respawnCooldown:F0}s.");
 
-        // Map changed mid-appearance — retreat and wait for the new layout.
+        // Retreat and wait for the new layout if the map regenerates mid-appearance.
         if (DungeonGenerator.Instance != null)
             DungeonGenerator.Instance.OnGenerated += Retreat;
     }
@@ -203,8 +166,7 @@ public class TheEchoAI : NetworkBehaviour
         }
     }
 
-    // ── Hidden: wait out the cooldown, pick a target, appear ───────────────
-
+    // Waits out the cooldown, picks an isolated target, and appears out of sight near them.
     private void TickHidden()
     {
         if (Time.time < _nextSpawnTime) return;
@@ -239,8 +201,7 @@ public class TheEchoAI : NetworkBehaviour
 
         Debug.Log($"[TheEchoAI] Appearing near '{_target.name}' at {spawnPos}.");
 
-        // Move BEFORE enabling — the agent can only be created on top of the
-        // NavMesh, and while hidden we're parked far away from it.
+        // Move before enabling: the agent can only attach on top of the NavMesh.
         transform.position = spawnPos;
         _agent.enabled = true;
 
@@ -253,11 +214,10 @@ public class TheEchoAI : NetworkBehaviour
 
         _agent.Warp(spawnPos);
 
-        // While luring it stands still and turns by hand — let the agent steer
-        // rotation only during the chase, or it overrides our manual facing.
+        // While luring it stands still and turns by hand; the agent only steers rotation during the chase.
         _agent.updateRotation = false;
 
-        // Face the target so the model isn't staring into its corner.
+        // Face the target.
         Vector3 look = _target.transform.position - spawnPos;
         look.y = 0f;
         if (look != Vector3.zero) transform.rotation = Quaternion.LookRotation(look);
@@ -272,11 +232,9 @@ public class TheEchoAI : NetworkBehaviour
         _nextVoiceTime = Time.time + voiceLength + _voiceRepeatDelay;
     }
 
-    // ── Lure: wait for someone to take the bait ────────────────────────────
-
     private void TickLure()
     {
-        // Target died, left the dungeon, or reached the safe return zone — give up now.
+        // Give up if the target died, left the dungeon, or reached the safe return zone.
         if (!IsValidTarget(_target))
         {
             Retreat();
@@ -295,7 +253,7 @@ public class TheEchoAI : NetworkBehaviour
             }
         }
 
-        // Keep repeating a (different) stolen voice a few seconds after each ends.
+        // Keep repeating a different stolen voice a few seconds after each ends.
         if (Time.time >= _nextVoiceTime)
         {
             float voiceLength = PlayStolenVoice();
@@ -306,7 +264,7 @@ public class TheEchoAI : NetworkBehaviour
             }
             else
             {
-                // Nothing left to steal — retry soon, but let the lure time out.
+                // Nothing left to steal; retry soon but let the lure time out.
                 _nextVoiceTime = Time.time + _voiceRepeatDelay;
             }
         }
@@ -315,11 +273,7 @@ public class TheEchoAI : NetworkBehaviour
             Retreat();
     }
 
-    /// <summary>
-    /// Counts flashes (the beam re-entering the Echo) for every player allowed to
-    /// scare it. Chase-only, so the beam reaches at any distance. Returns true
-    /// (after fleeing) once someone has flashed it enough.
-    /// </summary>
+    // Counts flashes for every player allowed to scare it, and flees once one flashes it enough.
     private bool UpdateFlashlightScare()
     {
         foreach (PlayerManager player in GetDungeonPlayers())
@@ -328,7 +282,7 @@ public class TheEchoAI : NetworkBehaviour
             FlashProgress progress = GetFlashProgress(player);
 
             bool lit = canReact && IsLitBy(player);
-            if (lit && !progress.wasLit) progress.flashes++; // beam just (re)entered — one flash
+            if (lit && !progress.wasLit) progress.flashes++; // beam just re-entered: one flash
             progress.wasLit = lit;
 
             if (canReact && _flashlightScareFlashes > 0
@@ -341,11 +295,8 @@ public class TheEchoAI : NetworkBehaviour
         return false;
     }
 
-    /// <summary>
-    /// True if the player's flashlight is aimed at any visible part of the Echo.
-    /// Samples several points up the body so partial cover (only the legs, only
-    /// the head...) still counts, and ignores beam range so distance is no limit.
-    /// </summary>
+    // True if the player's flashlight is aimed at any visible part of the Echo, sampling
+    // up the body so partial cover still counts.
     private bool IsLitBy(PlayerManager player)
     {
         PlayerFlashlight flashlight = GetFlashlight(player);
@@ -353,8 +304,7 @@ public class TheEchoAI : NetworkBehaviour
 
         Vector3 playerHead = player.transform.position + Vector3.up * HeadHeight;
 
-        // Offset perpendicular to the line of approach so peeking round a corner
-        // (only one side exposed) still lands a sample on the exposed side.
+        // Offset perpendicular to the approach so peeking round a corner still samples the exposed side.
         Vector3 toEcho = transform.position - player.transform.position;
         toEcho.y = 0f;
         Vector3 right = Vector3.Cross(Vector3.up, toEcho).normalized * ScareSampleRadius;
@@ -368,6 +318,7 @@ public class TheEchoAI : NetworkBehaviour
                 if (!flashlight.IsIlluminating(sample, ignoreRange: true)) continue;
                 if (!Physics.Linecast(playerHead, sample, _visionBlockers))
                     return true; // this part is both lit and visible
+
             }
         }
         return false;
@@ -376,7 +327,7 @@ public class TheEchoAI : NetworkBehaviour
     private void ScareAway(PlayerManager player)
     {
         Debug.Log($"[TheEchoAI] Scared away by '{player.name}'s flashlight.");
-        Retreat(); // Retreat plays the scared sound for every disappearance
+        Retreat();
     }
 
     private FlashProgress GetFlashProgress(PlayerManager player)
@@ -402,15 +353,13 @@ public class TheEchoAI : NetworkBehaviour
 
     private void StartChase(PlayerManager player)
     {
-        Debug.Log($"[TheEchoAI] '{player.name}' took the bait — chasing.");
+        Debug.Log($"[TheEchoAI] '{player.name}' took the bait, chasing.");
         _chaseTarget = player;
         _state = State.Chase;
         _chaseDeadline = Time.time + _chaseTimeout;
         _agent.updateRotation = true; // hand rotation back to the agent for the chase
         RpcSetChasing(true);
     }
-
-    // ── Chase: run the player down, hit once, vanish ───────────────────────
 
     private void TickChase()
     {
@@ -420,7 +369,7 @@ public class TheEchoAI : NetworkBehaviour
             return;
         }
 
-        // Mid-hunt the flashlight scares it off from any distance.
+        // The flashlight scares it off from any distance mid-hunt.
         if (UpdateFlashlightScare()) return;
 
         _agent.SetDestination(_chaseTarget.transform.position);
@@ -435,16 +384,15 @@ public class TheEchoAI : NetworkBehaviour
         }
     }
 
-    // Named Retreat (not Despawn) to avoid shadowing NetworkIdentity.Despawn — the
-    // Echo only hides and parks itself; the network object stays alive.
+    // Named Retreat (not Despawn) to avoid shadowing NetworkIdentity.Despawn; the network
+    // object stays alive while the Echo hides and parks itself.
     private void Retreat()
     {
         if (_state == State.Hidden) return;
 
         Debug.Log($"[TheEchoAI] Retreating ({_state}). Back in {_respawnCooldown:F0}s.");
 
-        // Scared cry on EVERY disappearance (flashlight, timeout, safe zone, hit-and-run…)
-        // — played at the spot it fled from, before the transform is parked away.
+        // Scared cry on every disappearance, played at the spot it fled from.
         RpcPlayScared(transform.position);
 
         _state = State.Hidden;
@@ -462,10 +410,7 @@ public class TheEchoAI : NetworkBehaviour
         RpcSetVisible(false);
     }
 
-    // ── Targeting helpers (server) ─────────────────────────────────────────
-
-    // The return gather zone is a safe area — a player standing in it can't be lured
-    // or chased, and losing a target to it makes the Echo retreat instantly.
+    // The return gather zone is a safe area: a player inside it can't be lured or chased.
     private static bool IsValidTarget(PlayerManager p)
         => p != null && !p.IsDead && p.IsInsideDungeon() && !ReturnGatherZone.IsInside(p);
 
@@ -512,9 +457,8 @@ public class TheEchoAI : NetworkBehaviour
     {
         result = default;
 
-        // The target's own position on the NavMesh — every candidate must be able
-        // to actually walk here, or the Echo spawns on a disconnected island
-        // (city ground, prop tops) and gets stuck behind "invisible walls".
+        // Every candidate must be able to walk to the target, or the Echo spawns on a
+        // disconnected island and gets stuck behind invisible walls.
         if (!NavMesh.SamplePosition(target.transform.position, out NavMeshHit targetHit, 2f, NavMesh.AllAreas))
             return false;
 
@@ -566,12 +510,7 @@ public class TheEchoAI : NetworkBehaviour
         return !Physics.Linecast(echoHead, playerHead, _visionBlockers);
     }
 
-    // ── Stolen voice playback ──────────────────────────────────────────────
-
-    /// <summary>
-    /// Plays a stolen voice clip — the target's own if _repeatTargetVoice is set,
-    /// otherwise another player's. Returns the clip length.
-    /// </summary>
+    // Plays a stolen voice clip and returns its length; the target's own if _repeatTargetVoice, else another player's.
     private float PlayStolenVoice()
     {
         VoiceRecordingStore store = VoiceRecordingStore.Instance;
@@ -588,8 +527,7 @@ public class TheEchoAI : NetworkBehaviour
             List<PlayerManager> others = GetDungeonPlayers();
             others.Remove(_target);
 
-            // Don't mimic whoever's closest — a voice coming from right next to a
-            // player gives the trick away. Only drop them if someone else is left.
+            // Don't mimic the closest player, since a voice right next to them gives the trick away.
             PlayerManager closest = GetClosestPlayer(others);
             if (others.Count > 1 && closest != null)
                 others.Remove(closest);
@@ -626,11 +564,9 @@ public class TheEchoAI : NetworkBehaviour
 
         _audioSource.Stop();
         _audioSource.clip = clip;
-        _audioSource.pitch = LocalVoicePitch; // personal upgrade — only this client hears it
+        _audioSource.pitch = LocalVoicePitch; // personal upgrade, only this client hears it
         _audioSource.Play();
     }
-
-    // ── Presentation (all clients) ─────────────────────────────────────────
 
     [ObserversRpc(runLocally: true, bufferLast: true)]
     private void RpcSetVisible(bool visible)
@@ -641,9 +577,8 @@ public class TheEchoAI : NetworkBehaviour
         if (_modelRoot != null)
             _modelRoot.SetActive(visible);
 
-        // Come back in the lure form; the chase form only appears mid-hunt. When
-        // hiding, both forms switch off — this is what hides the Echo when there's
-        // no separate model root assigned.
+        // Come back in the lure form; the chase form only appears mid-hunt. Hiding both
+        // forms is what hides the Echo when there's no separate model root.
         if (HasMorphForms)
         {
             _lureModel.SetActive(visible);
@@ -651,14 +586,13 @@ public class TheEchoAI : NetworkBehaviour
         }
 
         if (visible) PlayLoop(_breathingSound);
-        else _loopPlayer.StopLoop(); // fade out — no snap when it vanishes
+        else _loopPlayer.StopLoop(); // fade out so it doesn't snap when it vanishes
     }
 
     [ObserversRpc(runLocally: true)]
     private void RpcSetChasing(bool chasing)
     {
-        // Morph first so the chase model (and its Animator) is active before we
-        // try to set parameters on it.
+        // Morph first so the chase model's Animator is active before we set parameters on it.
         if (chasing && HasMorphForms && _morpher != null)
             _morpher.Morph(_lureModel, _chaseModel);
 
@@ -673,8 +607,7 @@ public class TheEchoAI : NetworkBehaviour
         }
     }
 
-    // Sets IsChasing only where the controller actually has that bool — the two
-    // forms have different animators and not all of them need the parameter.
+    // Sets IsChasing only where the controller actually has that bool.
     private static void SetChaseAnim(Animator animator, bool chasing)
     {
         if (animator == null || !animator.isActiveAndEnabled
@@ -698,8 +631,7 @@ public class TheEchoAI : NetworkBehaviour
         if (_scratchSound != null) _audioSource.PlayOneShot(_scratchSound);
     }
 
-    // Played at the spot it fled from — by the time the RPC lands, the Echo's own
-    // transform has already been parked back at the rest position.
+    // Plays at the spot it fled from, since its transform is parked away by the time this lands.
     [ObserversRpc(runLocally: true)]
     private void RpcPlayScared(Vector3 position)
     {
@@ -707,15 +639,14 @@ public class TheEchoAI : NetworkBehaviour
             AudioSource.PlayClipAtPoint(_scaredSound, position);
     }
 
-    // Crossfades between loops (breathing ↔ running) and fades in/out at the edges,
-    // so loop changes never click. Fade times are configurable on CrossfadeLoopPlayer.
+    // Crossfades between loops so changes don't click.
     private void PlayLoop(AudioClip clip)
     {
         if (clip == null) { _loopPlayer.StopLoop(); return; }
         _loopPlayer.PlayLoop(clip);
     }
 
-    // Throttled status log so the blocking condition is visible without spamming.
+    // Throttled status log so blocking conditions are visible without spamming.
     private void Status(string message)
     {
         if (Time.time < _nextLogTime) return;

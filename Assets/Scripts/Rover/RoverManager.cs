@@ -3,19 +3,7 @@ using PurrNet;
 using UnityEngine;
 
 /// <summary>
-/// Server-authoritative expedition flow.
-///
-/// DEPART: the <see cref="ExpeditionStartZone"/> (all alive players inside) calls
-/// <see cref="ServerStartExpedition"/> on the server: departure sound + loading screen
-/// for everyone, dungeon generation if needed, then teleport once BOTH generation is
-/// done AND the minimum loading time has passed (so there's always a short "travel"
-/// loading screen even when the dungeon is ready).
-///
-/// RETURN: <see cref="ReturnToBaseButton"/> → <see cref="ServerRequestReturnToBase"/>.
-/// Valid only after the early-return lock expires and with every alive player inside
-/// the <see cref="ReturnGatherZone"/>. Then: completion sound + "expedition complete"
-/// UI on all clients for a few seconds, and only after that the quota is evaluated and
-/// everyone is teleported/reset.
+/// Server-authoritative expedition flow: departure, dungeon travel, and the return-to-base sequence.
 /// </summary>
 public class RoverManager : NetworkBehaviour
 {
@@ -26,22 +14,18 @@ public class RoverManager : NetworkBehaviour
     [SerializeField] private GameObject _energyCellPrefab;
 
     [Header("Expedition Flow")]
-    [Tooltip("Minimum seconds the loading screen stays up when departing — a short fake " +
-             "loading even if the dungeon is already generated. If generation takes " +
-             "longer, the screen simply stays until it finishes.")]
+    [Tooltip("Minimum seconds the loading screen stays up when departing.")]
     [SerializeField] private float _minLoadingScreenSeconds = 2f;
     [Tooltip("Seconds after an expedition starts before the return-to-base button works.")]
     [SerializeField] private float _returnLockSeconds = 60f;
-    [Tooltip("Seconds the 'expedition complete' UI shows before players are teleported home.")]
+    [Tooltip("Seconds the expedition-complete UI shows before players are teleported home.")]
     [SerializeField] private float _completeUISeconds = 4f;
 
-    [Header("Sounds (2D, played for everyone)")]
-    [Tooltip("Played when the expedition departs (everyone gathered in the start zone).")]
+    [Header("Sounds")]
+    [Tooltip("Played when the expedition departs.")]
     [SerializeField] private AudioClip _expeditionStartSound;
-    [Tooltip("Played when the expedition is completed (return button accepted).")]
+    [Tooltip("Played when the expedition is completed.")]
     [SerializeField] private AudioClip _expeditionCompleteSound;
-
-    // ── Replicated / server state ─────────────────────────────────────────────
 
     // False while the early-return lock is armed. Replicated so every client's
     // ReturnToBaseButton agrees; the server also re-validates on use.
@@ -52,23 +36,19 @@ public class RoverManager : NetworkBehaviour
     private Transform _expeditionSpawnPoint;
     private int _energyCells;
 
-    // Departure: set while waiting for generation + minimum loading time.
+    // Departure: set while waiting for generation and the minimum loading time.
     private bool _awaitingDeparture;
     private float _departAfterTime;
 
-    // Return: guards the completion sequence so it can't run twice.
+    // Guards the return completion sequence so it can't run twice.
     private bool _returnSequenceRunning;
 
-    /// <summary>Whether the return-to-base button currently works (time lock only).</summary>
     public bool CanReturnToBase => _canReturnToBase.value;
 
-    /// <summary>True from "expedition triggered" until players are teleported in.</summary>
     public bool IsStartingExpedition => _awaitingDeparture;
 
-    /// <summary>Server time of the last completed return (zones use it to re-arm).</summary>
+    // Server time of the last completed return; zones use it to re-arm.
     public float LastReturnTime { get; private set; } = -999f;
-
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     protected override void OnSpawned(bool asServer) => Instance = this;
 
@@ -79,8 +59,7 @@ public class RoverManager : NetworkBehaviour
 
     private void Update()
     {
-        // Departure poll (server): teleport once the dungeon is ready AND the minimum
-        // loading time has elapsed. Polling (not OnGenerated) — see the note below.
+        // Departure poll: teleport once the dungeon is ready and the minimum loading time has elapsed.
         if (!_awaitingDeparture || !isServer) return;
         if (Time.time < _departAfterTime) return;
 

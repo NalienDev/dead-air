@@ -2,10 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Repeatedly spawns a prefab overhead once per second.
+/// </summary>
 public class Spawner : MonoBehaviour
 {
     public GameObject spawned;
-    // Start is called before the first frame update
+
     void Start()
     {
         StartCoroutine(Spawn());

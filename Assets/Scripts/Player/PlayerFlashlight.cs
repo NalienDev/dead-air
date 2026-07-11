@@ -3,15 +3,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 /// <summary>
-/// First-person volumetric flashlight. The owner toggles it with F; the on/off
-/// state and the look pitch are synced so teammates see the beam too.
-///
-/// The light + beam live on a mount built at runtime under the player root (which
-/// stays active for everyone), aimed from the owner's camera. Yaw comes free from
-/// the player transform (already networked); only pitch is synced.
-///
-/// Assign PlayerCameraRoot to _cameraRoot and a material using Custom/FlashlightBeam
-/// to _beamMaterial.
+/// First-person volumetric flashlight whose on/off state and aim pitch are synced so teammates see the beam.
 /// </summary>
 public class PlayerFlashlight : NetworkBehaviour
 {
@@ -40,16 +32,9 @@ public class PlayerFlashlight : NetworkBehaviour
     private Transform _mount;
     private GameObject _rig;
 
-    /// <summary>True while this player's flashlight is switched on (synced).</summary>
     public bool IsOn => _isOn.value;
 
-    /// <summary>
-    /// True if the flashlight is on and <paramref name="worldPoint"/> falls inside
-    /// the beam cone. Range is checked unless <paramref name="ignoreRange"/> is set
-    /// — the beam is angular, so it can still "hit" a distant point it's aimed at.
-    /// Works on the server too — the mount follows the synced pitch there.
-    /// Occlusion is the caller's problem.
-    /// </summary>
+    // True if the flashlight is on and worldPoint falls inside the beam cone; occlusion is the caller's problem.
     public bool IsIlluminating(Vector3 worldPoint, bool ignoreRange = false)
     {
         if (!_isOn.value || _mount == null) return false;
@@ -100,8 +85,6 @@ public class PlayerFlashlight : NetworkBehaviour
     {
         if (_rig != null) _rig.SetActive(on);
     }
-
-    // ── Rig ────────────────────────────────────────────────────────────────
 
     private void BuildRig()
     {

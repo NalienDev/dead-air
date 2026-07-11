@@ -1,6 +1,9 @@
-﻿using PurrNet;
+using PurrNet;
 using UnityEngine;
 
+/// <summary>
+/// Player-owned component handling hover, pickup, drop, throw, and inventory slots.
+/// </summary>
 public class Interactor : MonoBehaviour
 {
     [SerializeField] private int _baseInventorySize = 2;
@@ -20,16 +23,12 @@ public class Interactor : MonoBehaviour
     private void Awake()
     {
         _cam = Camera.main;
-        // Guard against spawn-order races: if an upgrade already sized the inventory
-        // (SetExtraSlots ran first), don't clobber it.
+        // If an upgrade already sized the inventory, don't clobber it.
         if (_slots == null)
             _slots = new GrabbableObject[Mathf.Max(1, _baseInventorySize)];
     }
 
-    /// <summary>
-    /// Grows (or shrinks) the inventory to base + <paramref name="extra"/> slots,
-    /// preserving items already held. Driven by the +inventory-slot upgrade.
-    /// </summary>
+    // Grows or shrinks the inventory to base + extra slots, preserving held items.
     public void SetExtraSlots(int extra)
     {
         extra = Mathf.Max(0, extra);
@@ -56,10 +55,6 @@ public class Interactor : MonoBehaviour
         HandleThrow();
     }
 
-    // ── Hover outline ──────────────────────────────────────────────────────
-    // White silhouette on whatever interactable the camera is aimed at. Purely
-    // local — this component only runs for the owning player.
-
     private Interactable _hovered;
     private HoverOutline _hoveredOutline;
 
@@ -84,7 +79,6 @@ public class Interactor : MonoBehaviour
         }
     }
 
-    // ── Slot switching ─────────────────────────────────────────────────────
     private void HandleSlotSwitch()
     {
         float scroll = Input.GetAxisRaw("Mouse ScrollWheel");
@@ -99,17 +93,13 @@ public class Interactor : MonoBehaviour
         _slots[_activeSlot]?.SetVisible(true);
     }
 
-    // ── Interact ───────────────────────────────────────────────────────────
     private void HandleInteract()
     {
         if (!Input.GetKeyDown(KeyCode.E)) return;
         if (!TryRaycast(out Interactable interactable, out RaycastHit hit)) return;
 
-        // If the target is a grabbable and the active slot is already occupied,
-        // bail out before calling OnInteract. This MUST be checked client-side
-        // before the call — _isHeld is a SyncVar with replication latency, so
-        // by the time it flips to true a second E press could already call
-        // TryPickup and jam two objects into the same slot.
+        // Bail before OnInteract if the slot is full: _isHeld is a replicated SyncVar,
+        // so a fast second press could jam two objects into one slot before it flips.
         if (hit.transform.TryGetComponent(out GrabbableObject _) && _slots[_activeSlot] != null)
             return;
 
@@ -117,12 +107,8 @@ public class Interactor : MonoBehaviour
 
         if (result == InteractionType.GRAB)
             _slots[_activeSlot] = hit.transform.GetComponent<GrabbableObject>();
-
-        // InteractionType.PRESS needs no handling here — the interactable
-        // already did its work inside OnInteract.
     }
 
-    // ── Drop ──────────────────────────────────────────────────────────────
     private void HandleDrop()
     {
         if (!Input.GetKeyDown(KeyCode.Q)) return;
@@ -132,7 +118,6 @@ public class Interactor : MonoBehaviour
         _slots[_activeSlot] = null;
     }
 
-    // ── Throw ─────────────────────────────────────────────────────────────
     private void HandleThrow()
     {
         if (!Input.GetKeyDown(KeyCode.G)) return;
@@ -142,7 +127,6 @@ public class Interactor : MonoBehaviour
         _slots[_activeSlot] = null;
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────
     private bool TryRaycast(out Interactable interactable, out RaycastHit hit)
     {
         interactable = null;
@@ -154,11 +138,7 @@ public class Interactor : MonoBehaviour
     public Transform GetPickupPos() => _pickupPosTransform;
     public bool IsHolding => _slots[_activeSlot] != null;
 
-    /// <summary>
-    /// Clears a specific object from the inventory without dropping/throwing it.
-    /// Used when something consumes a held item (e.g. the dampener eats an energy
-    /// cell) so we never keep a reference to a destroyed object in a slot.
-    /// </summary>
+    // Clears an object from the inventory without dropping it, e.g. when it's consumed.
     public void RemoveFromInventory(GrabbableObject obj)
     {
         for (int i = 0; i < _slots.Length; i++)

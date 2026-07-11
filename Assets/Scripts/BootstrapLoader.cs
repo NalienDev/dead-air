@@ -2,9 +2,7 @@ using PurrNet;
 using UnityEngine;
 
 /// <summary>
-/// Stays as a NetworkBehaviour so OnSpawned fires server-side
-/// and loads the first scene — same as before.
-/// Transport/room-code configuration is handled by BootstrapConnector (separate MonoBehaviour).
+/// Loads the first scene on the server once the network spawns.
 /// </summary>
 public class BootstrapLoader : NetworkBehaviour
 {

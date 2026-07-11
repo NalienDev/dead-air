@@ -3,23 +3,11 @@ using TMPro;
 using UnityEngine;
 
 /// <summary>
-/// Lives in the GameOver scene, alongside GameOverHandler and
-/// GameOverCameraSequence. Reads QuotaManager's stats once at Start -
-/// synchronously, before GameOverHandler's multi-second delayed reset wipes
-/// them back to day 1 - and writes them into world-space TextMeshPro signs
-/// placed by hand on buildings in the scene, the same numbers QuotaUI.cs
-/// already shows during normal play, just rendered as 3D text in the world
-/// instead of a screen overlay, so the flythrough camera passes by them.
-///
-/// Setup for each sign: Hierarchy > right-click > 3D Object > Text -
-/// TextMeshPro (NOT the UI version - that needs a Canvas and won't sit
-/// naturally on a building facade). Position/rotate/scale it to sit flush
-/// against a wall, then drag it into the matching slot below. Leave any
-/// slot empty to skip it.
+/// Writes the run's final stats into world-space text signs in the game-over scene.
 /// </summary>
 public class GameOverStatsDisplay : MonoBehaviour
 {
-    [Header("World-space text on buildings (TextMeshPro 3D, not UGUI)")]
+    [Header("World-space Text")]
     [SerializeField] private TextMeshPro daySurvivedText;
     [SerializeField] private TextMeshPro reasonText;
     [SerializeField] private TextMeshPro extractedText;
@@ -29,14 +17,15 @@ public class GameOverStatsDisplay : MonoBehaviour
     [SerializeField] private string extractedFormat = "TOTAL EXTRACTED: {0}";
 
     [Header("Reveal")]
-    [Tooltip("Types each sign out character by character (like ConnectedText.cs) instead of popping in all at once.")]
+    [Tooltip("Type each sign out character by character instead of popping in at once.")]
     [SerializeField] private bool useTypewriterEffect = true;
     [SerializeField] private float typewriterCharsPerSecond = 20f;
-    [Tooltip("Pause between each sign starting its reveal, so they don't all type at once.")]
+    [Tooltip("Pause between each sign starting its reveal.")]
     [SerializeField] private float staggerBetweenSigns = 1.5f;
 
     private void Start()
     {
+        // Read the stats now, before GameOverHandler's delayed reset wipes them.
         int day = 1;
         int reason = GameOverReason.None;
         int extracted = 0;

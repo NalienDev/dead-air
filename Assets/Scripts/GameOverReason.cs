@@ -1,8 +1,5 @@
 /// <summary>
-/// Shared reason codes for why the run last ended in a Game Over. Stored on
-/// QuotaManager.lastGameOverReason (a SyncVar<int>, so it replicates to
-/// every client, not just the server) and read back by
-/// GameOverStatsDisplay in the GameOver scene to show why the run ended.
+/// Shared reason codes for why a run ended in a game over.
 /// </summary>
 public static class GameOverReason
 {

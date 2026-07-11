@@ -3,12 +3,7 @@ using StarterAssets;
 using UnityEngine;
 
 /// <summary>
-/// Reports walking/sprinting footstep noise to the server so the blind Conductor can
-/// hear it. Reads movement + sprint straight from the StarterAssets FirstPersonController
-/// rig used by the real player prefab (PlayerCapsule) — PlayerMovement's noise code only
-/// exists on the PlayerTest prefab, which is why sprinting was inaudible in the game.
-///
-/// Attach next to PlayerManager on the PlayerCapsule prefab. Owner-only.
+/// Reports the owner's walking and sprinting footstep noise to the server so the Conductor can hear it.
 /// </summary>
 [RequireComponent(typeof(PlayerManager))]
 public class PlayerFootstepNoise : NetworkBehaviour
@@ -17,10 +12,9 @@ public class PlayerFootstepNoise : NetworkBehaviour
     [SerializeField] private float _walkStepInterval = 0.5f;
     [Tooltip("Seconds between footstep noises while sprinting.")]
     [SerializeField] private float _sprintStepInterval = 0.3f;
-    [Tooltip("How loud a walking step is to the Conductor (0..1). Usually below its " +
-             "hearing threshold — walking should be reasonably safe.")]
+    [Tooltip("How loud a walking step is to the Conductor.")]
     [SerializeField, Range(0f, 1f)] private float _walkNoise = 0.25f;
-    [Tooltip("How loud a sprinting step is (0..1). Loud enough to draw the Conductor.")]
+    [Tooltip("How loud a sprinting step is to the Conductor.")]
     [SerializeField, Range(0f, 1f)] private float _sprintNoise = 0.55f;
 
     private PlayerManager _playerManager;

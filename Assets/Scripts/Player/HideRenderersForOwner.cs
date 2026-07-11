@@ -2,18 +2,7 @@ using PurrNet;
 using UnityEngine;
 
 /// <summary>
-/// Marks the third-person body — the model other players see — and keeps it
-/// ACTIVE for everyone (so its NetworkAnimator keeps ticking and replicating),
-/// while hiding its renderers on the owning client so the local player sees their
-/// first-person models instead.
-///
-/// Use this INSTEAD of adding the object to NetworkOwnershipToggle's deactivate
-/// list. Deactivating the GameObject stops its Animator/NetworkAnimator from
-/// running on the owner, which prevents PurrNet from syncing its parameters.
-///
-/// Renderers are only hidden, not disabled on the Animator, so the pose still
-/// evaluates and syncs. Swap enabled=false for shadowCastingMode = ShadowsOnly
-/// if you want the local player to still cast a self-shadow.
+/// Hides the third-person body's renderers for the owner while keeping its animator ticking and replicating.
 /// </summary>
 public class HideRenderersForOwner : NetworkBehaviour
 {

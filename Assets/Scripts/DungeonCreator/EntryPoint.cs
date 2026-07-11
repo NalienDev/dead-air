@@ -1,8 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Marks a connection point between two dungeon parts.
-/// Tracks whether this point is already connected to another part.
+/// A connection point between dungeon parts that tracks whether it is already occupied.
 /// </summary>
 public class EntryPoint : MonoBehaviour
 {

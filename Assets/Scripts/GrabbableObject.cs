@@ -1,6 +1,9 @@
 using PurrNet;
 using UnityEngine;
 
+/// <summary>
+/// Networked physics object that players can pick up, hold, throw, and stash in inventory.
+/// </summary>
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(NetworkTransform))]
 public class GrabbableObject : Interactable
@@ -22,10 +25,8 @@ public class GrabbableObject : Interactable
 
     private SyncVar<bool> _isHeld = new SyncVar<bool>(false);
 
-    // Dungeon-loot bookkeeping. Objects baked into room prefabs are frozen while
-    // the dungeon generates (rooms teleport around; live rigidbodies get scattered)
-    // and swept up by the generator when the dungeon is torn down or strays are
-    // left orphaned by a failed placement.
+    // Loot baked into room prefabs is frozen while the dungeon generates (rooms
+    // teleport around) and swept up by the generator on teardown.
     private bool _isDungeonLoot;
     private bool _wasEverHeld;              // server-side: a player held this at least once
     private bool _frozenForGeneration;
@@ -163,13 +164,8 @@ public class GrabbableObject : Interactable
         _rb.AddForce(direction * _throwForce, ForceMode.Impulse);
     }
 
-    /// <summary>
-    /// Shows or hides this object while it sits in an inactive inventory slot.
-    /// Colliders are also disabled so the hidden item doesn't block raycasts or physics.
-    /// Applied locally immediately, then relayed through the server so every
-    /// other client hides/shows the same object — otherwise it stays visible
-    /// (and interactable) for everyone but the owner.
-    /// </summary>
+    // Shows/hides the object and its colliders locally, then relays through the
+    // server so every other client matches.
     public void SetVisible(bool visible)
     {
         ApplyVisible(visible);

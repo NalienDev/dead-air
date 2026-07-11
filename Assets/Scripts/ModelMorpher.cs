@@ -3,23 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Crossfades one model into another using the Custom/EchoDissolve shader.
-/// Both models sit overlapped under the same parent; the old one dissolves out
-/// while the new one dissolves in, with a glowing edge along the burn front.
-///
-/// Purely visual and local — run it on every client (the Echo triggers it from
-/// an ObserversRpc). The models keep their own materials: during the morph each
-/// renderer is temporarily switched to a dissolve material that copies its base
-/// map/color, and the originals are restored when the morph ends.
+/// Crossfades one overlapped model into another using the Custom/EchoDissolve shader.
 /// </summary>
 public class ModelMorpher : MonoBehaviour
 {
-    [Tooltip("The Custom/EchoDissolve shader. Assign it explicitly so it isn't " +
-             "stripped from builds; Shader.Find is only a play-mode fallback.")]
+    [Tooltip("The Custom/EchoDissolve shader. Assign it so it isn't stripped from builds.")]
     [SerializeField] private Shader _dissolveShader;
     [SerializeField] private float _duration = 1.5f;
     [SerializeField] private AnimationCurve _curve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-    [Tooltip("Optional burst played when the morph starts (place it on the model).")]
+    [Tooltip("Burst played when the morph starts.")]
     [SerializeField] private ParticleSystem _burst;
 
     private static readonly int DissolveThreshold = Shader.PropertyToID("_DissolveThreshold");
@@ -42,11 +34,6 @@ public class ModelMorpher : MonoBehaviour
 
     public bool IsMorphing => _routine != null;
 
-    /// <summary>
-    /// Dissolves <paramref name="from"/> out while <paramref name="to"/> dissolves
-    /// in. Activates both immediately; when done, <paramref name="from"/> is
-    /// deactivated and every renderer gets its original materials back.
-    /// </summary>
     public void Morph(GameObject from, GameObject to)
     {
         CancelMorph();
@@ -54,7 +41,7 @@ public class ModelMorpher : MonoBehaviour
         if (_dissolveShader == null)
             _dissolveShader = Shader.Find("Custom/EchoDissolve");
 
-        // No shader available — hard swap so gameplay still reads correctly.
+        // No shader available: hard swap so gameplay still reads correctly.
         if (_dissolveShader == null || from == null || to == null)
         {
             if (from != null) from.SetActive(false);
@@ -74,10 +61,7 @@ public class ModelMorpher : MonoBehaviour
         _routine = StartCoroutine(Run());
     }
 
-    /// <summary>
-    /// Stops a running morph and restores original materials. Active states are
-    /// left alone — the caller decides which model should be showing.
-    /// </summary>
+    // Stops a running morph and restores original materials, leaving active states alone.
     public void CancelMorph()
     {
         if (_routine != null)
