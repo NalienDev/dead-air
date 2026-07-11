@@ -11714,13 +11714,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e11c8f753f42f046bad3efa27aea170, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeMachineHud
-  _root: {fileID: 0}
-  _cardContainer: {fileID: 0}
+  _root: {fileID: 1048480752}
+  _cardContainer: {fileID: 892487673}
   _cardPrefab: {fileID: 4895218485174248468, guid: fdd171571e161d44f8d4df22d5e056e7, type: 3}
-  _balatroFeelRoot: {fileID: 0}
-  _cardsGroupHolder: {fileID: 0}
+  _balatroFeelRoot: {fileID: 1213297827}
+  _cardsGroupHolder: {fileID: 892487675}
   _playerCamera: {fileID: 1410719489}
-  _pickerCamera: {fileID: 0}
+  _pickerCamera: {fileID: 430821572}
   _playerInputs: {fileID: 1412007505189304343, guid: bdee0438dcdfe184288ae7e1a32623d4, type: 3}
   _objectsToHideWhileOpen:
   - {fileID: 768888344}
@@ -11738,10 +11738,10 @@ MonoBehaviour:
   - {fileID: 339233548}
   - {fileID: 1146003537}
   - {fileID: 603361704}
-  _titleText: {fileID: 0}
-  _creditsText: {fileID: 0}
-  _resultText: {fileID: 0}
-  _closeButton: {fileID: 0}
+  _titleText: {fileID: 2025830620}
+  _creditsText: {fileID: 1296947340}
+  _resultText: {fileID: 509287320}
+  _closeButton: {fileID: 832178705}
   _title: SELECT UPGRADE
   _debugTitle: 'DEBUG: PICK ANY UPGRADE'
   _resultVisibleSeconds: 2
@@ -16279,7 +16279,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1213297828
 Transform:
   m_ObjectHideFlags: 0
@@ -25572,7 +25572,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: 50.300293}
+  m_AnchoredPosition: {x: 0, y: 94.1001}
   m_SizeDelta: {x: 626.38, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2025830620
@@ -25622,8 +25622,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 127.46
-  m_fontSizeBase: 127.46
+  m_fontSize: 118.15
+  m_fontSizeBase: 118.15
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -25635,7 +25635,7 @@ MonoBehaviour:
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
   m_wordSpacing: 0
-  m_lineSpacing: 0
+  m_lineSpacing: -32.9
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
