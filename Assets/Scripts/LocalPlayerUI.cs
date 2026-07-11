@@ -19,6 +19,13 @@ public class LocalPlayerUI : MonoBehaviour
 
     private bool _hidden;
 
+    /// <summary>
+    /// True while some other system (e.g. the upgrade/fortune-teller canvas) has
+    /// forced the HUD hidden. While this is set, <see cref="Update"/> stops driving
+    /// visibility from the death state so it can't fight with the external caller.
+    /// </summary>
+    private bool _suspended;
+
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -30,8 +37,30 @@ public class LocalPlayerUI : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
+    /// <summary>
+    /// Force the vitals HUD hidden (true) or let it resume tracking the death state
+    /// (false). Used by systems that take over the whole screen, like the upgrade
+    /// canvas — call this instead of touching the vitals GameObject directly, or it
+    /// will just get reactivated on the next frame's death check.
+    /// </summary>
+    public void SetSuspended(bool suspended)
+    {
+        _suspended = suspended;
+
+        if (suspended)
+        {
+            SetVitalsVisible(false);
+            return;
+        }
+
+        bool dead = PlayerManager.Local != null && PlayerManager.Local.IsDead;
+        SetVitalsVisible(!dead);
+    }
+
     private void Update()
     {
+        if (_suspended) return;
+
         bool dead = PlayerManager.Local != null && PlayerManager.Local.IsDead;
 
         if (dead)
