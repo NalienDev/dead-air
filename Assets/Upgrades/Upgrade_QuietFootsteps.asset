@@ -13,14 +13,11 @@ MonoBehaviour:
   m_Name: Upgrade_QuietFootsteps
   m_EditorClassIdentifier: Assembly-CSharp::QuietFootstepsUpgrade
   DisplayName: QUIET FOOTSTEPS
-  Description: 'Just walk like a ninja!
-
-    Be a Teenage Mutant Ninja Turtle once
-    in your miserable life.'
-  Icon: {fileID: 0}
-  RarityColor: {r: 0.38431373, g: 0.77254903, b: 0.38431373, a: 1}
+  Description: Make less noise walking.
+  Icon: {fileID: 21300000, guid: 0c1b6945f8f50e4498d83a59561003d1, type: 3}
+  RarityColor: {r: 0.90588236, g: 0.8039216, b: 0.61960787, a: 1}
   Weight: 1
-  AppearChance: 1
+  AppearChance: 0.212
   Repeatable: 1
   MinExpeditions: 0
-  ValueRange: {x: 0, y: 0}
+  ValueRange: {x: 0.2, y: 2}
