@@ -205,7 +205,7 @@ public class LobbyIntroController : MonoBehaviour
         switch (_state)
         {
             case State.Waiting:
-                if (IsConfirmPressed())
+                if (IsAnyKeyboardKeyPressed())
                     StartCoroutine(ApproachPc());
                 break;
 
@@ -226,6 +226,16 @@ public class LobbyIntroController : MonoBehaviour
     private bool IsConfirmPressed()
     {
         return Input.GetKeyDown(confirmKey) || Input.GetKeyDown(confirmKeyAlt);
+    }
+
+    // Input.anyKeyDown also fires for mouse buttons - excluded here since the ask was
+    // specifically "any KEYBOARD key" for the initial "press any key" prompt at the PC.
+    private bool IsAnyKeyboardKeyPressed()
+    {
+        return Input.anyKeyDown
+            && !Input.GetMouseButtonDown(0)
+            && !Input.GetMouseButtonDown(1)
+            && !Input.GetMouseButtonDown(2);
     }
 
     private void ChangeSelection(int dir)
