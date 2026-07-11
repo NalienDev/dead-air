@@ -225,13 +225,12 @@ public class PlayerManager : NetworkIdentity, ISoundListener
 
     /// <summary>
     /// Notifies all clients of a hit so the owning client can apply the movement stun.
-    /// PlayerMovement is only enabled on the owner, so non-owners are no-ops.
     /// </summary>
     [ObserversRpc(runLocally: true)]
     private void RpcOnHit()
     {
-        if (TryGetComponent(out PlayerMovement movement))
-            movement.ApplyHitStun();
+        if (TryGetComponent(out StarterAssets.FirstPersonController fpc))
+            fpc.ApplyHitStun();
     }
 
     [ServerRpc]
