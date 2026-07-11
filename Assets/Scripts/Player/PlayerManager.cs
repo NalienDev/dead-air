@@ -45,6 +45,16 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         }
     }
 
+    // ── Suffocation (0 oxygen) ───────────────────────────────────────────────
+
+    [Header("Suffocation (at 0 oxygen)")]
+    [Tooltip("Health lost per second while out of oxygen.")]
+    [SerializeField] private int _suffocationDamagePerSecond = 10;
+    [Tooltip("Looping gasp/alarm played for the local player while suffocating.")]
+    [SerializeField] private AudioClip _suffocationLoop;
+
+    private AudioSource _suffocationSource;
+
     // ── Private state ──────────────────────────────────────────────────────
 
     private float _oxygenTimer = 0f;
@@ -85,17 +95,61 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         // in-flight utterance finishes sending.
         PumpVoiceStreaming();
 
-        if (IsDead) return; // Stop draining oxygen / accepting debug input when dead
+        if (IsDead)
+        {
+            StopSuffocationLoop(); // no gasping once dead
+            return;
+        }
 
         _oxygenTimer += Time.deltaTime;
         if (_oxygenTimer >= 1f)
         {
             _oxygenTimer = 0f;
-            DrainOxygen(1);
+            ServerOxygenTick(); // drains, or suffocation-damages at 0
         }
+
+        // Loop the suffocation sound locally (per-frame so it starts/stops promptly).
+        if (IsSuffocatingNow()) StartSuffocationLoop();
+        else StopSuffocationLoop();
 
         // Debug bindings — remove before shipping (F is the flashlight now)
         if (Input.GetKeyDown(KeyCode.X)) GainOxygen(10);
+    }
+
+    /// <summary>
+    /// True while the player is out of air and unprotected — i.e. actively suffocating.
+    /// Shared shape between the local audio and the server-side damage so they agree.
+    /// </summary>
+    private bool IsSuffocatingNow()
+    {
+        return !IsDead
+            && currentOxygen.value <= 0
+            && !hasInfiniteOxygen.value
+            && !FogClearingZone.ContainsPoint(transform.position);
+    }
+
+    // ── Suffocation audio (local player only) ────────────────────────────────
+
+    private void StartSuffocationLoop()
+    {
+        if (_suffocationLoop == null) return;
+
+        if (_suffocationSource == null)
+        {
+            _suffocationSource = gameObject.AddComponent<AudioSource>();
+            _suffocationSource.playOnAwake = false;
+            _suffocationSource.loop = true;
+            _suffocationSource.spatialBlend = 0f; // your own gasping — 2D
+            _suffocationSource.clip = _suffocationLoop;
+        }
+
+        if (!_suffocationSource.isPlaying) _suffocationSource.Play();
+    }
+
+    private void StopSuffocationLoop()
+    {
+        if (_suffocationSource != null && _suffocationSource.isPlaying)
+            _suffocationSource.Stop();
     }
 
     // ── Public getters ─────────────────────────────────────────────────────
@@ -139,6 +193,33 @@ public class PlayerManager : NetworkIdentity, ISoundListener
 
     // ── Server RPCs ────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Owner → server, once per second. Drains 1 oxygen; once oxygen hits 0 the player
+    /// suffocates instead of dying outright — losing <see cref="_suffocationDamagePerSecond"/>
+    /// health each tick until they get air back (death then comes from health reaching 0).
+    /// Breathing air (silence zone) or infinite oxygen protects from both.
+    /// </summary>
+    [ServerRpc]
+    private void ServerOxygenTick()
+    {
+        if (IsDead) return;
+
+        // Silence zone / infinite oxygen → breathing, so neither drain nor suffocate.
+        if (hasInfiniteOxygen.value || FogClearingZone.ContainsPoint(transform.position))
+            return;
+
+        if (currentOxygen.value > 0)
+            currentOxygen.value = Mathf.Clamp(currentOxygen.value - 1, 0, maxOxygen.value);
+
+        if (currentOxygen.value <= 0)
+        {
+            currentHealth.value = Mathf.Max(currentHealth.value - _suffocationDamagePerSecond, 0);
+            CheckServerDeath();
+        }
+    }
+
+    /// <summary>External oxygen reduction (hazards etc.). Clamped; no longer lethal on
+    /// its own — running out just starts suffocation on the next oxygen tick.</summary>
     [ServerRpc]
     public void DrainOxygen(int amount)
     {
@@ -147,7 +228,6 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         // Inside a silence zone (FogClearingZone) the air is breathable — no drain.
         if (FogClearingZone.ContainsPoint(transform.position)) return;
         currentOxygen.value = Mathf.Clamp(currentOxygen.value - amount, 0, maxOxygen.value);
-        CheckServerDeath();
     }
 
     // ── Oxygen upgrades (server-side, called by PlayerUpgrades) ──────────────

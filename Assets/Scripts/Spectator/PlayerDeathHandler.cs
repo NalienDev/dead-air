@@ -10,9 +10,9 @@ using UnityEngine;
 /// context as PlayerManager on the same GameObject — a second NetworkIdentity on
 /// one GameObject breaks SyncVar replication for the extra component.
 ///
-/// Death conditions (either one):
-///   • currentHealth reaches 0
-///   • currentOxygen reaches 0
+/// Death condition:
+///   • currentHealth reaches 0 (running out of oxygen suffocates the player — see
+///     PlayerManager — draining health until it hits 0, rather than killing instantly)
 ///
 /// State is server-authoritative via the <see cref="isDead"/> SyncVar. When it
 /// flips, every client hides the dead player's body; the owning client also
@@ -105,7 +105,9 @@ public class PlayerDeathHandler : NetworkBehaviour
 
         if (_playerManager == null) _playerManager = GetComponent<PlayerManager>();
 
-        if (_playerManager.GetCurrentHealth() <= 0 || _playerManager.GetCurrentOxygen() <= 0)
+        // Oxygen no longer kills directly — running out makes the player suffocate
+        // (PlayerManager drains health while at 0 oxygen), so death is health-only.
+        if (_playerManager.GetCurrentHealth() <= 0)
             Die();
     }
 
