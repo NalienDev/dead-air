@@ -2011,7 +2011,7 @@ MonoBehaviour:
   _dampener: {fileID: 1105739692}
   _snapVisual: {fileID: 1286771027}
   _audioSource: {fileID: 120427474}
-  _insertSound: {fileID: 8300000, guid: c79f7f7b781bf5e45bde1c97acb60809, type: 3}
+  _insertSound: {fileID: 8300000, guid: c1eb4f2fadbcee14db36bf7780e1d5de, type: 3}
 --- !u!65 &120427476
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2694,7 +2694,7 @@ MonoBehaviour:
   _dampener: {fileID: 1105739692}
   _snapVisual: {fileID: 1354219772}
   _audioSource: {fileID: 148669391}
-  _insertSound: {fileID: 8300000, guid: c79f7f7b781bf5e45bde1c97acb60809, type: 3}
+  _insertSound: {fileID: 8300000, guid: c1eb4f2fadbcee14db36bf7780e1d5de, type: 3}
 --- !u!65 &148669393
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4845,7 +4845,7 @@ MonoBehaviour:
   _dampener: {fileID: 1105739692}
   _snapVisual: {fileID: 1497121384}
   _audioSource: {fileID: 293398100}
-  _insertSound: {fileID: 8300000, guid: c79f7f7b781bf5e45bde1c97acb60809, type: 3}
+  _insertSound: {fileID: 8300000, guid: c1eb4f2fadbcee14db36bf7780e1d5de, type: 3}
 --- !u!65 &293398102
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -15848,7 +15848,7 @@ MonoBehaviour:
   _beamDelay: 1
   _keepBeamAfterExpand: 0
   _audioSource: {fileID: 0}
-  _beamActivateSound: {fileID: 0}
+  _beamActivateSound: {fileID: 8300000, guid: 5ace310e37b427b41bc89b2ec0aec207, type: 3}
 --- !u!82 &1105739693
 AudioSource:
   m_ObjectHideFlags: 0
@@ -17104,7 +17104,7 @@ MonoBehaviour:
   _dampener: {fileID: 1105739692}
   _snapVisual: {fileID: 1136727691}
   _audioSource: {fileID: 1168234352}
-  _insertSound: {fileID: 8300000, guid: c79f7f7b781bf5e45bde1c97acb60809, type: 3}
+  _insertSound: {fileID: 8300000, guid: c1eb4f2fadbcee14db36bf7780e1d5de, type: 3}
 --- !u!65 &1168234354
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -25760,7 +25760,7 @@ MonoBehaviour:
   _dampener: {fileID: 1105739692}
   _snapVisual: {fileID: 310538904}
   _audioSource: {fileID: 1521306038}
-  _insertSound: {fileID: 8300000, guid: c79f7f7b781bf5e45bde1c97acb60809, type: 3}
+  _insertSound: {fileID: 8300000, guid: c1eb4f2fadbcee14db36bf7780e1d5de, type: 3}
 --- !u!65 &1521306040
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -33201,7 +33201,7 @@ MonoBehaviour:
   _dampener: {fileID: 1105739692}
   _snapVisual: {fileID: 638361469}
   _audioSource: {fileID: 2125828816}
-  _insertSound: {fileID: 8300000, guid: c79f7f7b781bf5e45bde1c97acb60809, type: 3}
+  _insertSound: {fileID: 8300000, guid: c1eb4f2fadbcee14db36bf7780e1d5de, type: 3}
 --- !u!65 &2125828818
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -33603,7 +33603,7 @@ MonoBehaviour:
   _dampener: {fileID: 1105739692}
   _snapVisual: {fileID: 779579022}
   _audioSource: {fileID: 2141346126}
-  _insertSound: {fileID: 8300000, guid: c79f7f7b781bf5e45bde1c97acb60809, type: 3}
+  _insertSound: {fileID: 8300000, guid: c1eb4f2fadbcee14db36bf7780e1d5de, type: 3}
 --- !u!65 &2141346128
 BoxCollider:
   m_ObjectHideFlags: 0

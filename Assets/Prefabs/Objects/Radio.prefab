@@ -180,7 +180,7 @@ MonoBehaviour:
   _worthlessVisual: {fileID: 0}
   _ambientSource: {fileID: 8361924888709395980}
   _playAmbientOnSpawn: 1
-  _pickupSound: {fileID: 0}
+  _pickupSound: {fileID: 8300000, guid: 1d30b38c2a6109442a900321c4553dff, type: 3}
   _pickupSoundChance: 0.35
   _pickupSoundVolume: 1
   _pickupNoiseLoudness: 0.55
@@ -195,7 +195,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
+  m_Resource: {fileID: 8300000, guid: cfc76ced69785d749bd61e75f802e5a6, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.152
   m_Pitch: 1
