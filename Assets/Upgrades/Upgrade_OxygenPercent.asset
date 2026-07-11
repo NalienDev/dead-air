@@ -15,7 +15,7 @@ MonoBehaviour:
   DisplayName: Oxygen!
   Description: 
   Icon: {fileID: 0}
-  RarityColor: {r: 0.2830189, g: 0.2830189, b: 0.2830189, a: 1}
+  RarityColor: {r: 1, g: 0.9137255, b: 0.5803922, a: 1}
   Weight: 1
   AppearChance: 1
   Repeatable: 1

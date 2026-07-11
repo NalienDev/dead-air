@@ -15,7 +15,7 @@ MonoBehaviour:
   DisplayName: Quiet Footsteps
   Description: 
   Icon: {fileID: 0}
-  RarityColor: {r: 1, g: 1, b: 1, a: 1}
+  RarityColor: {r: 1, g: 0.9137255, b: 0.5803922, a: 1}
   Weight: 1
   AppearChance: 1
   Repeatable: 1

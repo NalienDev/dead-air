@@ -15,7 +15,7 @@ MonoBehaviour:
   DisplayName: Inventory Slot
   Description: You read it!
   Icon: {fileID: 0}
-  RarityColor: {r: 0, g: 0.8028636, b: 1, a: 1}
+  RarityColor: {r: 0.47770557, g: 0.81416357, b: 0.8962264, a: 1}
   Weight: 1
   AppearChance: 1
   Repeatable: 0

@@ -15,7 +15,7 @@ MonoBehaviour:
   DisplayName: Speed!
   Description: Increase your walk speed
   Icon: {fileID: 0}
-  RarityColor: {r: 0.28627452, g: 0.28627452, b: 0.28627452, a: 1}
+  RarityColor: {r: 1, g: 0.91253936, b: 0.5801887, a: 1}
   Weight: 1
   AppearChance: 1
   Repeatable: 1
