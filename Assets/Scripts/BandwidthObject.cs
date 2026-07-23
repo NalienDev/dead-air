@@ -120,7 +120,7 @@ public class BandwidthObject : GrabbableObject
     // Worthless junk stays silent, which doubles as a tell that audible loot has value.
     private void UpdateAmbientSound()
     {
-        if (_ambientSource == null) return;
+        if (_ambientSource == null || !_ambientSource.enabled || !_ambientSource.isActiveAndEnabled) return;
 
         bool shouldPlay = _playAmbientOnSpawn && CurrentCondition != Condition.Worthless;
         if (shouldPlay)

@@ -118,6 +118,7 @@
     <Compile Include="Assets\Scripts\TestGen.cs" />
     <Compile Include="Assets\Scripts\Spectator\SpectatorController.cs" />
     <Compile Include="Assets\Shaders\Nova\Runtime\Core\Scripts\ApplyDistortionPass_RenderGraph.cs" />
+    <Compile Include="Assets\Scripts\Audio\PlayerMuteHandler.cs" />
     <Compile Include="Assets\Scripts\Voice\AudioVisualizer.cs" />
     <Compile Include="Assets\Packages\StarterAssets\FirstPersonController\Scripts\BasicRigidBodyPush.cs" />
     <Compile Include="Assets\Scripts\Upgrades\PlayerUpgrades.cs" />
@@ -177,6 +178,7 @@
     <Compile Include="Assets\Scripts\QuotaUI.cs" />
     <Compile Include="Assets\Scripts\GameOverHandler.cs" />
     <Compile Include="Assets\Scripts\GameOverCameraSequence.cs" />
+    <Compile Include="Assets\Scripts\DungeonCreator\LootSpawnPoint.cs" />
     <Compile Include="Assets\Scripts\Upgrades\UpgradeOptionCard.cs" />
     <Compile Include="Assets\Scripts\LobbyLocalUserCapture.cs" />
     <Compile Include="Assets\Scripts\Spectator\SpectatorHud.cs" />

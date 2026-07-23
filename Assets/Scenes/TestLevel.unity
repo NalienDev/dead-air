@@ -240,11 +240,125 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1957925317}
   m_Direction: 0
   m_Value: 1
-  m_Size: 0.99999994
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &3455255
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3455258}
+  - component: {fileID: 3455257}
+  - component: {fileID: 3455256}
+  m_Layer: 0
+  m_Name: DungeonGenerator (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &3455256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3455255}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ddcb75a7b344a249a9580b9951ee629, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TestGen
+--- !u!114 &3455257
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3455255}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbd5a8a62103edc4abd8bb81dbc3beb5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DungeonGenerator
+  _isSetup: 0
+  _prefabId: -2147483648
+  _componentIndex: -2147483648
+  _shouldBePooled: 0
+  _parent: {fileID: 0}
+  _invertedPathToNearestParent: 
+  _directChildren: []
+  _networkRules: {fileID: 0}
+  _visitiblityRules: {fileID: 0}
+  _entrance: {fileID: 911949480880013668, guid: 2dc5de21eb15bd243957b4bdb3b9d469, type: 3}
+  _rooms:
+  - {fileID: 8385200692948620012, guid: db45de1a55d7f2c478efb698f527f6ca, type: 3}
+  - {fileID: 8385200692948620012, guid: 5d5d7ae817b04d346ab2520602473d21, type: 3}
+  - {fileID: 8385200692948620012, guid: 93668cdb29ecf5b429e28ed0e999bfe6, type: 3}
+  - {fileID: 8385200692948620012, guid: 713196dd01b5a08448bb2928103ada16, type: 3}
+  - {fileID: 8385200692948620012, guid: ac5c387eb39afed4dafc68a14241b36f, type: 3}
+  - {fileID: 8385200692948620012, guid: b2489c125a8d52b498f4586d9860e6fa, type: 3}
+  _specialRooms: []
+  _alternateEntrances: []
+  _hallways:
+  - {fileID: 8843619782282464795, guid: f069cda0ef33a934f9141050cd22d744, type: 3}
+  - {fileID: 8843619782282464795, guid: c4997aee11ba6ab48843bfceaf6d5705, type: 3}
+  _door: {fileID: 1612309275916227888, guid: d8cd806de753f034b9ade00aaa160c63, type: 3}
+  _doorYOffset: 0
+  _doorZOffset: 0
+  _doorYRotation: 0
+  _doorChance: 0.321
+  _targetRoomCount: 30
+  _generationTickInterval: 0.1
+  _hallwayChance: 0.3
+  _specialRoomChance: 0
+  _roomsLayerMask:
+    serializedVersion: 2
+    m_Bits: 6656
+  _lootPrefabs:
+  - {fileID: 322975916374066887, guid: 4a2ab51132c65bf46aaec31321092ae0, type: 3}
+  - {fileID: 322975916374066887, guid: 2d159684411188342b9cda6040ac4767, type: 3}
+  - {fileID: 322975916374066887, guid: c471e9e8e3852054380c001bf69ba8ec, type: 3}
+  - {fileID: 322975916374066887, guid: 0941832947c469a4899219204b1b3c77, type: 3}
+  - {fileID: 322975916374066887, guid: 1a6d9632713cf444f89e4e51bca57337, type: 3}
+  _lootChancePerPoint: 0.5
+  _maxLootPerRoom: 2
+  _maxTotalLoot: 30
+  _minTotalLoot: 15
+  _randomizeLootYRotation: 1
+  _energyCellPrefabs:
+  - {fileID: 8220706766722938257, guid: 01dca756cf0528548aa590f2b139a242, type: 3}
+  _cellChancePerPoint: 0.25
+  _maxCellsPerRoom: 1
+  _maxTotalCells: 2
+  _minTotalCells: 1
+  _maxConsecutiveFailures: 5
+  _maxRestartAttempts: 15
+  isGenerated:
+    _value: 0
+    _ownerAuth: 0
+    _sendIntervalInSeconds: 0
+--- !u!4 &3455258
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3455255}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -15.2243, y: -18.85343, z: -24.004454}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &57631059
 GameObject:
   m_ObjectHideFlags: 0
@@ -4439,104 +4553,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1760466422}
   m_CullTransparentMesh: 1
---- !u!1 &1779305304
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1779305306}
-  - component: {fileID: 1779305305}
-  - component: {fileID: 1779305307}
-  m_Layer: 0
-  m_Name: DungeonGenerator
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1779305305
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1779305304}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dbd5a8a62103edc4abd8bb81dbc3beb5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DungeonGenerator
-  _isSetup: 0
-  _prefabId: -2147483648
-  _componentIndex: -2147483648
-  _shouldBePooled: 0
-  _parent: {fileID: 0}
-  _invertedPathToNearestParent: 
-  _directChildren: []
-  _networkRules: {fileID: 0}
-  _visitiblityRules: {fileID: 0}
-  _entrance: {fileID: 911949480880013668, guid: 2dc5de21eb15bd243957b4bdb3b9d469, type: 3}
-  _rooms:
-  - {fileID: 8385200692948620012, guid: db45de1a55d7f2c478efb698f527f6ca, type: 3}
-  - {fileID: 8385200692948620012, guid: 5d5d7ae817b04d346ab2520602473d21, type: 3}
-  - {fileID: 8385200692948620012, guid: 93668cdb29ecf5b429e28ed0e999bfe6, type: 3}
-  - {fileID: 8385200692948620012, guid: ac5c387eb39afed4dafc68a14241b36f, type: 3}
-  - {fileID: 8385200692948620012, guid: b2489c125a8d52b498f4586d9860e6fa, type: 3}
-  - {fileID: 8385200692948620012, guid: 713196dd01b5a08448bb2928103ada16, type: 3}
-  _specialRooms: []
-  _alternateEntrances:
-  - {fileID: 911949480880013668, guid: 2dc5de21eb15bd243957b4bdb3b9d469, type: 3}
-  _hallways:
-  - {fileID: 8843619782282464795, guid: f069cda0ef33a934f9141050cd22d744, type: 3}
-  - {fileID: 8843619782282464795, guid: c4997aee11ba6ab48843bfceaf6d5705, type: 3}
-  _door: {fileID: 1612309275916227888, guid: d8cd806de753f034b9ade00aaa160c63, type: 3}
-  _doorYOffset: 0
-  _doorZOffset: 0
-  _doorYRotation: 0
-  _doorChance: 0.321
-  _targetRoomCount: 30
-  _generationTickInterval: 0.1
-  _hallwayChance: 0.3
-  _specialRoomChance: 0
-  _roomsLayerMask:
-    serializedVersion: 2
-    m_Bits: 7680
-  _maxConsecutiveFailures: 5
-  _maxRestartAttempts: 15
-  isGenerated:
-    _value: 0
-    _ownerAuth: 0
-    _sendIntervalInSeconds: 0
---- !u!4 &1779305306
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1779305304}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 24.7757, y: 3.14657, z: 38.99555}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1779305307
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1779305304}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ddcb75a7b344a249a9580b9951ee629, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TestGen
 --- !u!1 &1854487265
 GameObject:
   m_ObjectHideFlags: 0
@@ -4800,11 +4816,18 @@ MonoBehaviour:
   _slotUIs:
   - background: {fileID: 2105313653}
     itemLabel: {fileID: 1113110835}
+    icon: {fileID: 0}
+    root: {fileID: 0}
   - background: {fileID: 1854487267}
     itemLabel: {fileID: 134673324}
+    icon: {fileID: 0}
+    root: {fileID: 0}
   _activeColor: {r: 1, g: 1, b: 1, a: 0.9}
   _inactiveColor: {r: 0.4, g: 0.4, b: 0.4, a: 0.6}
   _occupiedTint: {r: 0.6, g: 1, b: 0.6, a: 1}
+  _activeScale: 1.2
+  _inactiveScale: 0.85
+  _scaleLerpSpeed: 8
 --- !u!114 &1887584327
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4819,6 +4842,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocalPlayerUI
   _healthText: {fileID: 531258022}
   _oxygenText: {fileID: 337844416}
+  _healthFillImage: {fileID: 0}
+  _oxygenFillImage: {fileID: 0}
+  _oxygenFillMax: 0.78
   _vitalsRoot: {fileID: 0}
 --- !u!114 &1887584328
 MonoBehaviour:
@@ -5491,10 +5517,10 @@ SceneRoots:
   m_Roots:
   - {fileID: 1710003465}
   - {fileID: 360162260}
-  - {fileID: 1779305306}
   - {fileID: 57631061}
   - {fileID: 141818826}
   - {fileID: 954157812}
   - {fileID: 1484022254}
   - {fileID: 2080520563}
   - {fileID: 2083092040}
+  - {fileID: 3455258}

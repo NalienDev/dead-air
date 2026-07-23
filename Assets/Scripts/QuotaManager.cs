@@ -12,8 +12,13 @@ public class QuotaManager : NetworkIdentity
 
     [Header("Settings")]
     [SerializeField] private int _baseQuota = 1000;
+    [Tooltip("Player count the base quota is balanced for; the day-1 quota scales linearly from this.")]
+    [SerializeField, Min(1)] private int _baseQuotaPlayerCount = 3;
     [SerializeField] private float _quotaMultiplier = 1.3f;
     [SerializeField] private string _gameOverSceneName = "GameOver";
+
+    // Whether the day-1 quota has already been scaled to the player count this run.
+    private bool _quotaScaledForPlayers = false;
 
     [Header("Synced State")]
     public SyncVar<int> currentDay = new SyncVar<int>(1);
@@ -43,6 +48,23 @@ public class QuotaManager : NetworkIdentity
     {
         base.OnDespawned(asServer);
         if (Instance == this) Instance = null;
+    }
+
+    // Scales the day-1 quota to how many players are in the run. The base quota is tuned for
+    // _baseQuotaPlayerCount players, so each player is worth _baseQuota / _baseQuotaPlayerCount.
+    // Applied once per run (guarded), so later days keep compounding off the scaled value.
+    public void ServerScaleQuotaForPlayerCount()
+    {
+        if (!isServer || _quotaScaledForPlayers) return;
+
+        int playerCount = FindObjectsByType<PlayerManager>(FindObjectsSortMode.None).Length;
+        if (playerCount <= 0) return;
+
+        float perPlayer = (float)_baseQuota / Mathf.Max(1, _baseQuotaPlayerCount);
+        currentQuota.value = Mathf.Max(1, Mathf.RoundToInt(perPlayer * playerCount));
+        _quotaScaledForPlayers = true;
+
+        Debug.Log($"[QuotaManager] Quota scaled for {playerCount} player(s): {currentQuota.value}.");
     }
 
     public void ServerProcessItems(int bandwidth, int energyCells)
@@ -115,6 +137,7 @@ public class QuotaManager : NetworkIdentity
         currentEnergyCells.value = 0;
         expeditionsCompleted.value = 0;
         lastGameOverReason.value = GameOverReason.None;
+        _quotaScaledForPlayers = false; // re-scale on the next run's first expedition
 
         Debug.Log("[QuotaManager] Game reset.");
         if (DungeonGenerator.Instance != null)

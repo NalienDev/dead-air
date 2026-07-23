@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using PurrNet;
+using StarterAssets;
 using UnityEngine;
 
 /// <summary>
@@ -38,11 +39,17 @@ public class PlayerManager : NetworkIdentity, ISoundListener
     [SerializeField] private int _suffocationDamagePerSecond = 10;
     [Tooltip("Looping gasp played for the local player while suffocating.")]
     [SerializeField] private AudioClip _suffocationLoop;
+    [Tooltip("Oxygen drain multiplier while sprinting (e.g. 3 = drains 3x faster).")]
+    [SerializeField, Min(1)] private int _sprintOxygenMultiplier = 3;
 
     private AudioSource _suffocationSource;
 
     private float _oxygenTimer = 0f;
     private PlayerDeathHandler _deathHandler;
+
+    // Owner-only movement refs, used to tell whether the local player is sprinting.
+    private StarterAssetsInputs _input;
+    private FirstPersonController _controller;
 
     // Server-side view of the player's mic loudness, read by the Conductor. Decays to 0
     // on its own once the owner stops sending reports.
@@ -55,6 +62,9 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         if (isOwner)
         {
             Local = this;
+
+            TryGetComponent(out _input);
+            TryGetComponent(out _controller);
 
             // Hide the loading screen once the local player is fully spawned in Main.
             if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Main")
@@ -82,7 +92,7 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         if (_oxygenTimer >= 1f)
         {
             _oxygenTimer = 0f;
-            ServerOxygenTick();
+            ServerOxygenTick(IsSprinting());
         }
 
         if (IsSuffocatingNow()) StartSuffocationLoop();
@@ -152,18 +162,28 @@ public class PlayerManager : NetworkIdentity, ISoundListener
         if (cc != null) cc.enabled = true;
     }
 
-    // Once per second: drains oxygen, then suffocation-damages health while at 0.
-    // A silence zone or infinite oxygen protects from both.
+    // Owner-only: true when actually sprinting (moving on the ground with sprint held),
+    // matching the footstep-noise definition so oxygen drains in step with visible sprinting.
+    private bool IsSprinting()
+    {
+        if (_input == null) return false;
+        bool grounded = _controller == null || _controller.Grounded;
+        return grounded && _input.move != Vector2.zero && _input.sprint;
+    }
+
+    // Once per second: drains oxygen (faster while sprinting), then suffocation-damages
+    // health while at 0. A silence zone or infinite oxygen protects from both.
     [ServerRpc]
-    private void ServerOxygenTick()
+    private void ServerOxygenTick(bool sprinting)
     {
         if (IsDead) return;
 
         if (hasInfiniteOxygen.value || FogClearingZone.ContainsPoint(transform.position))
             return;
 
+        int drain = sprinting ? _sprintOxygenMultiplier : 1;
         if (currentOxygen.value > 0)
-            currentOxygen.value = Mathf.Clamp(currentOxygen.value - 1, 0, maxOxygen.value);
+            currentOxygen.value = Mathf.Clamp(currentOxygen.value - drain, 0, maxOxygen.value);
 
         if (currentOxygen.value <= 0)
         {

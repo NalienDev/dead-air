@@ -27,8 +27,10 @@ public class UpgradeMachine : Interactable
     [Tooltip("Key the local player presses to open the free debug picker.")]
     [SerializeField] private KeyCode _debugKey = KeyCode.F3;
 
-    // Spent credits. Replicated so AvailableUpgrades matches on every client.
-    private readonly SyncVar<int> _spentUpgrades = new(0);
+    // Credits spent per player. Each player gets their own pool: one inserted cell grants
+    // one upgrade to every player, so one player's purchases never drain another's.
+    // Server-only — clients learn their remaining credits via the offer/purchase TargetRpcs.
+    private readonly Dictionary<PlayerID, int> _spentUpgrades = new();
 
     // Server-side memory of what each player was offered, so a pick can be validated.
     private sealed class Offer { public int[] options; public bool free; }
@@ -37,7 +39,10 @@ public class UpgradeMachine : Interactable
     private int CellsGranting =>
         _dampener != null ? Mathf.Min(_dampener.CellCount, _maxUpgradeGrantingCells) : 0;
 
-    public int AvailableUpgrades => Mathf.Max(0, CellsGranting - _spentUpgrades.value);
+    private int SpentFor(PlayerID pid) => _spentUpgrades.TryGetValue(pid, out int v) ? v : 0;
+
+    // Credits still available to a specific player.
+    private int AvailableFor(PlayerID pid) => Mathf.Max(0, CellsGranting - SpentFor(pid));
 
     private void Awake()
     {
@@ -78,7 +83,7 @@ public class UpgradeMachine : Interactable
 
         bool free = debug && _debugFreeUpgrades;
 
-        if (!free && AvailableUpgrades <= 0)
+        if (!free && AvailableFor(pid) <= 0)
         {
             TargetNoUpgrades(pid);
             return;
@@ -104,7 +109,7 @@ public class UpgradeMachine : Interactable
         }
 
         _pendingOffers[pid] = new Offer { options = options, free = free };
-        TargetShowOffer(pid, options, free, AvailableUpgrades);
+        TargetShowOffer(pid, options, free, AvailableFor(pid));
     }
 
     [TargetRpc]
@@ -149,7 +154,7 @@ public class UpgradeMachine : Interactable
         if (!offer.free)
         {
             // Re-validate server-side; the client is never trusted.
-            if (AvailableUpgrades <= 0) return;
+            if (AvailableFor(pid) <= 0) return;
 
             int expeditions = QuotaManager.Instance != null
                 ? QuotaManager.Instance.expeditionsCompleted.value : 0;
@@ -161,9 +166,9 @@ public class UpgradeMachine : Interactable
         def.ServerApply(player, rolled);
         if (!def.Repeatable) player.ServerMarkOwned(defIndex);
 
-        if (!offer.free) _spentUpgrades.value += 1;
+        if (!offer.free) _spentUpgrades[pid] = SpentFor(pid) + 1;
 
-        TargetPurchaseResult(pid, defIndex, rolled, AvailableUpgrades);
+        TargetPurchaseResult(pid, defIndex, rolled, AvailableFor(pid));
     }
 
     [TargetRpc]

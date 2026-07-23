@@ -302,6 +302,7 @@ GameObject:
   - component: {fileID: 353332715589107572}
   - component: {fileID: 8402820434770916415}
   - component: {fileID: -3425673028540209630}
+  - component: {fileID: 3652160989160226112}
   m_Layer: 6
   m_Name: PlayerCapsule
   m_TagString: Player
@@ -392,6 +393,8 @@ MonoBehaviour:
   - target: {fileID: 1174776988409076660}
     activeAsOwner: 1
   - target: {fileID: 1503026038489913737}
+    activeAsOwner: 1
+  - target: {fileID: 3652160989160226112}
     activeAsOwner: 1
   _gameObjects:
   - target: {fileID: 7179928310667017016}
@@ -653,6 +656,9 @@ MonoBehaviour:
     _sendIntervalInSeconds: 0
   _suffocationDamagePerSecond: 10
   _suffocationLoop: {fileID: 8300000, guid: 2949a8f580a1aaa4eb91dde44f039d8c, type: 3}
+  _sprintOxygenMultiplier: 3
+  _hitStunMultiplier: 0.3
+  _hitStunDuration: 2
 --- !u!114 &5292867448715972009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1026,6 +1032,18 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &3652160989160226112
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9126679355787183082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17e125056c434cd4e9ea95454cf01cc7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
 --- !u!1001 &4563925786305766699
 PrefabInstance:
   m_ObjectHideFlags: 0

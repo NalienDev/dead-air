@@ -35,6 +35,11 @@ public class GrabbableObject : Interactable
     /// <summary>True if this object was spawned as part of a dungeon room prefab.</summary>
     public bool IsDungeonLoot => _isDungeonLoot;
 
+    // Marks loot the generator spawned at runtime (LootSpawnPoints) as dungeon loot, so the
+    // generator's cleanup sweeps own it just like loot baked into room prefabs. Server-side
+    // is enough: cleanup runs on the server and the despawn propagates.
+    public void ServerMarkAsDungeonLoot() => _isDungeonLoot = true;
+
     /// <summary>Server-side: true once any player has picked this object up.</summary>
     public bool WasEverHeld => _wasEverHeld;
 

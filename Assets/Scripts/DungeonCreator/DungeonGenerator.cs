@@ -49,6 +49,32 @@ public class DungeonGenerator : NetworkBehaviour
     [SerializeField] private float _specialRoomChance = 0.1f;
     [SerializeField] private LayerMask _roomsLayerMask;
 
+    [Header("Bandwidth Loot Spawning")]
+    [Tooltip("Loot prefabs (bandwidth objects) picked at random for each spawn.")]
+    [SerializeField] private List<GameObject> _lootPrefabs = new();
+    [Tooltip("Chance each Bandwidth LootSpawnPoint in a part actually spawns an object.")]
+    [SerializeField, Range(0f, 1f)] private float _lootChancePerPoint = 0.5f;
+    [Tooltip("Max objects spawned per part. 0 = no cap.")]
+    [SerializeField, Min(0)] private int _maxLootPerRoom = 3;
+    [Tooltip("Max objects across the whole dungeon. 0 = no cap.")]
+    [SerializeField, Min(0)] private int _maxTotalLoot = 0;
+    [Tooltip("Guaranteed minimum across the whole dungeon (fills random empty points if the rolls came up short).")]
+    [SerializeField, Min(0)] private int _minTotalLoot = 0;
+    [Tooltip("Give each spawned object a random Y rotation instead of the spawn point's.")]
+    [SerializeField] private bool _randomizeLootYRotation = true;
+
+    [Header("Energy Cell Spawning")]
+    [Tooltip("Energy cell prefabs picked at random for each spawn.")]
+    [SerializeField] private List<GameObject> _energyCellPrefabs = new();
+    [Tooltip("Chance each EnergyCell LootSpawnPoint in a part actually spawns a cell.")]
+    [SerializeField, Range(0f, 1f)] private float _cellChancePerPoint = 0.25f;
+    [Tooltip("Max cells spawned per part. 0 = no cap.")]
+    [SerializeField, Min(0)] private int _maxCellsPerRoom = 1;
+    [Tooltip("Max cells across the whole dungeon. 0 = no cap.")]
+    [SerializeField, Min(0)] private int _maxTotalCells = 0;
+    [Tooltip("Guaranteed minimum of cells across the whole dungeon.")]
+    [SerializeField, Min(0)] private int _minTotalCells = 0;
+
     [Header("Failure Recovery")]
     [Tooltip("Consecutive placement failures before the dungeon is scrapped and restarted.")]
     [SerializeField] private int _maxConsecutiveFailures = 10;
@@ -253,8 +279,187 @@ public class DungeonGenerator : NetworkBehaviour
         CleanupDungeonLoot(includeRoomChildren: false);
 
         isGenerated.value = true;
+
+        // After isGenerated so freshly spawned loot skips the generation freeze entirely.
+        SpawnRoomLoot();
+
         Debug.Log($"[DungeonGenerator] Generation complete after {_restartAttempts} restart(s). {_generatedRooms.Count} parts placed.");
         OnGenerated?.Invoke();
+    }
+
+    // Rolls every LootSpawnPoint in the placed parts and spawns prefabs at the winners,
+    // one pass per category, honouring per-room/total caps and guaranteed minimums.
+    private void SpawnRoomLoot()
+    {
+        // Bandwidth prefabs vary in size, so their pass rejects prefabs that don't
+        // physically fit at a point and tries the others.
+        int loot = SpawnCategory(LootSpawnPoint.Category.Bandwidth, _lootPrefabs,
+            _lootChancePerPoint, _maxLootPerRoom, _maxTotalLoot, _minTotalLoot, mustFit: true);
+
+        int cells = SpawnCategory(LootSpawnPoint.Category.EnergyCell, _energyCellPrefabs,
+            _cellChancePerPoint, _maxCellsPerRoom, _maxTotalCells, _minTotalCells, mustFit: false);
+
+        Debug.Log($"[DungeonGenerator] Spawned {loot} loot object(s) and {cells} energy cell(s) " +
+                  $"across {_generatedRooms.Count} parts.");
+    }
+
+    // Runs the roll for one spawn-point category and returns how many objects were placed.
+    private int SpawnCategory(LootSpawnPoint.Category category, List<GameObject> prefabs,
+        float chancePerPoint, int maxPerRoom, int maxTotal, int minTotal, bool mustFit)
+    {
+        if (prefabs.Count == 0) return 0;
+
+        int total = 0;
+        // Points that lost their roll, kept around so the minimum can be topped up.
+        List<(LootSpawnPoint point, DungeonPart part)> leftovers = new();
+        Dictionary<DungeonPart, int> perRoomCount = new();
+
+        foreach (DungeonPart part in _generatedRooms)
+        {
+            if (part == null) continue;
+            if (maxTotal > 0 && total >= maxTotal) break;
+
+            LootSpawnPoint[] points = System.Array.FindAll(
+                part.GetComponentsInChildren<LootSpawnPoint>(),
+                p => p.SpawnCategory == category);
+            if (points.Length == 0) continue;
+
+            int inRoom = 0;
+            foreach (LootSpawnPoint point in WeightedOrder(points))
+            {
+                if (maxPerRoom > 0 && inRoom >= maxPerRoom) break;
+                if (maxTotal > 0 && total >= maxTotal) break;
+
+                if (UnityEngine.Random.value > chancePerPoint)
+                {
+                    leftovers.Add((point, part));
+                    continue;
+                }
+
+                if (!SpawnLootAt(point, prefabs, mustFit)) continue; // nothing fits here
+                inRoom++;
+                total++;
+            }
+
+            perRoomCount[part] = inRoom;
+        }
+
+        // Short of the guaranteed minimum: fill random skipped points, still honouring caps.
+        if (minTotal > 0 && total < minTotal && leftovers.Count > 0)
+        {
+            ShuffleList(leftovers);
+            foreach ((LootSpawnPoint point, DungeonPart part) in leftovers)
+            {
+                if (total >= minTotal) break;
+                if (maxTotal > 0 && total >= maxTotal) break;
+                if (maxPerRoom > 0 && perRoomCount[part] >= maxPerRoom) continue;
+
+                if (!SpawnLootAt(point, prefabs, mustFit)) continue;
+                perRoomCount[part]++;
+                total++;
+            }
+        }
+
+        return total;
+    }
+
+    // Spawns one object at the point. With mustFit, a prefab whose colliders overlap the
+    // world at the point is rejected and the remaining prefabs are tried (shuffled);
+    // returns false when nothing fits, same instantiate-check-destroy pattern the room
+    // placement itself uses.
+    private bool SpawnLootAt(LootSpawnPoint point, List<GameObject> prefabs, bool mustFit)
+    {
+        if (!mustFit)
+        {
+            InstantiateLoot(PickRandom(prefabs), point);
+            return true;
+        }
+
+        List<GameObject> order = new(prefabs);
+        ShuffleList(order);
+
+        foreach (GameObject prefab in order)
+        {
+            GameObject go = InstantiateLoot(prefab, point);
+            if (!LootOverlapsSomething(go))
+                return true;
+
+            // Deactivate before the deferred Destroy so this candidate's colliders can't
+            // block the next candidate's overlap check within the same frame.
+            go.SetActive(false);
+            Destroy(go);
+        }
+
+        Debug.Log($"[DungeonGenerator] No loot prefab fits at '{point.name}', skipping point.", point);
+        return false;
+    }
+
+    private GameObject InstantiateLoot(GameObject prefab, LootSpawnPoint point)
+    {
+        Quaternion rot = _randomizeLootYRotation
+            ? Quaternion.Euler(0f, UnityEngine.Random.Range(0f, 360f), 0f)
+            : point.transform.rotation;
+
+        // Unparented, matching the RoverManager energy-cell drop: PurrNet auto-spawns
+        // server-side instantiates, and runtime re-parenting under a networked room is
+        // exactly the kind of hierarchy sync we don't want to depend on.
+        GameObject go = Instantiate(prefab, point.transform.position, rot);
+        go.transform.SetParent(null);
+
+        // Hand ownership to the generator's cleanup sweeps (regeneration, restarts).
+        if (go.TryGetComponent(out GrabbableObject grab))
+            grab.ServerMarkAsDungeonLoot();
+
+        return go;
+    }
+
+    // True if any of the object's solid colliders overlap the world at its current pose.
+    // The test box is shrunk and lifted a touch so merely resting on the floor doesn't
+    // read as a blocker, and DungeonPart room-bounds colliders are ignored since they
+    // cover the entire interior.
+    private static bool LootOverlapsSomething(GameObject go)
+    {
+        Physics.SyncTransforms();
+
+        foreach (Collider col in go.GetComponentsInChildren<Collider>())
+        {
+            if (col.isTrigger || !col.enabled) continue;
+
+            Bounds b = col.bounds;
+            Collider[] hits = Physics.OverlapBox(
+                b.center + Vector3.up * 0.02f,
+                b.extents * 0.9f,
+                Quaternion.identity,
+                ~0,
+                QueryTriggerInteraction.Ignore);
+
+            foreach (Collider hit in hits)
+            {
+                if (hit.transform.IsChildOf(go.transform)) continue;
+                if (hit.TryGetComponent(out DungeonPart _)) continue;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Orders points by weighted random draw (Efraimidis–Spirakis), so higher-weight points
+    // come first and win when a room caps out, while equal weights are a fair shuffle.
+    private static List<LootSpawnPoint> WeightedOrder(LootSpawnPoint[] points)
+    {
+        List<(float key, LootSpawnPoint point)> keyed = new(points.Length);
+        foreach (LootSpawnPoint p in points)
+        {
+            float weight = Mathf.Max(0.0001f, p.Weight);
+            keyed.Add((Mathf.Pow(UnityEngine.Random.value, 1f / weight), p));
+        }
+        keyed.Sort((a, b) => b.key.CompareTo(a.key));
+
+        List<LootSpawnPoint> ordered = new(keyed.Count);
+        foreach ((float _, LootSpawnPoint point) in keyed)
+            ordered.Add(point);
+        return ordered;
     }
 
     private void RestartGeneration()

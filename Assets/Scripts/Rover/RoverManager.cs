@@ -97,6 +97,9 @@ public class RoverManager : NetworkBehaviour
     {
         if (!isServer || _awaitingDeparture || _returnSequenceRunning) return;
 
+        // Set the day-1 quota to the number of players present (no-op after the first expedition).
+        QuotaManager.Instance?.ServerScaleQuotaForPlayerCount();
+
         if (_expeditionSpawnPoint == null)
         {
             GameObject spawnGo = GameObject.FindGameObjectWithTag("ExpeditionSpawn");

@@ -171,10 +171,10 @@ MonoBehaviour:
   _throwForce: 1
   _baseValue: 1000
   _perfectMultiplier: 1
-  _damagedMultiplier: 0.6
+  _damagedMultiplier: 0.393
   _worthlessMultiplier: 0
-  _perfectChance: 0.733
-  _damagedChance: 0.4
+  _perfectChance: 0.136
+  _damagedChance: 0.72
   _perfectVisual: {fileID: 0}
   _damagedVisual: {fileID: 0}
   _worthlessVisual: {fileID: 0}

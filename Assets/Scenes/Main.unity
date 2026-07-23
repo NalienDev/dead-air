@@ -19384,7 +19384,8 @@ MonoBehaviour:
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
   _baseQuota: 1000
-  _quotaMultiplier: 1.3
+  _baseQuotaPlayerCount: 2
+  _quotaMultiplier: 1.2
   _gameOverSceneName: GameOver
   currentDay:
     _value: 1
@@ -27273,6 +27274,23 @@ MonoBehaviour:
   _roomsLayerMask:
     serializedVersion: 2
     m_Bits: 6656
+  _lootPrefabs:
+  - {fileID: 322975916374066887, guid: 4a2ab51132c65bf46aaec31321092ae0, type: 3}
+  - {fileID: 322975916374066887, guid: 2d159684411188342b9cda6040ac4767, type: 3}
+  - {fileID: 322975916374066887, guid: c471e9e8e3852054380c001bf69ba8ec, type: 3}
+  - {fileID: 322975916374066887, guid: 0941832947c469a4899219204b1b3c77, type: 3}
+  - {fileID: 322975916374066887, guid: 1a6d9632713cf444f89e4e51bca57337, type: 3}
+  _lootChancePerPoint: 0.5
+  _maxLootPerRoom: 2
+  _maxTotalLoot: 30
+  _minTotalLoot: 15
+  _randomizeLootYRotation: 1
+  _energyCellPrefabs:
+  - {fileID: 8220706766722938257, guid: 01dca756cf0528548aa590f2b139a242, type: 3}
+  _cellChancePerPoint: 0.25
+  _maxCellsPerRoom: 1
+  _maxTotalCells: 2
+  _minTotalCells: 1
   _maxConsecutiveFailures: 5
   _maxRestartAttempts: 15
   isGenerated:
@@ -33244,7 +33262,7 @@ Transform:
   m_GameObject: {fileID: 6325673818972595333}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -1.999999, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
